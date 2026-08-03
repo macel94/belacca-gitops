@@ -59,8 +59,8 @@ francesco.belacca.com  A  169.58.97.73
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
 same address. Traefik uses the TLS-ALPN-01 challenge, so public port 443 must
-reach Traefik for certificate issuance and renewal. Normal HTTP traffic on port
-80 redirects to HTTPS.
+reach Traefik for certificate issuance and renewal. HTTP→HTTPS redirects are
+explicit router-level rules, preserving standard public port 443 URLs.
 
 ## Delivery flow
 
