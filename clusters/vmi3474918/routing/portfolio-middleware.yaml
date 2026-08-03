@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: apex-to-portfolio
+  namespace: portfolio
+  labels:
+    belacca.com/project: portfolio
+spec:
+  redirectRegex:
+    regex: ^https?://(?:www\.)?belacca\.com/(.*)
+    replacement: https://francesco.belacca.com/${1}
+    permanent: true

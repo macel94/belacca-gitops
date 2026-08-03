@@ -1,0 +1,34 @@
+name: Validate GitOps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    name: Render manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: v1.35.0
+      - name: Render cluster tree
+        run: kubectl kustomize clusters/vmi3474918 >/tmp/belacca-gitops.yaml
+      - name: Render routing source
+        run: kubectl kustomize clusters/vmi3474918/routing >/tmp/belacca-routing.yaml
+      - name: Check rendered output
+        run: |
+          grep -q 'name: belacca-routing' clusters/vmi3474918/routing-flux.yaml
+          grep -q 'name: pong' clusters/vmi3474918/applications.yaml
+          grep -q 'name: portfolio' clusters/vmi3474918/applications.yaml
+          grep -q 'name: cloudnativepong' clusters/vmi3474918/sources.yaml
+          grep -q 'name: francesco-belacca-site' clusters/vmi3474918/sources.yaml
+          grep -q 'pong.belacca.com' /tmp/belacca-routing.yaml
+          grep -q 'francesco.belacca.com' /tmp/belacca-routing.yaml
+          grep -q 'apex-to-portfolio' /tmp/belacca-routing.yaml

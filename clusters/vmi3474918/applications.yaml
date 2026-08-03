@@ -1,0 +1,31 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pong
+  namespace: flux-system
+  labels:
+    belacca.com/project: pong
+spec:
+  interval: 10m
+  path: ./k8s/overlays/server
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: cloudnativepong
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: portfolio
+  namespace: flux-system
+  labels:
+    belacca.com/project: portfolio
+spec:
+  interval: 10m
+  path: ./deploy
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: francesco-belacca-site

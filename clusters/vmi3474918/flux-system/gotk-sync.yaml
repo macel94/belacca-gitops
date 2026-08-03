@@ -1,0 +1,32 @@
+# Flux bootstrap for the belacca.com multi-project platform.
+# Keep this file aligned with the repository URL and branch used by the
+# cluster's flux-system Secret.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: flux-system
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  url: https://github.com/macel94/belacca-gitops.git
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-system
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/vmi3474918
+  # Bootstrap with prune disabled so the existing Flux inventory is not
+  # deleted during the repository handoff. Enable prune after child
+  # Kustomizations are Ready and the migration checklist is complete.
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
