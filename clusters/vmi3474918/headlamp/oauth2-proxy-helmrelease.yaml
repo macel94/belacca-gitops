@@ -42,6 +42,7 @@ spec:
       redirect-url: https://dashboard.belacca.com/oauth2/callback
       scope: openid email profile
       reverse-proxy: true
+      trusted-proxy-ip: 10.42.0.0/16
       set-xauthrequest: true
       pass-user-headers: true
       cookie-secure: true

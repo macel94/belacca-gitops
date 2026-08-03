@@ -6,5 +6,5 @@ Flux reconciles this directory into the existing `k3d-pong` cluster.
 - `sources.yaml`: independent application Git sources
 - `applications.yaml`: application Kustomizations
 - `routing/`: Traefik host/TLS routing
-- `headlamp/`: private read-only cluster dashboard
+- `headlamp/`: read-only Headlamp dashboard with Google OAuth2 Proxy
 - `traefik-acme-pvc.yaml` and `traefik-config.yaml`: persistent ACME and ingress configuration

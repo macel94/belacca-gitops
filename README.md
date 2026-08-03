@@ -28,14 +28,14 @@ nested checkout.
 Flux root source (belacca-gitops)
 ├── cluster infrastructure
 │   ├── Traefik + persistent ACME storage
-│   └── Headlamp (ClusterIP, read-only RBAC, authenticated public route)
+│   └── Headlamp + OAuth2 Proxy (ClusterIP, read-only RBAC)
 ├── child source: cloudnativepong ──> Kustomization pong ──> namespace pong
 ├── child source: francesco-belacca-site ──> Kustomization portfolio
 └── host routing
     ├── pong.belacca.com ──> pong-gateway
     ├── francesco.belacca.com ──> francesco-site
     ├── belacca.com / www ──> HTTPS redirect to portfolio
-    └── dashboard.belacca.com ──> authenticated Headlamp dashboard
+    └── dashboard.belacca.com ──> Google OAuth2 Proxy ──> Headlamp
 ```
 
 The existing `k3d-pong` cluster, Flux controllers, and Traefik ACME PVC are
@@ -125,7 +125,8 @@ cluster host outside Git; do not commit it to a repository.
 
 Headlamp is a lightweight CNCF Kubernetes dashboard installed from the pinned
 official Helm chart (`0.44.0`). It uses a dedicated read-only ServiceAccount and
-remains a ClusterIP service; the public route is only a Traefik reverse proxy.
+remains a ClusterIP service. The public route is Traefik → OAuth2 Proxy →
+Headlamp; OAuth2 Proxy is installed from the pinned official chart (`10.7.0`).
 
 The dashboard is available at:
 
@@ -134,14 +135,21 @@ https://dashboard.belacca.com/
 ```
 
 Traefik redirects HTTP to HTTPS and obtains the certificate with the existing
-Let's Encrypt HTTP-01 resolver on the `web` entrypoint. The HTTPS route is protected by a
-namespace-local BasicAuth middleware. The referenced
-`headlamp-dashboard-auth` Secret is deliberately created out-of-band on the
-cluster and is not represented in Git. The temporary username and password are
-provided separately to the operator; rotate or remove that Secret when the
-credential is no longer needed. The BasicAuth layer does not grant additional
-Kubernetes permissions: Headlamp itself remains bound only to
+Let's Encrypt HTTP-01 resolver on the `web` entrypoint. OAuth2 Proxy uses Google
+OIDC and permits only `belakkuz@gmail.com`. Its callback is:
+
+```text
+https://dashboard.belacca.com/oauth2/callback
+```
+
+The Google OAuth client ID, client secret, and OAuth2 Proxy cookie secret are
+stored in the out-of-band `headlamp-google-oauth` Secret. That Secret is not
+represented in Git. Headlamp itself remains bound only to
 `headlamp-read-only`, which permits observation and logs but no mutations.
+
+The previous `headlamp-dashboard-auth` BasicAuth Secret and middleware remain
+available as a rollback path while OAuth is being validated. They are not used
+by the active HTTPS route.
 
 For a private localhost-only alternative, use the existing port-forward and
 short-lived Kubernetes token procedure documented in `cloudnativepong/README.md`

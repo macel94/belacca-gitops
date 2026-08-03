@@ -166,28 +166,25 @@ Use the existing `ingressClassName: traefik`, the existing
 `letsencrypt` resolver, an explicit host, and an explicit Service port. Keep
 middleware references namespace-qualified in Traefik's annotation format.
 
-For an authenticated endpoint, create the BasicAuth Middleware in the same
-namespace as the Ingress and reference an out-of-band Secret, for example:
+For the dashboard's Google authentication, deploy OAuth2 Proxy as a pinned
+HelmRelease in the same namespace. Point its upstream at the Headlamp ClusterIP
+Service and configure the exact callback:
 
-```yaml
-spec:
-  basicAuth:
-    secret: dashboard-basic-auth
-    removeHeader: true
+```text
+https://dashboard.belacca.com/oauth2/callback
 ```
 
-Create the Secret on the cluster without saving the generated YAML:
-
-```bash
-htpasswd -nB admin
-kubectl -n <namespace> create secret generic dashboard-basic-auth \
-  --from-literal='users=<username>:<bcrypt-hash>' \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
+Keep the Google client ID, client secret, and OAuth2 Proxy cookie secret in an
+out-of-band Secret. The chart should reference that Secret by name, not contain
+its values. To restrict access to one account, use OAuth2 Proxy's
+`authenticatedEmailsFile` with the email address in a ConfigMap or Secret.
 
 The Secret must exist before the authenticated route is expected to work. Do
-not commit the password, bcrypt hash, or a Secret manifest containing either.
-Record only the Secret name and rotation procedure in documentation.
+not commit the Google client secret, cookie secret, OAuth client JSON, or a raw
+Secret manifest containing any of them. Record only the Secret name and
+rotation procedure in documentation. A namespace-local Traefik BasicAuth
+middleware may remain as a rollback path during the migration, but it should
+not be the active route after OAuth2 Proxy is verified.
 
 Add the new file to the routing Kustomization:
 
@@ -296,15 +293,20 @@ Verify behavior:
 ```bash
 curl -I http://<hostname>/
 curl -I https://<hostname>/
-curl -u '<username>:<temporary-password>' https://<hostname>/
+curl -I https://<hostname>/oauth2/start
 ```
 
-For an authenticated route, expect:
+For the Google OAuth2 Proxy route, expect:
 
 - HTTP: `301` or `308` to HTTPS.
-- HTTPS without credentials: `401` and a BasicAuth challenge.
-- HTTPS with correct credentials: `200` from the dashboard/backend.
-- HTTPS with an incorrect password: `401`.
+- HTTPS at `/`: a redirect to `/oauth2/start` or the Google authorization endpoint.
+- `/oauth2/start`: a redirect to `https://accounts.google.com/...`.
+- After an allowed Google login: a `200` Headlamp response.
+- A Google account not in the allowlist: rejection by OAuth2 Proxy, not Headlamp.
+
+During a staged rollout, the old BasicAuth route may remain active until the
+OAuth2 Proxy Deployment and HelmRelease are Ready. Switch the Ingress backend
+only after that readiness check.
 
 Verify the certificate without suppressing hostname validation in the final
 check:
@@ -333,6 +335,25 @@ kubectl auth can-i \
 
 The first two should be `yes` when needed; mutation checks should be `no` for
 an observation-only dashboard.
+
+## Google OAuth dashboard notes
+
+For this cluster, OAuth2 Proxy is preferred over native Headlamp OIDC. Native
+Headlamp OIDC would require configuring Google OIDC flags on the K3s API server
+and adding Google-user RBAC. OAuth2 Proxy keeps Headlamp's existing dedicated
+read-only ServiceAccount and limits Google access at the public edge.
+
+The Google web client must authorize exactly:
+
+```text
+https://dashboard.belacca.com/oauth2/callback
+```
+
+Use the issuer `https://accounts.google.com`, scopes `openid email profile`, and
+allow only the intended email address. OAuth2 Proxy's upstream is the internal
+Headlamp Service. Deploy the proxy and wait for its HelmRelease/Deployment to be
+Ready before changing the HTTPS Ingress backend. This two-phase sequence keeps
+the old BasicAuth route available during rollout.
 
 ## What failed in the previous rollout
 
@@ -392,8 +413,10 @@ Do not leave a resource permanently managed outside Flux.
 - Do not delete application PVCs or recreate the cluster.
 - If Flux ownership is being moved, follow `MIGRATION.md` and keep the old
   Kustomization at `prune: false` until the new owner is Ready.
-- Remove or rotate the out-of-band BasicAuth Secret when access is no longer
+- Remove or rotate the out-of-band Google OAuth Secret when access is no longer
   required.
+- Remove the old BasicAuth Secret only after the OAuth login path has been
+  verified and the rollback window has ended.
 - Revoke the temporary Cloudflare token after DNS work completes.
 
 ## References

@@ -61,7 +61,6 @@ metadata:
     belacca.com/component: headlamp
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: headlamp-headlamp-basic-auth@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     traefik.ingress.kubernetes.io/router.priority: "100"
@@ -78,6 +77,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: headlamp
+                name: headlamp-oauth2-proxy
                 port:
                   number: 80
