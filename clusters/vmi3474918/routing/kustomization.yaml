@@ -4,3 +4,4 @@ resources:
   - portfolio-middleware.yaml
   - portfolio-ingress.yaml
   - pong-ingress.yaml
+  - headlamp-ingress.yaml

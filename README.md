@@ -55,6 +55,7 @@ Create these A records at the DNS provider before expecting ACME issuance:
 ```text
 pong.belacca.com       A  169.58.97.73
 francesco.belacca.com  A  169.58.97.73
+dashboard.belacca.com  A  169.58.97.73
 ```
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
@@ -114,8 +115,28 @@ remove `pong-api-data`, its PV, or `kube-system/traefik-acme` during rollback.
 The current Pong database backup created during the cutover is retained on the
 cluster host outside Git; do not commit it to a repository.
 
-## Private cluster dashboard
+## Cluster dashboard
 
-Headlamp remains ClusterIP-only and is not exposed by any public route. Access
-it through the existing localhost-only port-forward and short-lived token
-procedure documented in `cloudnativepong/README.md` and `DEPLOYMENT.md`.
+Headlamp is a lightweight CNCF Kubernetes dashboard installed from the pinned
+official Helm chart (`0.44.0`). It uses a dedicated read-only ServiceAccount and
+remains a ClusterIP service; the public route is only a Traefik reverse proxy.
+
+The dashboard is available at:
+
+```text
+https://dashboard.belacca.com/
+```
+
+Traefik redirects HTTP to HTTPS and obtains the certificate with the existing
+Let's Encrypt TLS-ALPN-01 resolver. The HTTPS route is protected by a
+namespace-local BasicAuth middleware. The referenced
+`headlamp-dashboard-auth` Secret is deliberately created out-of-band on the
+cluster and is not represented in Git. The temporary username and password are
+provided separately to the operator; rotate or remove that Secret when the
+credential is no longer needed. The BasicAuth layer does not grant additional
+Kubernetes permissions: Headlamp itself remains bound only to
+`headlamp-read-only`, which permits observation and logs but no mutations.
+
+For a private localhost-only alternative, use the existing port-forward and
+short-lived Kubernetes token procedure documented in `cloudnativepong/README.md`
+and `DEPLOYMENT.md`.
