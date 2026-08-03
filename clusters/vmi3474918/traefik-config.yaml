@@ -19,6 +19,10 @@ spec:
           httpChallenge:
             entryPoint: web
     additionalArguments:
+      # Traefik 3 must bypass the entrypoint redirect for HTTP-01 challenges.
+      # Without this, /.well-known/acme-challenge/* returns 404 and ACME
+      # cannot issue certificates for the subdomains.
+      - --entryPoints.web.allowACMEByPass=true
       - --entryPoints.web.http.redirections.entryPoint.to=:443
       - --entryPoints.web.http.redirections.entryPoint.scheme=https
       - --entryPoints.web.http.redirections.entryPoint.permanent=true
