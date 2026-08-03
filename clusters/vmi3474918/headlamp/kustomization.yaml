@@ -5,3 +5,5 @@ resources:
   - rbac.yaml
   - helmrepository.yaml
   - helmrelease.yaml
+  - oauth2-proxy-helmrepository.yaml
+  - oauth2-proxy-helmrelease.yaml
