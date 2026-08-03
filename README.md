@@ -37,11 +37,16 @@ Flux root source (belacca-gitops)
     └── belacca.com / www ──> HTTPS redirect to portfolio
 ```
 
-The existing `k3d-pong` cluster, SQLite PVC, Flux controllers, and Traefik ACME
-PVC are retained. The GHCR package for `francesco-belacca-site` must be set to
-Public after its first publish, just like the existing anonymous-pull Pong
-packages; otherwise add an imagePullSecret instead of making the package public. This repository does not recreate the cluster and must not
-be used with destructive `k3d cluster delete` or PVC deletion commands.
+The existing `k3d-pong` cluster, Flux controllers, and Traefik ACME PVC are
+retained. Pong's SQLite PVC is managed by the child application Kustomization,
+protected with `kustomize.toolkit.fluxcd.io/prune: disabled`, and its underlying
+PV uses a `Retain` reclaim policy. This repository does not recreate the cluster
+and must not be used with destructive `k3d cluster delete` or PVC deletion
+commands.
+
+The GHCR package for `francesco-belacca-site` is anonymously pullable, like the
+existing Pong packages. If a future project uses a private package, configure
+an imagePullSecret rather than relying on anonymous pulls.
 
 ## DNS
 
@@ -59,11 +64,17 @@ still handling ACME challenges.
 
 ## Delivery flow
 
-The initial platform cutover intentionally bootstraps the root Kustomization
-with `prune: false`. This preserves the existing Flux inventory while child
-sources adopt the workloads. After the staged migration has been verified, set
-`prune: true` in `clusters/vmi3474918/flux-system/gotk-sync.yaml` and commit
-that change so the platform root can prune only resources it owns.
+The current platform root intentionally uses `prune: false` while the cutover
+is validated. This is a guard, not a substitute for a staged ownership
+transfer: Flux's old Kustomization must have pruning disabled and reconciled
+before resources are moved to a different Kustomization. Replacing the source
+behind one root and moving its inventory in one commit can garbage-collect live
+workloads and PVCs before the new child adopts them. See `MIGRATION.md` for the
+incident record and safe procedure.
+
+After DNS, routing, workload, and stateful-resource verification, set `prune:
+true` in `clusters/vmi3474918/flux-system/gotk-sync.yaml` and commit that
+change so the platform root can prune only resources it owns.
 
 1. Change an application in its own repository.
 2. Its tests run and the image is published to GHCR with an immutable
@@ -99,7 +110,9 @@ curl -I https://belacca.com/
 To roll back an app, revert the deployment-tag commit in that application
 repository and reconcile its child Kustomization. To roll back routing, revert
 this repository's routing commit and reconcile the root Kustomization. Never
-remove `pong-api-data` or `kube-system/traefik-acme` during rollback.
+remove `pong-api-data`, its PV, or `kube-system/traefik-acme` during rollback.
+The current Pong database backup created during the cutover is retained on the
+cluster host outside Git; do not commit it to a repository.
 
 ## Private cluster dashboard
 

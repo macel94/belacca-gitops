@@ -1,8 +1,17 @@
 # Multi-project cutover runbook
 
-This runbook moves the existing Flux root from
-`macel94/cloudnativepong` to `macel94/belacca-gitops` without deleting the
-Pong SQLite PVC or causing an avoidable routing outage.
+This runbook documents the completed move from
+`macel94/cloudnativepong` to `macel94/belacca-gitops` and the safe procedure for
+future resource ownership changes. Flux resources must not be moved between
+Kustomizations by replacing the source behind one existing root in a single
+commit: the old root inventory can garbage-collect resources before the new
+child Kustomization adopts them.
+
+The initial cutover exposed that failure mode. Pong was recovered by its child
+Kustomization, the local-path PVC was recreated, and the current database was
+backed up outside Git. The recovered PVC is now protected with a `Retain`
+reclaim policy and the Pong Namespace/PVC manifests carry Flux prune-disabled
+annotations.
 
 ## Preconditions
 
@@ -41,47 +50,49 @@ Push `belacca-gitops` next, still with `prune: false` in its Flux bootstrap.
 Keep the legacy Pong Ingress files in the Pong repository for this stage so the
 current Flux root remains safe until Stage 2.
 
-## Stage 2 — switch Flux source, preserving inventory
+## Stage 2 — prepare ownership transfer before changing sources
 
-The existing Flux `GitRepository/flux-system` points at the old application
-repository. Patch only its repository URL in-place; retain the existing Secret
-and never print or recreate its credentials:
-
-```bash
-kubectl -n flux-system patch gitrepository flux-system --type merge \
-  -p '{"spec":{"url":"https://github.com/macel94/belacca-gitops.git"}}'
-```
-
-The existing `flux-system` Secret remains the credential source for the new
-public repository. Reconcile the source and root, then inspect conditions:
+For a future move from one Flux Kustomization to another, first commit and
+reconcile `prune: false` in the **old** Kustomization while it still watches
+its old repository. Verify the live object:
 
 ```bash
-flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization flux-system -n flux-system --with-source
-flux get sources git -A
-flux get kustomizations -A
+flux export kustomization flux-system -n flux-system | grep -A2 prune
 ```
 
-The platform root starts with `prune: false`, so old inventory is not deleted
-while the child sources are adopted. Wait for `pong`, `portfolio`, and then
-`belacca-routing` to be Ready. Confirm the new portfolio has two Ready pods and
-that the existing `pong-api-data` PVC remains Bound. The new `pong-host`
-Ingress and portfolio Ingress have higher priority than the old wildcard route.
+For stateful resources, also add
+`kustomize.toolkit.fluxcd.io/prune: disabled` to the Namespace and PVC, and set
+the underlying PV reclaim policy to `Retain`. Only after the old inventory has
+stopped pruning may the new Kustomization apply the same resources.
+
+The initial cutover did not follow this order; changing the root source and
+inventory together caused the old root to delete Pong before adoption. Do not
+repeat that operation. The current cluster is already on the new root, so the
+remaining stages below are the applicable verification/cleanup steps.
 
 ## Stage 3 — move Pong routing ownership
 
-After the new `pong`, `portfolio`, and `belacca-routing` Kustomizations are
-Ready, push the Pong change that removes `k8s/overlays/server/ingress.yaml` and
-`ingress-tls.yaml`. The child Pong Kustomization now owns the workload tree and
+The new `pong`, `portfolio`, and `belacca-routing` Kustomizations are now
+Ready. Push the Pong change that removes `k8s/overlays/server/ingress.yaml`
+and `ingress-tls.yaml`. The child Pong Kustomization owns the workload tree and
 will prune those old Ingresses; the platform routing Kustomization owns the new
-host-specific routes. Confirm the `pong-api-data` PVC remains Bound.
+host-specific routes. The Namespace and PVC prune annotations protect the
+stateful data during this cleanup.
 
 ```bash
 cd /root/sources/cloudnativepong
 go test ./...
-git add README.md DEPLOYMENT.md HANDOFF.md clusters k8s/overlays/server/kustomization.yaml k8s/overlays/server/ingress.yaml k8s/overlays/server/ingress-tls.yaml
+git add README.md DEPLOYMENT.md HANDOFF.md clusters k8s/base/all.yaml k8s/overlays/server/kustomization.yaml k8s/overlays/server/ingress.yaml k8s/overlays/server/ingress-tls.yaml
 git commit -m "feat: move Pong to pong subdomain"
 git push origin main
+```
+
+After reconciliation, verify:
+
+```bash
+kubectl -n pong get namespace,pvc,pv
+kubectl -n pong get ingress
+kubectl -n flux-system get kustomization pong belacca-routing
 ```
 
 ## Stage 4 — verify public behavior
@@ -103,14 +114,15 @@ kubectl -n portfolio get ingress
 kubectl -n flux-system get kustomizations
 ```
 
-## Stage 5 — enable pruning after the handoff
+## Stage 5 — enable platform-root pruning only after verification
 
-Only after all resources are confirmed healthy, change
+The platform root currently remains at `prune: false` as a deliberate guard
+while the cutover is validated. After DNS, TLS, host routing, Pong WebSockets,
+and the resource inventory are verified, change
 `clusters/vmi3474918/flux-system/gotk-sync.yaml` from `prune: false` to
-`prune: true`, commit, push, and reconcile. The new platform root then owns the
-cluster tree and can prune resources removed from its source. Do not delete the
-old Flux Kustomization separately; the new root has the same name and replaces
-it through reconciliation.
+`prune: true`, commit, push, and reconcile. This root owns platform resources
+and child Flux objects; the Pong child owns Pong workloads. Never remove the
+Pong prune annotations or delete the database PVC as part of this step.
 
 ## Rollback
 
@@ -124,7 +136,10 @@ flux reconcile source git flux-system -n flux-system
 flux reconcile kustomization flux-system -n flux-system --with-source
 ```
 
-Because the bootstrap root uses `prune: false`, this rollback does not remove
-existing workloads. If routing was already switched, revert the platform
-routing commit and reconcile after the old source is restored. Never delete
-`pong-api-data`, `kube-system/traefik-acme`, or the entire cluster as a rollback.
+Because the current bootstrap root uses `prune: false`, rollback is a
+repository/source operation, not a destructive cluster operation. If routing
+is already switched, revert the platform routing commit and reconcile the
+platform source. Do not switch the root back to the old repository unless the
+old Kustomization has first been reconciled with `prune: false` and its
+stateful resources are protected. Never delete `pong-api-data`, its PV,
+`kube-system/traefik-acme`, or the entire cluster as a rollback.
