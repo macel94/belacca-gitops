@@ -23,6 +23,7 @@ spec:
       # The K3s-packaged chart drops an empty tlsChallenge map, so pass the
       # resolver explicitly to ensure Traefik enables TLS-ALPN-01.
       - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
-      - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      # The k3s chart listens internally on :8443 but publishes HTTPS on :443.
+      - --entryPoints.web.http.redirections.entryPoint.to=:443
       - --entryPoints.web.http.redirections.entryPoint.scheme=https
       - --entryPoints.web.http.redirections.entryPoint.permanent=true
