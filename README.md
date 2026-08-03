@@ -58,9 +58,9 @@ francesco.belacca.com  A  169.58.97.73
 ```
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
-same address. HTTP-01 validation requires public port 80 to reach Traefik; the
-existing Traefik configuration redirects normal HTTP traffic to HTTPS while
-still handling ACME challenges.
+same address. Traefik uses the TLS-ALPN-01 challenge, so public port 443 must
+reach Traefik for certificate issuance and renewal. Normal HTTP traffic on port
+80 redirects to HTTPS.
 
 ## Delivery flow
 
