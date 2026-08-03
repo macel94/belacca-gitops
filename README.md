@@ -28,13 +28,14 @@ nested checkout.
 Flux root source (belacca-gitops)
 ├── cluster infrastructure
 │   ├── Traefik + persistent ACME storage
-│   └── Headlamp (private ClusterIP, read-only RBAC)
+│   └── Headlamp (ClusterIP, read-only RBAC, authenticated public route)
 ├── child source: cloudnativepong ──> Kustomization pong ──> namespace pong
 ├── child source: francesco-belacca-site ──> Kustomization portfolio
 └── host routing
     ├── pong.belacca.com ──> pong-gateway
     ├── francesco.belacca.com ──> francesco-site
-    └── belacca.com / www ──> HTTPS redirect to portfolio
+    ├── belacca.com / www ──> HTTPS redirect to portfolio
+    └── dashboard.belacca.com ──> authenticated Headlamp dashboard
 ```
 
 The existing `k3d-pong` cluster, Flux controllers, and Traefik ACME PVC are
@@ -59,9 +60,14 @@ dashboard.belacca.com  A  169.58.97.73
 ```
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
-same address. Traefik uses the TLS-ALPN-01 challenge, so public port 443 must
-reach Traefik for certificate issuance and renewal. HTTP→HTTPS redirects are
-explicit router-level rules, preserving standard public port 443 URLs.
+same address. Traefik uses the HTTP-01 challenge on the public `web` entrypoint,
+so public ports 80 and 443 must reach Traefik for certificate issuance and
+renewal. HTTP→HTTPS redirects are explicit router-level rules; Traefik's ACME
+challenge router takes precedence over the redirect while validation runs.
+
+For the complete, repeatable procedure—including Cloudflare token handling,
+DNS propagation, route ownership, ACME recovery, and rollback—see
+[`SUBDOMAIN-RUNBOOK.md`](SUBDOMAIN-RUNBOOK.md).
 
 ## Delivery flow
 
@@ -128,7 +134,7 @@ https://dashboard.belacca.com/
 ```
 
 Traefik redirects HTTP to HTTPS and obtains the certificate with the existing
-Let's Encrypt TLS-ALPN-01 resolver. The HTTPS route is protected by a
+Let's Encrypt HTTP-01 resolver on the `web` entrypoint. The HTTPS route is protected by a
 namespace-local BasicAuth middleware. The referenced
 `headlamp-dashboard-auth` Secret is deliberately created out-of-band on the
 cluster and is not represented in Git. The temporary username and password are

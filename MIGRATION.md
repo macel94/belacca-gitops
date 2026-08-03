@@ -20,9 +20,11 @@ annotations.
    - `francesco.belacca.com` → `169.58.97.73`
 2. The portfolio image has been published to GHCR and the package is public,
    or the cluster has a pull secret configured.
-3. DNS A records resolve publicly. Traefik uses TLS-ALPN-01, so public 443 must
-   reach the cluster for certificate issuance. HTTP redirects are router-level
-   rules and must produce standard `https://host/` URLs.
+3. DNS A records resolve publicly. Traefik uses HTTP-01 on the `web`
+   entrypoint, so public ports 80 and 443 must reach the cluster for certificate
+   issuance and normal HTTPS traffic. HTTP redirects are router-level rules and
+   must produce standard `https://host/` URLs; Traefik's ACME challenge router
+   takes precedence during validation.
 4. `npm test`, Pong Go tests, Kustomize render, and CI checks pass.
 5. Keep the current cluster context as `k3d-pong` and do not delete/recreate it.
 
