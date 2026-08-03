@@ -35,7 +35,7 @@ metadata:
     belacca.com/project: portfolio
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: apex-to-portfolio@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: portfolio-apex-to-portfolio@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     traefik.ingress.kubernetes.io/router.priority: "100"
