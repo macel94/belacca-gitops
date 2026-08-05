@@ -21,6 +21,8 @@ metadata:
   namespace: flux-system
   labels:
     belacca.com/project: portfolio
+  annotations:
+    belacca.com/release: "site-8a48bd551af3d0996ad0eaf85f069ef1d9eaf069"
 spec:
   interval: 10m
   path: ./deploy
