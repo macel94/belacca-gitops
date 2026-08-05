@@ -9,6 +9,7 @@ projects under `belacca.com` on the existing `k3d-pong` Kubernetes cluster.
 |---|---|---|---|
 | [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, WebSockets, dynamic room Pods | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/server` |
 | [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static NGINX portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
+| GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
 
 The apex names `belacca.com` and `www.belacca.com` permanently redirect to the
 portfolio. The canonical Pong URL is now the `pong` subdomain.
@@ -31,9 +32,11 @@ Flux root source (belacca-gitops)
 │   └── Headlamp + OAuth2 Proxy (ClusterIP, read-only RBAC)
 ├── child source: cloudnativepong ──> Kustomization pong ──> namespace pong
 ├── child source: francesco-belacca-site ──> Kustomization portfolio
+├── child Kustomization: analytics ──> GoatCounter + SQLite PVC
 └── host routing
     ├── pong.belacca.com ──> pong-gateway
     ├── francesco.belacca.com ──> francesco-site
+    ├── stats.belacca.com ──> GoatCounter analytics
     ├── belacca.com / www ──> HTTPS redirect to portfolio
     └── dashboard.belacca.com ──> Google OAuth2 Proxy ──> Headlamp
 ```
@@ -46,8 +49,10 @@ and must not be used with destructive `k3d cluster delete` or PVC deletion
 commands.
 
 The GHCR package for `francesco-belacca-site` is anonymously pullable, like the
-existing Pong packages. If a future project uses a private package, configure
-an imagePullSecret rather than relying on anonymous pulls.
+existing Pong packages. GoatCounter uses the pinned public `arp242/goatcounter`
+image and stores its data on the analytics PVC. If a future project uses a
+private package, configure an imagePullSecret rather than relying on anonymous
+pulls.
 
 ## DNS
 
@@ -56,6 +61,7 @@ Create these A records at the DNS provider before expecting ACME issuance:
 ```text
 pong.belacca.com       A  169.58.97.73
 francesco.belacca.com  A  169.58.97.73
+stats.belacca.com      A  169.58.97.73
 dashboard.belacca.com  A  169.58.97.73
 ```
 

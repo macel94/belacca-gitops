@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: goatcounter-data
+  namespace: analytics
+  labels:
+    app: goatcounter
+    belacca.com/project: analytics
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: goatcounter
+  namespace: analytics
+  labels:
+    app: goatcounter
+    belacca.com/project: analytics
+spec:
+  serviceName: goatcounter
+  replicas: 1
+  selector:
+    matchLabels:
+      app: goatcounter
+  template:
+    metadata:
+      labels:
+        app: goatcounter
+        belacca.com/project: analytics
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: bootstrap-site
+          image: arp242/goatcounter:2.7.0@sha256:791df3317bf5ce379511181a4802aaf29127a318b372d4fe39ec59e1c5af44be
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              existing_site="$(goatcounter db -createdb show site -find=stats.belacca.com -format=json 2>/dev/null || true)"
+              case "$existing_site" in
+                *stats.belacca.com*) exit 0 ;;
+              esac
+              exec goatcounter db -createdb create site \
+                -vhost=stats.belacca.com \
+                -user.email="${GOATCOUNTER_ADMIN_EMAIL}" \
+                -user.password="${GOATCOUNTER_ADMIN_PASSWORD}"
+          env:
+            - name: GOATCOUNTER_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: goatcounter-admin
+                  key: email
+            - name: GOATCOUNTER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: goatcounter-admin
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: data
+              mountPath: /home/goatcounter/goatcounter-data
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: goatcounter
+          image: arp242/goatcounter:2.7.0@sha256:791df3317bf5ce379511181a4802aaf29127a318b372d4fe39ec59e1c5af44be
+          imagePullPolicy: IfNotPresent
+          args:
+            - serve
+            - -automigrate
+            - -listen=:8080
+            - -tls=http
+            - -json
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: stats.belacca.com
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: stats.belacca.com
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /home/goatcounter/goatcounter-data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: goatcounter-data
+        - name: tmp
+          emptyDir: {}
