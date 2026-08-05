@@ -20,8 +20,9 @@ The cluster tree contains an opt-in, private Prometheus collector under
 
 The Flux `observability` Kustomization has `prune: false` intentionally. This is
 an opt-in/staged component: validate resource usage and CNI connectivity before
-considering a future ownership/pruning change. The existing root `prune: false`
-and protected PVC behavior are unchanged.
+considering a future ownership/pruning change. The platform root now has
+`prune: true` after ownership/inventory verification; protected PVC behavior is
+unchanged.
 
 `synthetic-contracts.json` is the machine-readable external-check contract for
 portfolio, Pong, analytics, and authenticated dashboard journeys. It contains

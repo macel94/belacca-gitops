@@ -23,10 +23,10 @@ metadata:
 spec:
   interval: 10m0s
   path: ./clusters/vmi3474918
-  # Bootstrap with prune disabled so the existing Flux inventory is not
-  # deleted during the repository handoff. Enable prune after child
-  # Kustomizations are Ready and the migration checklist is complete.
-  prune: false
+  # The ownership migration is complete: the checked-in root render retains
+  # every live root-inventory object, child inventories are disjoint, all live
+  # children are Ready, and stateful claims are prune-protected.
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system

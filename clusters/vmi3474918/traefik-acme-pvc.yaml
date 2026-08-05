@@ -3,6 +3,10 @@ kind: PersistentVolumeClaim
 metadata:
   name: traefik-acme
   namespace: kube-system
+  annotations:
+    # Keep the ACME account/certificate state across ownership changes. Delete
+    # this claim deliberately only after its contents are no longer needed.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

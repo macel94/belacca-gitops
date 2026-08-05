@@ -28,9 +28,9 @@ backup credential, or scheduled backup Job is provisioned here.
 - `pong-api-data`, `goatcounter-data`, and the Traefik ACME claim are protected
   from Flux pruning. Do not delete, recreate, or alter their protected behavior
   as part of routine reconciliation.
-- The Flux root remains `prune: false` until the migration and ownership
-  verification in [`../MIGRATION.md`](../MIGRATION.md) is complete. This change
-  does not enable destructive pruning.
+- The Flux root is `prune: true` after the migration and ownership verification
+  in [`../MIGRATION.md`](../MIGRATION.md). The application/analytics/ACME
+  stateful claims and relevant Namespaces remain explicitly prune-protected.
 - NetworkPolicy enforcement depends on the cluster CNI implementing the
   Kubernetes NetworkPolicy API. Rendered policy is not proof of runtime
   enforcement; verify with approved, non-destructive connectivity checks after

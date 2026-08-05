@@ -80,9 +80,12 @@ DNS propagation, route ownership, ACME recovery, and rollback—see
 
 ## Delivery flow
 
-The current platform root intentionally uses `prune: false` while the cutover
-is validated. Service ownership, SLO intent, RTO/RPO, dependencies, dashboard,
-and runbook metadata are recorded in [`catalog/services.json`](catalog/services.json)
+The platform root is set to `prune: true` after the ownership migration was
+verified. The checked-in root render contains every object in the live root
+inventory, child inventories are disjoint, the application/routing children are
+Ready, and the stateful Namespace/PVC resources are explicitly protected from
+pruning. Service ownership, SLO intent, RTO/RPO, dependencies, dashboard, and
+runbook metadata are recorded in [`catalog/services.json`](catalog/services.json)
 and validated in CI. Reliability boundaries and response procedures are in
 [`docs/RELIABILITY.md`](docs/RELIABILITY.md); operator failure drills for the
 gateway, static service, lobby, rooms, Flux, and NetworkPolicy are in
@@ -91,17 +94,15 @@ encryption, object-storage, and no-values Secret contract is in
 [`docs/BACKUP-CONTRACT.md`](docs/BACKUP-CONTRACT.md); notification Secret
 provisioning is in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md). The scoped
 NetworkPolicies and replicated-workload PDBs are under
-`clusters/vmi3474918/policies/`. This is
-a guard, not a substitute for a staged ownership
-transfer: Flux's old Kustomization must have pruning disabled and reconciled
-before resources are moved to a different Kustomization. Replacing the source
-behind one root and moving its inventory in one commit can garbage-collect live
-workloads and PVCs before the new child adopts them. See `MIGRATION.md` for the
-incident record and safe procedure.
+`clusters/vmi3474918/policies/`. The staged `observability` child remains at
+`prune: false` until its own resource, CNI, and target-health checks pass. See
+`MIGRATION.md` for the incident record and safe procedure.
 
-After DNS, routing, workload, and stateful-resource verification, set `prune:
-true` in `clusters/vmi3474918/flux-system/gotk-sync.yaml` and commit that
-change so the platform root can prune only resources it owns.
+Publish and reconcile the GitOps commit before relying on root pruning in the
+cluster. Flux's old Kustomization must have pruning disabled and reconciled
+before resources are moved to a different Kustomization; replacing a source
+and moving its inventory in one commit can garbage-collect live workloads and
+PVCs before the new child adopts them.
 
 1. Change an application in its own repository.
 2. Its tests run and the image is published to GHCR with an immutable

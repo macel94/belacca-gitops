@@ -121,20 +121,37 @@ kubectl -n portfolio get ingress
 kubectl -n flux-system get kustomizations
 ```
 
-## Stage 5 — enable platform-root pruning only after verification
+## Stage 5 — enable platform-root pruning
 
-The platform root currently remains at `prune: false` as a deliberate guard
-while the cutover is validated. After DNS, TLS, host routing, Pong WebSockets,
-and the resource inventory are verified, change
-`clusters/vmi3474918/flux-system/gotk-sync.yaml` from `prune: false` to
-`prune: true`, commit, push, and reconcile. This root owns platform resources
-and child Flux objects; the Pong child owns Pong workloads. Never remove the
-Pong prune annotations or delete the database PVC as part of this step.
+The ownership migration has now passed its safety gates and the platform root
+is set to `prune: true` in
+`clusters/vmi3474918/flux-system/gotk-sync.yaml`. Before making that change, we
+verified that:
+
+- every object in the live root inventory is present in the checked-in root
+  render;
+- the `pong`, `portfolio`, `analytics`, and `belacca-routing` child inventories
+  are disjoint and each child is Ready;
+- the root owns platform infrastructure and child Flux objects, while child
+  Kustomizations own application and routing resources;
+- the Pong and analytics Namespaces/PVCs are annotated with
+  `kustomize.toolkit.fluxcd.io/prune: disabled`;
+- the ACME PVC is also explicitly prune-protected; and
+- the Pong PV reclaim policy is `Retain`.
+
+The staged `observability` child remains deliberately at `prune: false` until
+its resource budget, CNI behavior, and target health are separately validated.
+Root pruning does not change that child setting. Publish this GitOps change,
+wait for the root to reconcile, and repeat the inventory and protected-state
+checks before treating the live cluster as migrated. The root owns platform
+resources and child Flux objects; the Pong child owns Pong workloads. Never
+remove the prune annotations or delete a database/ACME PVC as part of this
+step.
 
 ## Rollback
 
-If the platform source fails before the new child resources are Ready, restore
-the old repository URL in `GitRepository/flux-system` and reconcile:
+If the platform source fails after root pruning is enabled, revert the GitOps
+commit and reconcile the root from the reviewed revision:
 
 ```bash
 kubectl -n flux-system patch gitrepository flux-system --type merge \
@@ -143,10 +160,10 @@ flux reconcile source git flux-system -n flux-system
 flux reconcile kustomization flux-system -n flux-system --with-source
 ```
 
-Because the current bootstrap root uses `prune: false`, rollback is a
-repository/source operation, not a destructive cluster operation. If routing
-is already switched, revert the platform routing commit and reconcile the
-platform source. Do not switch the root back to the old repository unless the
-old Kustomization has first been reconciled with `prune: false` and its
-stateful resources are protected. Never delete `pong-api-data`, its PV,
+A rollback must be a reviewed Git revert, not an ad-hoc source swap. If the
+root source itself must be changed, first suspend or set the active root to
+`prune: false`, reconcile that change, and verify the old/new inventories and
+stateful-resource protections before switching sources. If routing is already
+switched, revert the platform routing commit and reconcile the platform source.
+Never delete `pong-api-data`, its PV, `analytics/goatcounter-data`,
 `kube-system/traefik-acme`, or the entire cluster as a rollback.
