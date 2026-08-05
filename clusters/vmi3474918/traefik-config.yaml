@@ -16,10 +16,13 @@ spec:
         acme:
           email: francesco.belacca@hotmail.it
           storage: /data/acme.json
-          # TLS-ALPN-01 runs on the public websecure entrypoint and avoids
-          # interference from the ordinary HTTP→HTTPS redirect routers.
-          tlsChallenge: {}
-    additionalArguments:
-      # The K3s-packaged chart can omit nested challenge values, so pass the
-      # resolver explicitly to ensure Traefik enables TLS-ALPN-01.
-      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+          # DNS-01 avoids the HTTP redirect and TLS-ALPN challenge paths. The
+          # token is injected from the out-of-band traefik-cloudflare Secret.
+          dnsChallenge:
+            provider: cloudflare
+            resolvers:
+              - 1.1.1.1:53
+              - 8.8.8.8:53
+    envFrom:
+      - secretRef:
+          name: traefik-cloudflare
