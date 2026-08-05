@@ -18,17 +18,60 @@ jobs:
       - uses: azure/setup-kubectl@v4
         with:
           version: v1.35.0
-      - name: Render cluster tree
-        run: kubectl kustomize clusters/vmi3474918 >/tmp/belacca-gitops.yaml
-      - name: Render routing source
-        run: kubectl kustomize clusters/vmi3474918/routing >/tmp/belacca-routing.yaml
-      - name: Check rendered output
+      - name: Validate service catalog
+        run: python3 scripts/validate-catalog.py
+      - name: Validate catalog JSON
+        run: python3 -m json.tool catalog/services.json >/tmp/services.pretty.json
+      - name: Validate recovery contract and drills
+        run: python3 scripts/validate-recovery-contract.py
+      - name: Validate observability contracts
+        run: |
+          python3 scripts/validate-observability.py
+          python3 scripts/extract-prometheus-config.py
+          if command -v promtool >/dev/null 2>&1; then
+            promtool check rules /tmp/prometheus.rules.yml
+            promtool check config /tmp/prometheus.yml
+          else
+            echo 'promtool unavailable; staged contract and Kustomize validation still run.'
+          fi
+      - name: Render every checked-in Kustomization
+        # kubectl kustomize parses every YAML document in each active manifest
+        # tree while rendering; this avoids adding a second YAML parser just for CI.
+        run: |
+          set -eu
+          while IFS= read -r file; do
+            directory="$(dirname "$file")"
+            directory="${directory#./}"
+            output="/tmp/kustomize-$(printf '%s' "$directory" | tr '/.' '__').yaml"
+            kubectl kustomize "$directory" >"$output"
+            test -s "$output"
+            echo "rendered $directory -> $output"
+          done < <(find . -name kustomization.yaml -not -path './.git/*' -print | sort)
+      - name: Check rendered output and secret safety
         run: |
           grep -q 'name: belacca-routing' clusters/vmi3474918/routing-flux.yaml
           grep -q 'name: pong' clusters/vmi3474918/applications.yaml
           grep -q 'name: portfolio' clusters/vmi3474918/applications.yaml
           grep -q 'name: cloudnativepong' clusters/vmi3474918/sources.yaml
           grep -q 'name: francesco-belacca-site' clusters/vmi3474918/sources.yaml
-          grep -q 'pong.belacca.com' /tmp/belacca-routing.yaml
-          grep -q 'francesco.belacca.com' /tmp/belacca-routing.yaml
-          grep -q 'apex-to-portfolio' /tmp/belacca-routing.yaml
+          grep -q 'pong.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
+          grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
+          grep -q 'apex-to-portfolio' /tmp/kustomize-clusters_vmi3474918_routing.yaml
+          grep -q 'platform-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
+          grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
+          grep -q 'dnsChallenge:' clusters/vmi3474918/traefik-config.yaml
+          grep -q 'CLOUDFLARE_DNS_API_TOKEN' README.md SUBDOMAIN-RUNBOOK.md
+          grep -q 'name: portfolio-traffic' /tmp/kustomize-clusters_vmi3474918_policies.yaml
+          grep -q 'name: pong-gateway' /tmp/kustomize-clusters_vmi3474918_policies.yaml
+          grep -q 'name: portfolio' /tmp/kustomize-clusters_vmi3474918_policies.yaml
+          grep -q 'name: observability' /tmp/kustomize-clusters_vmi3474918.yaml
+          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_vmi3474918_observability.yaml
+          grep -q 'name: pong-api-observability-scrape' /tmp/kustomize-clusters_vmi3474918_policies.yaml
+          test ! -f clusters/vmi3474918/secret.yaml
+          test ! -f clusters/vmi3474918/secret.yml
+          if grep -RInE 'xox[bap]-|CLOUDFLARE_DNS_API_TOKEN:|client-secret:|cookie-secret:|password: *[^<`" ]' --include='*.yaml' --include='*.yml' clusters catalog; then
+            echo 'credential-like value found in YAML' >&2
+            exit 1
+          fi
+      - name: Check catalog and manifest diff
+        run: git diff --check

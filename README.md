@@ -56,7 +56,7 @@ pulls.
 
 ## DNS
 
-Create these A records at the DNS provider before expecting ACME issuance:
+Create these A records at the DNS provider before expecting normal HTTPS traffic:
 
 ```text
 pong.belacca.com       A  169.58.97.73
@@ -66,10 +66,13 @@ dashboard.belacca.com  A  169.58.97.73
 ```
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
-same address. Traefik uses the HTTP-01 challenge on the public `web` entrypoint,
-so public ports 80 and 443 must reach Traefik for certificate issuance and
-renewal. HTTP→HTTPS redirects are explicit router-level rules; Traefik's ACME
-challenge router takes precedence over the redirect while validation runs.
+same address. Traefik uses the committed Cloudflare DNS-01 challenge
+configuration. The out-of-band `kube-system/traefik-cloudflare` Secret must
+provide `CLOUDFLARE_DNS_API_TOKEN`; no DNS/API credential is stored in Git.
+Public DNS must still point each hostname at the cluster for normal traffic, and
+public port 443 must reach Traefik for HTTPS. DNS-01 proves control of the zone
+with a TXT record and does not depend on the HTTP redirect or port 80 for
+certificate issuance.
 
 For the complete, repeatable procedure—including Cloudflare token handling,
 DNS propagation, route ownership, ACME recovery, and rollback—see
@@ -78,7 +81,18 @@ DNS propagation, route ownership, ACME recovery, and rollback—see
 ## Delivery flow
 
 The current platform root intentionally uses `prune: false` while the cutover
-is validated. This is a guard, not a substitute for a staged ownership
+is validated. Service ownership, SLO intent, RTO/RPO, dependencies, dashboard,
+and runbook metadata are recorded in [`catalog/services.json`](catalog/services.json)
+and validated in CI. Reliability boundaries and response procedures are in
+[`docs/RELIABILITY.md`](docs/RELIABILITY.md); operator failure drills for the
+gateway, static service, lobby, rooms, Flux, and NetworkPolicy are in
+[`docs/GAME-DAY-DRILLS.md`](docs/GAME-DAY-DRILLS.md). The backup retention,
+encryption, object-storage, and no-values Secret contract is in
+[`docs/BACKUP-CONTRACT.md`](docs/BACKUP-CONTRACT.md); notification Secret
+provisioning is in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md). The scoped
+NetworkPolicies and replicated-workload PDBs are under
+`clusters/vmi3474918/policies/`. This is
+a guard, not a substitute for a staged ownership
 transfer: Flux's old Kustomization must have pruning disabled and reconciled
 before resources are moved to a different Kustomization. Replacing the source
 behind one root and moving its inventory in one commit can garbage-collect live
@@ -121,11 +135,19 @@ curl -I https://belacca.com/
 ```
 
 To roll back an app, revert the deployment-tag commit in that application
-repository and reconcile its child Kustomization. To roll back routing, revert
-this repository's routing commit and reconcile the root Kustomization. Never
-remove `pong-api-data`, its PV, or `kube-system/traefik-acme` during rollback.
-The current Pong database backup created during the cutover is retained on the
-cluster host outside Git; do not commit it to a repository.
+repository and reconcile its child Kustomization. To roll back routing or
+policies, revert this repository's commit and reconcile the root Kustomization.
+The detailed, scoped commands are in
+[`docs/GAME-DAY-DRILLS.md`](docs/GAME-DAY-DRILLS.md). Never remove
+`pong-api-data`, its PV, or `kube-system/traefik-acme` during rollback.
+
+Recovery status is intentionally explicit: the application repository has a
+local SQLite verification helper and an opt-in isolated `pong-restore-*` k3d
+rehearsal. This repository does **not** provision object storage, retention,
+encryption keys, backup credentials, or a scheduled backup Job. Those external
+prerequisites and the names-only Secret interface are documented in
+[`docs/BACKUP-CONTRACT.md`](docs/BACKUP-CONTRACT.md). Do not commit backup
+artifacts or values to a repository.
 
 ## Cluster dashboard
 
@@ -140,9 +162,9 @@ The dashboard is available at:
 https://dashboard.belacca.com/
 ```
 
-Traefik redirects HTTP to HTTPS and obtains the certificate with the existing
-Let's Encrypt HTTP-01 resolver on the `web` entrypoint. OAuth2 Proxy uses Google
-OIDC and permits only `belakkuz@gmail.com`. Its callback is:
+Traefik redirects HTTP to HTTPS and obtains the certificate with the committed
+Let's Encrypt DNS-01 resolver. OAuth2 Proxy uses Google OIDC and permits only
+`belakkuz@gmail.com`. Its callback is:
 
 ```text
 https://dashboard.belacca.com/oauth2/callback

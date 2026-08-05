@@ -6,6 +6,9 @@ resources:
   - applications.yaml
   - routing-flux.yaml
   - analytics-flux.yaml
+  - notifications.yaml
+  - observability-flux.yaml
+  - policies
   - headlamp
   - traefik-acme-pvc.yaml
   - traefik-config.yaml

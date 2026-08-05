@@ -20,11 +20,13 @@ annotations.
    - `francesco.belacca.com` → `169.58.97.73`
 2. The portfolio image has been published to GHCR and the package is public,
    or the cluster has a pull secret configured.
-3. DNS A records resolve publicly. Traefik uses HTTP-01 on the `web`
-   entrypoint, so public ports 80 and 443 must reach the cluster for certificate
-   issuance and normal HTTPS traffic. HTTP redirects are router-level rules and
-   must produce standard `https://host/` URLs; Traefik's ACME challenge router
-   takes precedence during validation.
+3. DNS A records resolve publicly. The committed Traefik configuration uses
+   Cloudflare DNS-01, with the token supplied by the out-of-band
+   `kube-system/traefik-cloudflare` Secret under the
+   `CLOUDFLARE_DNS_API_TOKEN` key. Public port 443 must reach the cluster for
+   normal HTTPS traffic; port 80 is useful for the explicit redirect but is not
+   the ACME challenge path. HTTP redirects are router-level rules and must
+   produce standard `https://host/` URLs.
 4. `npm test`, Pong Go tests, Kustomize render, and CI checks pass.
 5. Keep the current cluster context as `k3d-pong` and do not delete/recreate it.
 

@@ -1,0 +1,81 @@
+# Flux notification resources are intentionally ready to reconcile but not
+# runnable until an operator creates the referenced Secret out of band.
+# See docs/NOTIFICATIONS.md. No destination URL or credential is committed.
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: platform-webhook
+  namespace: flux-system
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: notifications
+spec:
+  # The address is supplied by the Secret's `address` key. The `generic`
+  # provider requires an HTTPS endpoint at runtime.
+  type: generic
+  secretRef:
+    name: platform-notification-webhook
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-errors
+  namespace: flux-system
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: notifications
+spec:
+  providerRef:
+    name: platform-webhook
+  eventSeverity: error
+  eventMetadata:
+    cluster: k3d-pong
+    environment: production
+    runbook: docs/RELIABILITY.md#flux-and-notifications
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+      namespace: flux-system
+    - kind: Kustomization
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: headlamp
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-deployments
+  namespace: flux-system
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: notifications
+spec:
+  providerRef:
+    name: platform-webhook
+  eventSeverity: info
+  inclusionList:
+    - '.*succeeded.*'
+    - '.*ready.*'
+  eventMetadata:
+    cluster: k3d-pong
+    environment: production
+    runbook: docs/RELIABILITY.md#flux-and-notifications
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+      namespace: flux-system
+    - kind: Kustomization
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: headlamp

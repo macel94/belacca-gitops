@@ -7,7 +7,8 @@ HTTPS, Headlamp-style authentication, and Flux GitOps ownership.
 The short version is:
 
 1. Obtain a valid, narrowly scoped Cloudflare API token.
-2. Create and verify DNS **before** asking Traefik for a certificate.
+2. Create and verify the application DNS **before** exposing the route; the
+   DNS-01 provider separately creates ACME TXT records in the zone.
 3. Add the HTTP redirect and HTTPS route in this repository.
 4. Keep credentials outside Git.
 5. Commit and push the GitOps child repository, then update the parent gitlink.
@@ -126,7 +127,7 @@ Proxied: false
 ```
 
 Use DNS-only (`proxied: false`) because Traefik terminates TLS and this cluster
-uses an ACME HTTP-01 challenge. If an exact A record exists, update it rather
+uses an ACME DNS-01 challenge. If an exact A record exists, update it rather
 than creating a duplicate. If it does not exist, create it:
 
 ```bash
@@ -204,41 +205,45 @@ kubectl apply -f clusters/vmi3474918/routing/dashboard-ingress.yaml \
 git diff --check
 ```
 
-## Step 4: use the working ACME configuration
+## Step 4: use the committed ACME configuration
 
-This cluster currently uses Traefik HTTP-01 on the public `web` entrypoint:
+This cluster currently uses Traefik DNS-01 with Cloudflare, as committed in
+`clusters/vmi3474918/traefik-config.yaml`:
 
 ```yaml
 certificatesResolvers:
   letsencrypt:
     acme:
       storage: /data/acme.json
-      httpChallenge:
-        entryPoint: web
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - 1.1.1.1:53
+          - 8.8.8.8:53
+envFrom:
+  - secretRef:
+      name: traefik-cloudflare
 ```
 
-The K3s-packaged Traefik chart also receives the explicit argument:
+The out-of-band `kube-system/traefik-cloudflare` Secret must contain the
+`CLOUDFLARE_DNS_API_TOKEN` key with a narrowly scoped token that can edit DNS
+for the `belacca.com` zone. Do not commit the Secret, its token, or a guessed
+DNS provider endpoint. The existing `traefik-acme` PVC and `/data/acme.json`
+remain protected state.
 
-```text
---certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
-```
+DNS-01 requires:
 
-Do not switch this cluster back to TLS-ALPN-01 without a specific, tested
-reason. The existing Pong and portfolio certificates work, but during the
-subdomain rollout the TLS-ALPN-01 request for the new hostname failed with
-`remote error: tls: unrecognized name`. HTTP-01 succeeded after DNS was
-published and the resolver was changed.
+- The hostname's DNS zone is hosted by the configured Cloudflare account.
+- The Secret exists before Traefik attempts issuance or renewal.
+- The token can read the zone and edit the required TXT records.
+- Public DNS points the application hostname at the cluster for normal HTTPS.
+- Public TCP port 443 reaches Traefik's `websecure` entrypoint for normal TLS.
 
-HTTP-01 requires:
-
-- Public DNS pointing to the cluster.
-- Public TCP port 80 reaching Traefik's `web` entrypoint.
-- Public TCP port 443 reaching Traefik's `websecure` entrypoint for normal TLS.
-- The ordinary HTTP-to-HTTPS redirect not blocking the ACME challenge router.
-
-Traefik's ACME challenge router takes precedence over the ordinary redirect
-router. Keep the redirect, but do not replace the ACME resolver with a custom
-redirect service.
+Port 80 and the ordinary HTTP-to-HTTPS redirect are not the ACME challenge
+path for this configuration. Do not change the challenge mechanism without
+changing the manifest and this runbook in the same reviewed change. Never
+delete `acme.json` or the ACME PVC to recover from a challenge error; fix
+DNS/token/configuration and reconcile.
 
 ## Step 5: commit and reconcile in GitOps order
 
@@ -368,18 +373,6 @@ until Traefik was restarted/reloaded to trigger a fresh attempt.
 activate the public HTTPS route. If an attempt already failed because of DNS,
 fix DNS first and perform a controlled Traefik restart or configuration
 reconciliation; do not delete `/data/acme.json` or the `traefik-acme` PVC.
-
-### TLS-ALPN-01 for the new hostname
-
-The existing configuration initially used TLS-ALPN-01. For the new hostname,
-Let’s Encrypt reached port 443 but received `tls: unrecognized name` during the
-challenge. Existing certificates for other hosts remained valid, which made
-this look like a DNS problem even though public A resolution and TCP 443 were
-working.
-
-**Corrective rule:** use the tested HTTP-01 resolver on `web` for this cluster.
-If a future change requires TLS-ALPN-01, test it with a new hostname in a
-controlled change and confirm the challenge SNI path before relying on it.
 
 ### Cloudflare token failures
 

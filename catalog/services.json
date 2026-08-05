@@ -1,0 +1,197 @@
+{
+  "apiVersion": "belacca.com/v1alpha1",
+  "kind": "ServiceCatalog",
+  "metadata": {
+    "cluster": "k3d-pong",
+    "sourceOfTruth": "belacca-gitops",
+    "status": "initial-operational-metadata"
+  },
+  "services": [
+    {
+      "id": "portfolio",
+      "name": "Francesco Belacca portfolio",
+      "owner": "platform",
+      "publicHosts": [
+        "francesco.belacca.com",
+        "belacca.com",
+        "www.belacca.com"
+      ],
+      "tier": "tier-1",
+      "dependencies": [
+        {
+          "name": "Traefik",
+          "kind": "platform",
+          "required": true
+        },
+        {
+          "name": "GoatCounter analytics",
+          "kind": "optional-application-dependency",
+          "required": false
+        }
+      ],
+      "slo": {
+        "status": "proposed",
+        "target": "99.5%",
+        "window": "30d",
+        "indicator": "Successful HTTPS GET /health and homepage responses from an external probe",
+        "measurement": "Not currently collected in GitOps; establish an external probe before treating this as a measured SLO"
+      },
+      "rto": "4h",
+      "rpo": "N/A (stateless image and GitOps configuration)",
+      "dashboard": {
+        "url": "https://dashboard.belacca.com/",
+        "access": "OAuth2-protected Headlamp; cluster workload view, not a service-specific metrics dashboard"
+      },
+      "runbook": "docs/RELIABILITY.md#portfolio",
+      "implementation": "francesco-belacca-site/deploy"
+    },
+    {
+      "id": "pong",
+      "name": "Cloud Native Pong",
+      "owner": "platform",
+      "publicHosts": [
+        "pong.belacca.com"
+      ],
+      "tier": "tier-1",
+      "dependencies": [
+        {
+          "name": "Traefik",
+          "kind": "platform",
+          "required": true
+        },
+        {
+          "name": "pong-gateway",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "pong-api",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "dynamic room Pods and Services",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "pong-api-data PVC (SQLite)",
+          "kind": "stateful-storage",
+          "required": true
+        }
+      ],
+      "slo": {
+        "status": "proposed",
+        "target": "99.5%",
+        "window": "30d",
+        "indicator": "Successful HTTPS GET /api/rooms plus successful create, join, and WebSocket synthetic journeys",
+        "measurement": "The endpoint and workflow are implemented; external synthetic collection is not currently deployed"
+      },
+      "rto": "4h",
+      "rpo": "24h target (manual verified SQLite backup; isolated restore rehearsal available; object-storage automation is not deployed)",
+      "dashboard": {
+        "url": "https://dashboard.belacca.com/",
+        "access": "OAuth2-protected Headlamp; inspect pong workloads, events, PVC, and Flux state"
+      },
+      "runbook": "docs/RELIABILITY.md#pong",
+      "implementation": "cloudnativepong/k8s/overlays/server"
+    },
+    {
+      "id": "analytics",
+      "name": "GoatCounter analytics",
+      "owner": "platform",
+      "publicHosts": [
+        "stats.belacca.com"
+      ],
+      "tier": "tier-2",
+      "dependencies": [
+        {
+          "name": "Traefik",
+          "kind": "platform",
+          "required": true
+        },
+        {
+          "name": "goatcounter StatefulSet",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "goatcounter-data PVC (SQLite)",
+          "kind": "stateful-storage",
+          "required": true
+        },
+        {
+          "name": "goatcounter-admin Secret",
+          "kind": "out-of-band-secret",
+          "required": true
+        }
+      ],
+      "slo": {
+        "status": "proposed",
+        "target": "99.0%",
+        "window": "30d",
+        "indicator": "Successful HTTPS GET /status and successful same-origin /count requests",
+        "measurement": "The endpoint is implemented; external synthetic collection is not currently deployed"
+      },
+      "rto": "4h",
+      "rpo": "24h target (manual SQLite backup; automation is not yet deployed)",
+      "dashboard": {
+        "url": "https://stats.belacca.com/",
+        "access": "GoatCounter dashboard login; credentials are stored out of band"
+      },
+      "runbook": "docs/RELIABILITY.md#analytics",
+      "implementation": "clusters/vmi3474918/analytics"
+    },
+    {
+      "id": "dashboard",
+      "name": "Headlamp operations dashboard",
+      "owner": "platform",
+      "publicHosts": [
+        "dashboard.belacca.com"
+      ],
+      "tier": "tier-2",
+      "dependencies": [
+        {
+          "name": "Traefik",
+          "kind": "platform",
+          "required": true
+        },
+        {
+          "name": "oauth2-proxy",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "Headlamp",
+          "kind": "workload",
+          "required": true
+        },
+        {
+          "name": "headlamp-google-oauth Secret",
+          "kind": "out-of-band-secret",
+          "required": true
+        },
+        {
+          "name": "Google OAuth identity provider",
+          "kind": "external-identity-provider",
+          "required": true
+        }
+      ],
+      "slo": {
+        "status": "proposed",
+        "target": "99.0%",
+        "window": "30d",
+        "indicator": "Successful authenticated HTTPS dashboard probe",
+        "measurement": "Authentication-aware external collection is not currently deployed"
+      },
+      "rto": "4h",
+      "rpo": "GitOps configuration is versioned; the out-of-band OAuth Secret requires operator-managed backup and rotation",
+      "dashboard": {
+        "url": "https://dashboard.belacca.com/",
+        "access": "The service is itself the operations dashboard; OAuth2 login is required"
+      },
+      "runbook": "docs/RELIABILITY.md#dashboard",
+      "implementation": "clusters/vmi3474918/headlamp and clusters/vmi3474918/routing/headlamp-ingress.yaml"
+    }
+  ]
+}

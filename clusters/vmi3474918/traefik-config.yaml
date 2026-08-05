@@ -16,8 +16,8 @@ spec:
         acme:
           email: francesco.belacca@hotmail.it
           storage: /data/acme.json
-          # DNS-01 avoids the HTTP redirect and TLS-ALPN challenge paths. The
-          # token is injected from the out-of-band traefik-cloudflare Secret.
+          # DNS-01 uses an ACME TXT record. The token is injected from the
+          # out-of-band traefik-cloudflare Secret.
           dnsChallenge:
             provider: cloudflare
             resolvers:

@@ -10,6 +10,32 @@ Flux reconciles this directory into the existing `k3d-pong` cluster.
 - `analytics/`: self-hosted GoatCounter with a protected SQLite database
 - `traefik-acme-pvc.yaml` and `traefik-config.yaml`: persistent ACME and ingress configuration
 
+## Reliability and platform metadata
+
+- [`../../catalog/services.json`](../../catalog/services.json) is the validated
+  service catalog for portfolio, Pong, analytics, and dashboard.
+- [`../../docs/RELIABILITY.md`](../../docs/RELIABILITY.md) defines proposed SLOs,
+  failure-domain assumptions, RTO/RPO metadata, and recovery runbooks.
+- [`../../docs/NOTIFICATIONS.md`](../../docs/NOTIFICATIONS.md) documents the
+  Flux notification Provider's out-of-band Secret contract.
+- [`../../docs/BACKUP-CONTRACT.md`](../../docs/BACKUP-CONTRACT.md) documents the
+  names-only backup/object-storage/encryption contract; no backup Secret,
+  bucket, or scheduled Job is provisioned by this cluster tree.
+- [`../../docs/GAME-DAY-DRILLS.md`](../../docs/GAME-DAY-DRILLS.md) contains
+  bounded gateway, static, lobby, room, Flux, and NetworkPolicy drills with
+  rollback commands. The existing `k3d-pong` cluster and protected PVCs are
+  never disposable rehearsal targets.
+- `notifications.yaml` declares Flux error and deployment Alerts without
+  committing a destination or credentials.
+- `policies/` contains scoped NetworkPolicies and PDBs. Dynamic Pong room
+  Pods and single-writer SQLite workloads are intentionally not over-isolated or
+  given fake high-availability guarantees.
+- `observability/` contains the staged private Prometheus collector, bounded
+  seven-day/2 GB retention, fixed scrape/rule contracts, and source dashboard/
+  synthetic definitions. It does not install Grafana, Prometheus Operator,
+  blackbox-exporter, or an external status publisher. The Flux child has
+  `prune: false` until resource/CNI validation is explicitly completed.
+
 ## Self-hosted analytics
 
 GoatCounter is available at `https://stats.belacca.com/` after the DNS record

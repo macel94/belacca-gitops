@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # GitHub Actions used by the GitOps validation workflow.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
