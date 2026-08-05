@@ -16,12 +16,10 @@ spec:
         acme:
           email: francesco.belacca@hotmail.it
           storage: /data/acme.json
-          # HTTP-01 is served on the public web entrypoint. Traefik's ACME
-          # challenge router takes precedence over the ordinary HTTP→HTTPS
-          # redirect routers, so port 80 remains usable for validation.
-          httpChallenge:
-            entryPoint: web
+          # TLS-ALPN-01 runs on the public websecure entrypoint and avoids
+          # interference from the ordinary HTTP→HTTPS redirect routers.
+          tlsChallenge: {}
     additionalArguments:
       # The K3s-packaged chart can omit nested challenge values, so pass the
-      # resolver explicitly to ensure Traefik enables HTTP-01 on web.
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      # resolver explicitly to ensure Traefik enables TLS-ALPN-01.
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
