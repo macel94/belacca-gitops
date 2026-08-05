@@ -36,6 +36,7 @@ spec:
         belacca.com/project: analytics
     spec:
       automountServiceAccountToken: false
+      enableServiceLinks: false
       securityContext:
         fsGroup: 1000
         runAsGroup: 1000
