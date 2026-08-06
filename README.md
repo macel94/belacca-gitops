@@ -29,7 +29,9 @@ nested checkout.
 Flux root source (belacca-gitops)
 ├── cluster infrastructure
 │   ├── Traefik + persistent ACME storage
-│   └── Headlamp + OAuth2 Proxy (ClusterIP, read-only RBAC)
+│   ├── Dex + Google OIDC identity broker
+│   ├── Flux Web UI + Dex OIDC
+│   └── Headlamp + Dex-backed OAuth2 Proxy (ClusterIP)
 ├── child source: cloudnativepong ──> Kustomization pong ──> namespace pong
 ├── child source: francesco-belacca-site ──> Kustomization portfolio
 ├── child Kustomization: analytics ──> GoatCounter + SQLite PVC
@@ -38,7 +40,9 @@ Flux root source (belacca-gitops)
     ├── francesco.belacca.com ──> francesco-site
     ├── stats.belacca.com ──> GoatCounter analytics
     ├── belacca.com / www ──> HTTPS redirect to portfolio
-    └── dashboard.belacca.com ──> Google OAuth2 Proxy ──> Headlamp
+    ├── dashboard.belacca.com ──> Dex-backed OAuth2 Proxy ──> Headlamp
+    ├── flux.belacca.com ──> Flux Web UI ──> Dex
+    └── dex.belacca.com ──> Dex ──> Google
 ```
 
 The existing `k3d-pong` cluster, Flux controllers, and Traefik ACME PVC are
@@ -63,6 +67,8 @@ pong.belacca.com       A  169.58.97.73
 francesco.belacca.com  A  169.58.97.73
 stats.belacca.com      A  169.58.97.73
 dashboard.belacca.com  A  169.58.97.73
+flux.belacca.com       A  169.58.97.73
+dex.belacca.com        A  169.58.97.73
 ```
 
 Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
@@ -153,9 +159,12 @@ artifacts or values to a repository.
 ## Cluster dashboard
 
 Headlamp is a lightweight CNCF Kubernetes dashboard installed from the pinned
-official Helm chart (`0.44.0`). It uses a dedicated read-only ServiceAccount and
-remains a ClusterIP service. The public route is Traefik → OAuth2 Proxy →
-Headlamp; OAuth2 Proxy is installed from the pinned official chart (`10.7.0`).
+official Helm chart (`0.44.0`) and remains a ClusterIP service. The public route
+is Traefik → Dex-backed OAuth2 Proxy → Headlamp; OAuth2 Proxy is installed from
+the pinned official chart (`10.7.0`). Dex is installed from the pinned official
+chart (`0.24.1`) with persistent SQLite state. The Flux Web UI is installed as a
+standalone Flux Operator chart (`0.57.0`) without replacing the existing Flux
+controllers.
 
 The dashboard is available at:
 
@@ -164,21 +173,28 @@ https://dashboard.belacca.com/
 ```
 
 Traefik redirects HTTP to HTTPS and obtains the certificate with the committed
-Let's Encrypt DNS-01 resolver. OAuth2 Proxy uses Google OIDC and permits only
-`belakkuz@gmail.com`. Its callback is:
+Let's Encrypt DNS-01 resolver. Dex uses Google OIDC and its callback is
+`https://dex.belacca.com/callback`; the Headlamp and analytics proxies use Dex
+OIDC and permit only `belakkuz@gmail.com`.
 
 ```text
 https://dashboard.belacca.com/oauth2/callback
 ```
 
-The Google OAuth client ID, client secret, and OAuth2 Proxy cookie secret are
-stored in the out-of-band `headlamp-google-oauth` Secret. That Secret is not
-represented in Git. Headlamp itself remains bound only to
-`headlamp-read-only`, which permits observation and logs but no mutations.
+The Google OAuth client ID and secret are stored in the out-of-band
+`dex-google-oauth` Secret. Dex client secrets and OAuth2 Proxy cookie secrets are
+stored in the out-of-band `dex-client-secrets`, `flux-web-client`,
+`headlamp-dex-oauth`, and `analytics-dex-oauth` Secrets. None is represented in
+Git. The Headlamp proxy allowlist contains only `belakkuz@gmail.com`; because
+Headlamp's in-cluster mode uses one backend ServiceAccount, the separately named
+`headlamp-authenticated-admin` binding grants that backend `cluster-admin`.
+Keep the public proxy allowlist and the private ClusterIP/network policy intact.
 
 The previous `headlamp-dashboard-auth` BasicAuth Secret and middleware remain
 available as a rollback path while OAuth is being validated. They are not used
-by the active HTTPS route.
+by the active HTTPS route. The complete shared identity contract, required
+Secret keys, Google callback, and GoatCounter limitation are in
+[`docs/SSO.md`](docs/SSO.md).
 
 For a private localhost-only alternative, use the existing port-forward and
 short-lived Kubernetes token procedure documented in `cloudnativepong/README.md`

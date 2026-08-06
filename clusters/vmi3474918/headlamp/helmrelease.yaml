@@ -36,6 +36,8 @@ spec:
       name: headlamp
     clusterRoleBinding:
       create: true
+      # Keep the Helm-managed binding immutable-safe. The separately named
+      # binding in rbac.yaml grants the authenticated backend its admin role.
       clusterRoleName: headlamp-read-only
     service:
       type: ClusterIP

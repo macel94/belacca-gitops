@@ -83,3 +83,24 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: headlamp-service-account-reader
+---
+# Headlamp's in-cluster mode uses one backend ServiceAccount for all requests;
+# the public Dex/OAuth2 Proxy allowlist is the user-facing authentication gate.
+# Keep this binding separately named so the Helm-managed read-only binding's
+# immutable roleRef is never changed during upgrades.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-authenticated-admin
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: headlamp
+    belacca.com/authentication: dex-google
+subjects:
+  - kind: ServiceAccount
+    name: headlamp
+    namespace: headlamp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin

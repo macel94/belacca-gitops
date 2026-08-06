@@ -1,0 +1,119 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex
+  namespace: dex
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: identity
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: dex
+      version: "0.24.1"
+      sourceRef:
+        kind: HelmRepository
+        name: dex
+        namespace: dex
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    replicaCount: 1
+    revisionHistoryLimit: 2
+    configSecret:
+      create: true
+      name: dex-config
+    config:
+      issuer: https://dex.belacca.com
+      storage:
+        type: sqlite3
+        config:
+          file: /var/dex/dex.db
+      oauth2:
+        skipApprovalScreen: true
+      staticClients:
+        - id: flux-web
+          name: Flux Web UI
+          redirectURIs:
+            - https://flux.belacca.com/oauth2/callback
+        - id: headlamp
+          name: Headlamp
+          redirectURIs:
+            - https://dashboard.belacca.com/oauth2/callback
+        - id: stats
+          name: Analytics dashboard
+          redirectURIs:
+            - https://stats.belacca.com/oauth2/callback
+      connectors:
+        - type: google
+          id: google
+          name: Google
+          config:
+            redirectURI: https://dex.belacca.com/callback
+            # Use Google's normal remembered-session behavior rather than
+            # forcing a consent screen on every application login.
+            promptType: ""
+    volumes:
+      - name: dex-data
+        persistentVolumeClaim:
+          claimName: dex-data
+    volumeMounts:
+      - name: dex-data
+        mountPath: /var/dex
+    rbac:
+      # SQLite storage does not use Dex's Kubernetes CRD storage backend.
+      create: false
+      createClusterScoped: false
+    podSecurityContext:
+      fsGroup: 1001
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    networkPolicy:
+      enabled: false
+  valuesFrom:
+    - kind: Secret
+      name: dex-google-oauth
+      valuesKey: client-id
+      targetPath: config.connectors[0].config.clientID
+      literal: true
+    - kind: Secret
+      name: dex-google-oauth
+      valuesKey: client-secret
+      targetPath: config.connectors[0].config.clientSecret
+      literal: true
+    - kind: Secret
+      name: dex-client-secrets
+      valuesKey: flux-web-client-secret
+      targetPath: config.staticClients[0].secret
+      literal: true
+    - kind: Secret
+      name: dex-client-secrets
+      valuesKey: headlamp-client-secret
+      targetPath: config.staticClients[1].secret
+      literal: true
+    - kind: Secret
+      name: dex-client-secrets
+      valuesKey: stats-client-secret
+      targetPath: config.staticClients[2].secret
+      literal: true

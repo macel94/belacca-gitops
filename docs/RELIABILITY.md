@@ -93,29 +93,33 @@ application contract. The policy file documents the parts that are isolated.
 **Symptoms:** `/status` fails, `/count` returns errors, or the dashboard cannot
 load.
 
-1. Check `kubectl -n analytics get statefulset,pod,svc,pvc`.
-2. Check that the out-of-band `goatcounter-admin` Secret exists; never put its
-   password in Git or logs.
+1. Check `kubectl -n analytics get statefulset,pod,svc,pvc,helmrelease`.
+2. Check that the out-of-band `goatcounter-admin` and `analytics-dex-oauth`
+   Secrets exist; never put their passwords, client secrets, or cookie values in
+   Git or logs.
 3. Check the protected `goatcounter-data` PVC and node placement. SQLite is
    single-writer; do not scale the StatefulSet beyond one replica.
 4. Use the manual consistent backup procedure in
    [`../clusters/vmi3474918/README.md`](../clusters/vmi3474918/README.md) before
    upgrades or storage work.
-5. Restore only in an isolated, approved procedure. Verify `/status`, login,
-   and same-origin `/count` before considering the incident recovered.
+5. Restore only in an isolated, approved procedure. Verify `/status`, the
+   public same-origin `/count`, Dex-protected dashboard redirect, and the
+   GoatCounter application login before considering the incident recovered.
 
 ## Dashboard
 
 **Symptoms:** OAuth redirect/login fails or Headlamp is unavailable.
 
 1. Check `kubectl -n headlamp get helmrelease,pods,svc` and the
-   `headlamp-google-oauth` Secret's presence without printing values.
-2. Verify the callback remains exactly
-   `https://dashboard.belacca.com/oauth2/callback` and that the Google OAuth
-   client is configured out of band.
-3. Check Traefik's `dashboard.belacca.com` Ingress and certificate.
-4. Headlamp is read-only by RBAC. Do not grant mutation permissions to recover a
-   display problem.
+   `headlamp-dex-oauth` Secret's presence without printing values.
+2. Verify Dex is Ready, the callback remains exactly
+   `https://dashboard.belacca.com/oauth2/callback`, and the Google OAuth app
+   authorizes `https://dex.belacca.com/callback`.
+3. Check Traefik's `dashboard.belacca.com` and `dex.belacca.com` Ingresses and
+   certificates.
+4. Headlamp's backend ServiceAccount is intentionally admin only behind the
+   exact Dex/OAuth2 Proxy allowlist. Do not expose its ClusterIP or weaken the
+   network policy.
 5. If OAuth is unavailable, use the documented private port-forward/token
    procedure rather than weakening the public route.
 

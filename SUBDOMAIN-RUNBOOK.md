@@ -167,18 +167,26 @@ Use the existing `ingressClassName: traefik`, the existing
 `letsencrypt` resolver, an explicit host, and an explicit Service port. Keep
 middleware references namespace-qualified in Traefik's annotation format.
 
-For the dashboard's Google authentication, deploy OAuth2 Proxy as a pinned
-HelmRelease in the same namespace. Point its upstream at the Headlamp ClusterIP
-Service and configure the exact callback:
+For the shared Google authentication, deploy Dex as a pinned HelmRelease with
+persistent state and configure its Google connector callback:
 
 ```text
-https://dashboard.belacca.com/oauth2/callback
+https://dex.belacca.com/callback
 ```
 
-Keep the Google client ID, client secret, and OAuth2 Proxy cookie secret in an
-out-of-band Secret. The chart should reference that Secret by name, not contain
-its values. To restrict access to one account, use OAuth2 Proxy's
-`authenticatedEmailsFile` with the email address in a ConfigMap or Secret.
+Each application uses a separate Dex client. Headlamp and analytics use pinned
+OAuth2 Proxy HelmReleases whose upstreams are the private Headlamp and
+GoatCounter Services; Flux Web UI uses its own Dex client. The dashboard and
+analytics proxy `authenticatedEmailsFile` contains only `belakkuz@gmail.com`.
+The public GoatCounter collector paths `/count`, `/count.js`, and `/status`
+remain direct routes so portfolio analytics does not require a browser login.
+
+Keep Google client credentials, Dex client secrets, and OAuth2 Proxy cookie
+secrets in out-of-band Secrets. The charts reference those Secret names by
+key, not contain their values. GoatCounter itself still uses its own
+application session cookie after the edge Dex gate because the upstream does
+not consume OAuth2 Proxy identity headers; its existing admin user is aligned
+to `belakkuz@gmail.com` and its password remains out of band.
 
 The Secret must exist before the authenticated route is expected to work. Do
 not commit the Google client secret, cookie secret, OAuth client JSON, or a raw
@@ -341,24 +349,27 @@ kubectl auth can-i \
 The first two should be `yes` when needed; mutation checks should be `no` for
 an observation-only dashboard.
 
-## Google OAuth dashboard notes
+## Shared Dex/Google SSO notes
 
-For this cluster, OAuth2 Proxy is preferred over native Headlamp OIDC. Native
-Headlamp OIDC would require configuring Google OIDC flags on the K3s API server
-and adding Google-user RBAC. OAuth2 Proxy keeps Headlamp's existing dedicated
-read-only ServiceAccount and limits Google access at the public edge.
-
-The Google web client must authorize exactly:
+Dex is the shared OIDC issuer for Flux Web UI, Headlamp OAuth2 Proxy, and the
+analytics OAuth2 Proxy. The Google web client must authorize exactly:
 
 ```text
-https://dashboard.belacca.com/oauth2/callback
+https://dex.belacca.com/callback
 ```
 
-Use the issuer `https://accounts.google.com`, scopes `openid email profile`, and
-allow only the intended email address. OAuth2 Proxy's upstream is the internal
-Headlamp Service. Deploy the proxy and wait for its HelmRelease/Deployment to be
-Ready before changing the HTTPS Ingress backend. This two-phase sequence keeps
-the old BasicAuth route available during rollout.
+Use Dex as the proxy issuer, scopes `openid email profile`, and allow only the
+intended email address. OAuth2 Proxy's upstreams are private ClusterIP
+Services. Headlamp's in-cluster mode uses one backend ServiceAccount, so the
+separate `headlamp-authenticated-admin` binding grants that backend
+`cluster-admin`; never expose the ServiceAccount or remove the exact proxy
+allowlist/network policy.
+
+Deploy Dex and wait for its HelmRelease/Deployment to be Ready before relying on
+application SSO. Then reconcile the Flux Web UI and OAuth2 Proxy releases and
+wait for their Deployments before switching/validating the HTTPS routes. The
+old Headlamp BasicAuth Secret and middleware remain a rollback path until the
+Dex route, callback, certificate, and allowed-email behavior are verified.
 
 ## What failed in the previous rollout
 
@@ -408,7 +419,7 @@ Do not leave a resource permanently managed outside Flux.
   Kustomization at `prune: false` until the new owner is Ready.
 - Remove or rotate the out-of-band Google OAuth Secret when access is no longer
   required.
-- Remove the old BasicAuth Secret only after the OAuth login path has been
+- Remove the old BasicAuth Secret only after the Dex/OAuth login paths have been
   verified and the rollback window has ended.
 - Revoke the temporary Cloudflare token after DNS work completes.
 

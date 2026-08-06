@@ -1,11 +1,11 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: headlamp-oauth2-proxy
-  namespace: headlamp
+  name: analytics-oauth2-proxy
+  namespace: analytics
   labels:
-    belacca.com/project: platform
-    belacca.com/component: headlamp-auth
+    belacca.com/project: analytics
+    belacca.com/component: analytics-auth
 spec:
   interval: 10m
   chart:
@@ -15,7 +15,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: oauth2-proxy
-        namespace: headlamp
+        namespace: analytics
       interval: 1h
   install:
     remediation:
@@ -26,11 +26,11 @@ spec:
   values:
     replicaCount: 1
     config:
-      existingSecret: headlamp-dex-oauth
+      existingSecret: analytics-dex-oauth
       emailDomains:
         - gmail.com
       upstreams:
-        - http://headlamp.headlamp.svc.cluster.local:80
+        - http://goatcounter.analytics.svc.cluster.local:80
     authenticatedEmailsFile:
       enabled: true
       persistence: configmap
@@ -39,7 +39,7 @@ spec:
     extraArgs:
       provider: oidc
       oidc-issuer-url: https://dex.belacca.com
-      redirect-url: https://dashboard.belacca.com/oauth2/callback
+      redirect-url: https://stats.belacca.com/oauth2/callback
       scope: openid email profile
       reverse-proxy: true
       trusted-proxy-ip: 10.42.0.0/16
@@ -48,6 +48,8 @@ spec:
       cookie-secure: true
       cookie-samesite: lax
       skip-provider-button: true
+      # /count and /count.js are public collector paths; the ingress keeps
+      # them on the direct GoatCounter Service instead of this proxy.
     service:
       type: ClusterIP
       portNumber: 80

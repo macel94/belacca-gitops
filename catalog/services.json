@@ -124,6 +124,16 @@
           "name": "goatcounter-admin Secret",
           "kind": "out-of-band-secret",
           "required": true
+        },
+        {
+          "name": "analytics-dex-oauth Secret",
+          "kind": "out-of-band-secret",
+          "required": true
+        },
+        {
+          "name": "Dex Google connector",
+          "kind": "identity-provider",
+          "required": true
         }
       ],
       "slo": {
@@ -137,7 +147,7 @@
       "rpo": "24h target (manual SQLite backup; automation is not yet deployed)",
       "dashboard": {
         "url": "https://stats.belacca.com/",
-        "access": "GoatCounter dashboard login; credentials are stored out of band"
+        "access": "Dex SSO permits belakkuz@gmail.com; GoatCounter still requires its application session cookie for dashboard features"
       },
       "runbook": "docs/RELIABILITY.md#analytics",
       "implementation": "clusters/vmi3474918/analytics"
@@ -147,7 +157,8 @@
       "name": "Headlamp operations dashboard",
       "owner": "platform",
       "publicHosts": [
-        "dashboard.belacca.com"
+        "dashboard.belacca.com",
+        "flux.belacca.com"
       ],
       "tier": "tier-2",
       "dependencies": [
@@ -167,13 +178,18 @@
           "required": true
         },
         {
-          "name": "headlamp-google-oauth Secret",
-          "kind": "out-of-band-secret",
+          "name": "Flux Web UI",
+          "kind": "workload",
           "required": true
         },
         {
-          "name": "Google OAuth identity provider",
-          "kind": "external-identity-provider",
+          "name": "Dex Google connector",
+          "kind": "identity-provider",
+          "required": true
+        },
+        {
+          "name": "headlamp-dex-oauth Secret",
+          "kind": "out-of-band-secret",
           "required": true
         }
       ],
@@ -188,7 +204,7 @@
       "rpo": "GitOps configuration is versioned; the out-of-band OAuth Secret requires operator-managed backup and rotation",
       "dashboard": {
         "url": "https://dashboard.belacca.com/",
-        "access": "The service is itself the operations dashboard; OAuth2 login is required"
+        "access": "Dex SSO permits belakkuz@gmail.com for Headlamp and Flux Web UI; Headlamp is backed by a cluster-admin ServiceAccount because this deployment mode cannot impersonate each browser user"
       },
       "runbook": "docs/RELIABILITY.md#dashboard",
       "implementation": "clusters/vmi3474918/headlamp and clusters/vmi3474918/routing/headlamp-ingress.yaml"

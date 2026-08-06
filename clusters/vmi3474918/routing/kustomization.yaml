@@ -6,3 +6,5 @@ resources:
   - portfolio-ingress.yaml
   - pong-ingress.yaml
   - headlamp-ingress.yaml
+  - dex-ingress.yaml
+  - flux-web-ingress.yaml

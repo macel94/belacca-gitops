@@ -1,0 +1,72 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: flux-web
+  namespace: flux-system
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: flux-web
+spec:
+  interval: 10m
+  releaseName: flux-web
+  chartRef:
+    kind: OCIRepository
+    name: flux-web-chart
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    fullnameOverride: flux-web
+    # This cluster was bootstrapped with the Flux CLI, so the standalone web
+    # chart must install the Flux Operator CRDs without replacing controllers.
+    installCRDs: true
+    web:
+      enabled: true
+      serverOnly: true
+      serverReplicas: 1
+      ingress:
+        enabled: false
+      networkPolicy:
+        create: true
+      userActions:
+        access: FineGrained
+      config:
+        baseURL: https://flux.belacca.com
+        authentication:
+          type: OAuth2
+          oauth2:
+            provider: OIDC
+            issuerURL: https://dex.belacca.com
+            scopes:
+              - openid
+              - profile
+              - email
+            autoLogin: true
+        userActions:
+          audit:
+            - "*"
+          access: FineGrained
+        search:
+          cached: true
+    strategy:
+      type: Recreate
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  valuesFrom:
+    - kind: Secret
+      name: flux-web-client
+      valuesKey: client-id
+      targetPath: web.config.authentication.oauth2.clientID
+    - kind: Secret
+      name: flux-web-client
+      valuesKey: client-secret
+      targetPath: web.config.authentication.oauth2.clientSecret

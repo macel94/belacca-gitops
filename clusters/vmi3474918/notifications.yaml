@@ -46,6 +46,12 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: headlamp
+    - kind: HelmRelease
+      name: '*'
+      namespace: analytics
+    - kind: HelmRelease
+      name: '*'
+      namespace: dex
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -79,3 +85,9 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: headlamp
+    - kind: HelmRelease
+      name: '*'
+      namespace: analytics
+    - kind: HelmRelease
+      name: '*'
+      namespace: dex

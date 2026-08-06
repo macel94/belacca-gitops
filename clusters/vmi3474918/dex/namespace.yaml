@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dex
+  annotations:
+    # Keep the identity namespace and its protected signing/session PVC through
+    # an accidental child-Kustomization removal; delete deliberately to reset.
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: identity
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

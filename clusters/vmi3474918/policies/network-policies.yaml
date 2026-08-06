@@ -186,6 +186,10 @@ spec:
           podSelector:
             matchLabels:
               app: francesco-site
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: analytics-oauth2-proxy
+              app.kubernetes.io/name: oauth2-proxy
       ports:
         - protocol: TCP
           port: 8080
@@ -216,8 +220,8 @@ spec:
         - protocol: TCP
           port: 4180
     # Egress is intentionally not isolated: OAuth2 Proxy must reach the
-    # configured Google identity provider, whose endpoint/CIDRs are external
-    # runtime data and must not be invented in this repository.
+    # configured Dex identity provider, which in turn reaches Google. The
+    # endpoint/CIDRs are external runtime data and must not be invented here.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

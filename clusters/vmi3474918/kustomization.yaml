@@ -6,6 +6,8 @@ resources:
   - applications.yaml
   - routing-flux.yaml
   - analytics-flux.yaml
+  - dex-flux.yaml
+  - flux-web-flux.yaml
   - notifications.yaml
   - observability-flux.yaml
   - policies

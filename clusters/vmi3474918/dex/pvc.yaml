@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dex-data
+  namespace: dex
+  labels:
+    belacca.com/project: platform
+    belacca.com/component: identity
+  annotations:
+    # Dex stores signing keys and OIDC session state here. Keep it through
+    # Flux ownership changes and delete it only as an explicit identity reset.
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

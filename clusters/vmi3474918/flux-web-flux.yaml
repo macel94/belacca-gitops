@@ -1,21 +1,18 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: belacca-routing
+  name: flux-web
   namespace: flux-system
   labels:
     belacca.com/project: platform
+    belacca.com/component: flux-web
 spec:
   interval: 10m
-  path: ./clusters/vmi3474918/routing
+  path: ./clusters/vmi3474918/flux-web
   prune: true
   wait: true
   dependsOn:
-    - name: pong
-    - name: portfolio
-    - name: analytics
     - name: dex
-    - name: flux-web
   sourceRef:
     kind: GitRepository
     name: flux-system
