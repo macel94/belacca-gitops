@@ -1,7 +1,7 @@
 {
   "$schema": "https://francesco.belacca.com/status.schema.json",
   "contract_version": "belacca.synthetic-contracts.v1",
-  "publisher": "external-runner-required",
+  "publisher": "Pong GitHub Actions runner is active; portfolio, analytics, and dashboard runners remain external",
   "privacy": {
     "store_room_ids": false,
     "store_player_names": false,
@@ -33,7 +33,7 @@
       "service": "pong",
       "method": "WORKFLOW",
       "path": "/api/rooms/create -> /api/rooms/join -> /rooms/<id>/ws",
-      "expected": "two unique player assignments and state frames",
+      "expected": "homepage and health success, room CRUD, two unique player assignments, playing state, and room cleanup",
       "source": "cloudnativepong/scripts/synthetic-check.mjs",
       "slo_eligible": true
     },

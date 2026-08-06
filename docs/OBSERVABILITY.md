@@ -25,10 +25,12 @@ considering a future ownership/pruning change. The platform root now has
 unchanged.
 
 `synthetic-contracts.json` is the machine-readable external-check contract for
-portfolio, Pong, analytics, and authenticated dashboard journeys. It contains
-no credentials or collected results. `dashboard.json` is a private dashboard
-query/panel definition; it is source material, not proof that Grafana is
-installed or that the queries currently have data.
+portfolio, Pong, analytics, and authenticated dashboard journeys. The Pong
+repository now runs the canonical public journey on a scheduled GitHub Actions
+workflow; the other service checks still require their own external runners.
+The contract contains no credentials or collected results. `dashboard.json` is
+a private dashboard query/panel definition; it is source material, not proof
+that Grafana is installed or that the queries currently have data.
 
 This repository does **not** currently install Grafana, Prometheus Operator,
 blackbox-exporter, OpenTelemetry Collector, or a public metrics route. Those

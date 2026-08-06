@@ -23,8 +23,9 @@ flux get kustomizations -A
 
 Record the current Git revisions, deployment image digests, replica counts,
 ready conditions, and a baseline check of `https://pong.belacca.com/health` and
-`/api/rooms`. Use the public synthetic check only when its external URL is
-explicitly configured; a local curl is not an SLO measurement.
+`/api/rooms`. The scheduled Pong synthetic targets
+`https://pong.belacca.com` by default and fails closed if it cannot execute; a
+local curl is not an SLO measurement.
 
 Common post-drill verification:
 
