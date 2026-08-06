@@ -24,8 +24,13 @@ spec:
     replicaCount: 1
     config:
       inCluster: true
-      unsafeUseServiceAccountToken: false
+      # OAuth2 Proxy is the trusted public identity boundary. Headlamp uses
+      # its official identity-aware proxy mode and the mounted ServiceAccount
+      # token for the shared backend identity.
+      unsafeUseServiceAccountToken: true
       enableHelm: false
+      extraArgs:
+        - "-proxy-auth=true"
       oidc:
         secret:
           create: false

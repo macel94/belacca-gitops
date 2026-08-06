@@ -6,7 +6,7 @@ Flux reconciles this directory into the existing `k3d-pong` cluster.
 - `sources.yaml`: independent application Git sources
 - `applications.yaml`: application Kustomizations
 - `routing/`: Traefik host/TLS routing
-- `headlamp/`: read-only Headlamp dashboard with Google OAuth2 Proxy
+- `headlamp/`: Headlamp dashboard with Google OAuth2 Proxy identity-aware authentication and a shared in-cluster backend identity
 - `analytics/`: self-hosted GoatCounter with a protected SQLite database
 - `traefik-acme-pvc.yaml` and `traefik-config.yaml`: persistent ACME and ingress configuration
 
@@ -66,10 +66,12 @@ kubectl -n analytics rollout status statefulset/goatcounter
 ```
 
 The GoatCounter login cookie applies only to the dashboard user; portfolio
-visitors receive no analytics cookie. Keep the `goatcounter-admin` Secret out
-of Git. If you change it later, update the password through the dashboard or
-run the documented password-management command rather than assuming a Secret
-change alone changes the existing account.
+visitors receive no analytics cookie. The outer Dex/OAuth2 Proxy gate does not
+create this GoatCounter application session, so an operator must complete the
+GoatCounter login after the Google login. Keep the `goatcounter-admin` Secret
+out of Git. If you change it later, update the password through the dashboard
+or run the documented password-management command rather than assuming a
+Secret change alone changes the existing account.
 
 The database is on the `goatcounter-data` PVC and the StatefulSet intentionally
 has one replica because SQLite is single-writer and the cluster's `local-path`

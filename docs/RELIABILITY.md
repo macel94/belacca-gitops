@@ -103,8 +103,9 @@ load.
    [`../clusters/vmi3474918/README.md`](../clusters/vmi3474918/README.md) before
    upgrades or storage work.
 5. Restore only in an isolated, approved procedure. Verify `/status`, the
-   public same-origin `/count`, Dex-protected dashboard redirect, and the
-   GoatCounter application login before considering the incident recovered.
+   public same-origin `/count`, the Dex-protected dashboard redirect, and both
+   the Google/Dex gate and the GoatCounter application login before considering
+   the incident recovered.
 
 ## Dashboard
 
@@ -116,12 +117,16 @@ load.
    `https://dashboard.belacca.com/oauth2`, the Google connector callback remains
    exactly `https://dashboard.belacca.com/oauth2/callback`, and Headlamp's proxy
    callback is `https://dashboard.belacca.com/headlamp-auth/callback`.
-3. Check Traefik's `dashboard.belacca.com` and `dex.belacca.com` Ingresses and
+3. Check that the Headlamp HelmRelease renders `-proxy-auth=true` and
+   `unsafeUseServiceAccountToken: true`; the former consumes trusted OAuth2
+   Proxy identity headers and the latter supplies the shared backend API
+   identity.
+4. Check Traefik's `dashboard.belacca.com` and `dex.belacca.com` Ingresses and
    certificates.
-4. Headlamp's backend ServiceAccount is intentionally admin only behind the
-   exact Dex/OAuth2 Proxy allowlist. Do not expose its ClusterIP or weaken the
-   network policy.
-5. If OAuth is unavailable, use the documented private port-forward/token
+5. Headlamp's backend ServiceAccount is intentionally admin only behind the
+   exact Dex/OAuth2 Proxy allowlist. Do not expose its ClusterIP, trust
+   client-supplied identity headers, or weaken the network policy.
+6. If OAuth is unavailable, use the documented private port-forward/token
    procedure rather than weakening the public route.
 
 ## Flux and notifications

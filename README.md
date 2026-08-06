@@ -31,7 +31,7 @@ Flux root source (belacca-gitops)
 │   ├── Traefik + persistent ACME storage
 │   ├── Dex + Google OIDC identity broker
 │   ├── Flux Web UI + Dex OIDC
-│   └── Headlamp + Dex-backed OAuth2 Proxy (ClusterIP)
+│   └── Headlamp + Dex-backed OAuth2 Proxy (identity-aware, ClusterIP)
 ├── child source: cloudnativepong ──> Kustomization pong ──> namespace pong
 ├── child source: francesco-belacca-site ──> Kustomization portfolio
 ├── child Kustomization: analytics ──> GoatCounter + SQLite PVC
@@ -40,7 +40,7 @@ Flux root source (belacca-gitops)
     ├── francesco.belacca.com ──> francesco-site
     ├── stats.belacca.com ──> GoatCounter analytics
     ├── belacca.com / www ──> HTTPS redirect to portfolio
-    ├── dashboard.belacca.com ──> Dex-backed OAuth2 Proxy ──> Headlamp
+    ├── dashboard.belacca.com ──> Dex-backed OAuth2 Proxy ──> Headlamp (proxy-auth)
     ├── flux.belacca.com ──> Flux Web UI ──> Dex
     └── dex.belacca.com ──> Dex ──> Google
 ```
@@ -172,6 +172,12 @@ The dashboard is available at:
 https://dashboard.belacca.com/
 ```
 
+Headlamp uses its official identity-aware proxy mode: OAuth2 Proxy injects
+trusted identity headers after the Dex/Google login, and Headlamp uses its
+mounted in-cluster ServiceAccount for Kubernetes API calls. The backend is
+intentionally a shared administrative identity gated by the single-email proxy
+allowlist, not per-user Kubernetes OIDC/RBAC impersonation.
+
 Traefik redirects HTTP to HTTPS and obtains the certificate with the committed
 Let's Encrypt DNS-01 resolver. Dex uses the path-scoped issuer
 `https://dashboard.belacca.com/oauth2`; its Google callback reuses the existing
@@ -190,10 +196,12 @@ The Google OAuth client ID and secret are stored in the out-of-band
 credential is required for the path-scoped Dex issuer. Dex client secrets and OAuth2 Proxy cookie secrets are
 stored in the out-of-band `dex-client-secrets`, `flux-web-client`,
 `headlamp-dex-oauth`, and `analytics-dex-oauth` Secrets. None is represented in
-Git. The Headlamp proxy allowlist contains only `belakkuz@gmail.com`; because
-Headlamp's in-cluster mode uses one backend ServiceAccount, the separately named
+Git. The Headlamp proxy allowlist contains only `belakkuz@gmail.com`; Headlamp's
+identity-aware proxy mode consumes those trusted headers, while its in-cluster
+mode uses one backend ServiceAccount. The separately named
 `headlamp-authenticated-admin` binding grants that backend `cluster-admin`.
-Keep the public proxy allowlist and the private ClusterIP/network policy intact.
+This is shared-admin access rather than per-user Kubernetes OIDC/RBAC. Keep the
+public proxy allowlist and the private ClusterIP/network policy intact.
 
 The previous `headlamp-dashboard-auth` BasicAuth Secret and middleware remain
 available as a rollback path while OAuth is being validated. They are not used

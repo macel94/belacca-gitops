@@ -11,24 +11,52 @@ redirect alias. The intended administrator is `belakkuz@gmail.com`.
 | Endpoint | SSO path | Backend authorization |
 |---|---|---|
 | `https://flux.belacca.com/` | Flux Web UI OAuth2/OIDC → Dex (`https://dashboard.belacca.com/oauth2`) → Google | `flux-web-admin` for the Google email claim |
-| `https://dashboard.belacca.com/` | OAuth2 Proxy (`/headlamp-auth`) → Dex (`/oauth2`) → Google | Headlamp's fixed in-cluster backend ServiceAccount is bound to `cluster-admin`; the proxy allowlist contains only the intended email |
+| `https://dashboard.belacca.com/` | OAuth2 Proxy (`/headlamp-auth`) → Dex (`/oauth2`) → Google → Headlamp identity-aware proxy headers | Headlamp's fixed in-cluster backend ServiceAccount is bound to `cluster-admin`; Headlamp `proxy-auth` is enabled and the proxy allowlist contains only the intended email |
 | `https://stats.belacca.com/` | OAuth2 Proxy → Dex (`https://dashboard.belacca.com/oauth2`) → Google for the dashboard UI | A higher-priority direct Ingress sends public `/count`, `/count.js`, and `/status` paths to GoatCounter; dashboard pages still require its own application session cookie |
 | `https://dex.belacca.com/` | Redirect alias to the canonical Dex issuer | Not an application dashboard |
 
-The current Headlamp deployment uses its in-cluster mode, which authenticates
-Kubernetes API calls with one pod ServiceAccount. It cannot turn the browser's
-Dex identity into Kubernetes API impersonation without changing the K3s API
-server's OIDC configuration. The separate `headlamp-authenticated-admin`
-ClusterRoleBinding therefore makes the backend administrative, while the public
-Dex/OAuth2 Proxy allowlist is the user authentication boundary. Do not expose
-Headlamp's ClusterIP or remove the network policy as a workaround.
+The current Headlamp deployment uses its supported identity-aware proxy mode.
+OAuth2 Proxy authenticates the browser and injects trusted identity headers;
+Headlamp's `proxy-auth` flag consumes those headers and bypasses its internal
+login screen. Kubernetes API calls use the mounted in-cluster ServiceAccount
+token because `unsafeUseServiceAccountToken` is enabled. The separately named
+`headlamp-authenticated-admin` ClusterRoleBinding therefore makes that shared
+backend administrative. This is intentionally shared-admin access, not
+per-user Kubernetes OIDC/RBAC impersonation. Do not expose Headlamp's
+ClusterIP, weaken the network policy, or trust client-supplied identity headers.
 
-GoatCounter does not consume `X-Forwarded-User` or OAuth2 Proxy identity headers;
-its upstream dashboard authentication is a password-backed `key` cookie. The
-Dex proxy protects the public hostname and restricts who can reach that login,
-but it does not replace GoatCounter's own application session. Keep the
-GoatCounter account email aligned with `belakkuz@gmail.com` if one-person admin
-ownership is desired, and retain its password in the out-of-band Secret.
+GoatCounter does not consume `X-Forwarded-User`, `X-Forwarded-Email`, or
+OAuth2 Proxy identity headers; its upstream dashboard authentication is a
+password-backed `key` cookie. The Dex proxy protects the public hostname and
+restricts who can reach that login, but it does not replace GoatCounter's own
+application session. This deliberate two-step boundary remains because the
+self-hosted GoatCounter release has no supported OIDC or trusted-header SSO
+configuration. Keep the GoatCounter account email aligned with
+`belakkuz@gmail.com` if one-person admin ownership is desired, and retain its
+password in the out-of-band Secret.
+
+## Supported integration basis
+
+The Headlamp route follows Headlamp's documented identity-aware proxy
+integration: OAuth2 Proxy supplies trusted identity headers, Headlamp enables
+`proxy-auth`, and the in-cluster ServiceAccount is used for backend Kubernetes
+API access. This is a shared backend identity by design; per-user Kubernetes
+OIDC/RBAC would require configuring the K3s API server to validate Dex tokens
+and changing the authorization model.
+
+The current GoatCounter route intentionally stops at the outer Dex/OAuth2 Proxy
+gate and then uses GoatCounter's own password-backed application session. The
+self-hosted release has no supported OIDC or trusted identity-header bridge, so
+we do not claim end-to-end Google SSO for the analytics dashboard.
+
+Official references:
+
+- [Headlamp identity-aware proxy](https://headlamp.dev/docs/latest/installation/in-cluster/identity-aware-proxy/)
+- [Headlamp OIDC](https://headlamp.dev/docs/latest/installation/in-cluster/oidc/)
+- [OAuth2 Proxy configuration](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/)
+- [Flux Web UI SSO with Dex](https://fluxoperator.dev/docs/web-ui/sso-dex/)
+- [Kubernetes OIDC authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens)
+- [GoatCounter self-hosting](https://github.com/arp242/goatcounter/blob/release-2.7/README.md)
 
 ## Kubernetes Secret contract
 
@@ -59,10 +87,12 @@ https://dashboard.belacca.com/oauth2/callback
 
 Dex then returns each relying party to its own callback (`flux.belacca.com`,
 `dashboard.belacca.com/headlamp-auth`, or `stats.belacca.com`). The old direct
-Google OAuth2 Proxy path is no longer the active Headlamp path. Dex's Google
-connector uses the existing client ID/secret and requests only profile/email
-identity data; no Google Workspace service-account group delegation is needed
-because RBAC is bound directly to the email claim.
+Google OAuth2 Proxy path is no longer the active Headlamp path. Headlamp now
+uses the supported proxy-auth header integration after OAuth2 Proxy has
+completed the Dex flow. Dex's Google connector uses the existing client
+ID/secret and requests only profile/email identity data; no Google Workspace
+service-account group delegation is needed because the single backend identity
+is gated by the proxy email allowlist.
 
 ## Validation
 
@@ -76,6 +106,7 @@ kubectl -n analytics get secret analytics-dex-oauth
 curl -fsS https://dashboard.belacca.com/oauth2/.well-known/openid-configuration
 flux reconcile kustomization dex -n flux-system --with-source
 flux reconcile kustomization flux-web -n flux-system --with-source
+flux reconcile kustomization flux-system -n flux-system --with-source
 flux reconcile kustomization belacca-routing -n flux-system --with-source
 ```
 
