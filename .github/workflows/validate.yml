@@ -56,6 +56,7 @@ jobs:
           grep -q 'name: francesco-belacca-site' clusters/vmi3474918/sources.yaml
           grep -q 'pong.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
           grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
+          grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
           grep -q 'apex-to-portfolio' /tmp/kustomize-clusters_vmi3474918_routing.yaml
           grep -q 'platform-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
           grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_vmi3474918.yaml

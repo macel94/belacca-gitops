@@ -14,7 +14,8 @@
       "publicHosts": [
         "francesco.belacca.com",
         "belacca.com",
-        "www.belacca.com"
+        "www.belacca.com",
+        "www.francesco.belacca.com"
       ],
       "tier": "tier-1",
       "dependencies": [

@@ -23,7 +23,8 @@ flux get kustomizations -A
 
 Record the current Git revisions, deployment image digests, replica counts,
 ready conditions, and a baseline check of `https://pong.belacca.com/health` and
-`/api/rooms`. The scheduled Pong synthetic targets
+`/api/rooms`. The supported public host and redirect inventory is in
+[`SITES.md`](SITES.md). The scheduled Pong synthetic targets
 `https://pong.belacca.com` by default and fails closed if it cannot execute; a
 local curl is not an SLO measurement.
 

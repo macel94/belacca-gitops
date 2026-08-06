@@ -18,6 +18,7 @@ annotations.
 1. DNS A records exist and have propagated:
    - `pong.belacca.com` → `169.58.97.73`
    - `francesco.belacca.com` → `169.58.97.73`
+   - `belacca.com`, `www.belacca.com`, and `www.francesco.belacca.com` → `169.58.97.73`
 2. The portfolio image has been published to GHCR and the package is public,
    or the cluster has a pull secret configured.
 3. DNS A records resolve publicly. The committed Traefik configuration uses
@@ -108,6 +109,7 @@ kubectl -n flux-system get kustomization pong belacca-routing
 curl -fsS https://francesco.belacca.com/ | grep -q 'Systems, under load.'
 curl -I https://belacca.com/
 curl -I https://www.belacca.com/
+curl -I https://www.francesco.belacca.com/
 curl -fsS https://pong.belacca.com/ | grep -q '<!DOCTYPE'
 curl -fsS https://pong.belacca.com/api/rooms
 ```

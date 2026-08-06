@@ -52,8 +52,9 @@ burn-rate alert → incident evidence → tested recovery.
 
 ## Portfolio
 
-**Symptoms:** `https://francesco.belacca.com/health` fails, homepage is not
-served, or the apex redirect is wrong.
+**Symptoms:** `https://francesco.belacca.com/health` fails, the homepage is not
+served, or one of the portfolio aliases redirects incorrectly. The supported
+host and alias list is in [`SITES.md`](SITES.md).
 
 1. Check DNS and the Traefik certificate/Ingress:
    `kubectl -n portfolio get ingress,svc,pods`.
@@ -62,7 +63,10 @@ served, or the apex redirect is wrong.
 3. Check `kubectl -n portfolio logs deploy/francesco-site` for a serving fault.
 4. If the workload is unhealthy, roll back the application repository's
    immutable image/tag commit and reconcile the child Kustomization.
-5. The service is stateless; do not create or delete a PVC as recovery.
+5. Verify `belacca.com`, `www.belacca.com`, and
+   `www.francesco.belacca.com` return a permanent redirect to the canonical
+   portfolio origin while preserving the request path.
+6. The service is stateless; do not create or delete a PVC as recovery.
 
 The portfolio's `/count` endpoint depends on the in-cluster GoatCounter
 Service. A GoatCounter failure should not be treated as a portfolio image

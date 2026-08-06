@@ -97,6 +97,16 @@ spec:
                 name: francesco-site
                 port:
                   number: 80
+    - host: www.francesco.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: francesco-site
+                port:
+                  number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -117,6 +127,7 @@ spec:
     - hosts:
         - belacca.com
         - www.belacca.com
+        - www.francesco.belacca.com
   rules:
     - host: belacca.com
       http:
@@ -129,6 +140,16 @@ spec:
                 port:
                   number: 80
     - host: www.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: francesco-site
+                port:
+                  number: 80
+    - host: www.francesco.belacca.com
       http:
         paths:
           - path: /

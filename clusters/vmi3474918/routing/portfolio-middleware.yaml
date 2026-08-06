@@ -7,6 +7,6 @@ metadata:
     belacca.com/project: portfolio
 spec:
   redirectRegex:
-    regex: ^https?://(?:www\.)?belacca\.com/(.*)
+    regex: ^https?://(?:www\.)?(?:belacca\.com|francesco\.belacca\.com)/(.*)
     replacement: https://francesco.belacca.com/${1}
     permanent: true

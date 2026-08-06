@@ -11,8 +11,11 @@ projects under `belacca.com` on the existing `k3d-pong` Kubernetes cluster.
 | [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static NGINX portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
 | GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
 
-The apex names `belacca.com` and `www.belacca.com` permanently redirect to the
-portfolio. The canonical Pong URL is now the `pong` subdomain.
+The canonical site inventory, redirect aliases, operator surfaces, DNS records,
+and monitoring boundaries are maintained in [`docs/SITES.md`](docs/SITES.md).
+The canonical portfolio URL is `https://francesco.belacca.com/`; `belacca.com`,
+`www.belacca.com`, and `www.francesco.belacca.com` permanently redirect to it.
+The canonical Pong URL is `https://pong.belacca.com/`.
 
 ## Why child GitRepositories instead of submodules?
 
@@ -39,10 +42,11 @@ Flux root source (belacca-gitops)
     ├── pong.belacca.com ──> pong-gateway
     ├── francesco.belacca.com ──> francesco-site
     ├── stats.belacca.com ──> GoatCounter analytics
-    ├── belacca.com / www ──> HTTPS redirect to portfolio
+    ├── portfolio aliases ──> HTTPS redirect to portfolio
     ├── dashboard.belacca.com ──> Dex-backed OAuth2 Proxy ──> Headlamp (proxy-auth)
     ├── flux.belacca.com ──> Flux Web UI ──> Dex
-    └── dex.belacca.com ──> Dex ──> Google
+    ├── dex.belacca.com ──> Dex ──> Google
+    └── www.francesco.belacca.com ──> HTTPS redirect to portfolio
 ```
 
 The existing `k3d-pong` cluster, Flux controllers, and Traefik ACME PVC are
@@ -60,25 +64,14 @@ pulls.
 
 ## DNS
 
-Create these A records at the DNS provider before expecting normal HTTPS traffic:
-
-```text
-pong.belacca.com       A  169.58.97.73
-francesco.belacca.com  A  169.58.97.73
-stats.belacca.com      A  169.58.97.73
-dashboard.belacca.com  A  169.58.97.73
-flux.belacca.com       A  169.58.97.73
-dex.belacca.com        A  169.58.97.73
-```
-
-Keep the existing records for `belacca.com` and `www.belacca.com` pointing at the
-same address. Traefik uses the committed Cloudflare DNS-01 challenge
-configuration. The out-of-band `kube-system/traefik-cloudflare` Secret must
-provide `CLOUDFLARE_DNS_API_TOKEN`; no DNS/API credential is stored in Git.
-Public DNS must still point each hostname at the cluster for normal traffic, and
-public port 443 must reach Traefik for HTTPS. DNS-01 proves control of the zone
-with a TXT record and does not depend on the HTTP redirect or port 80 for
-certificate issuance.
+The complete supported DNS record set is maintained in [`docs/SITES.md`](docs/SITES.md).
+Create those DNS-only records at the DNS provider before expecting normal HTTPS
+traffic. Traefik uses the committed Cloudflare DNS-01 challenge configuration.
+The out-of-band `kube-system/traefik-cloudflare` Secret must provide
+`CLOUDFLARE_DNS_API_TOKEN`; no DNS/API credential is stored in Git. Public DNS
+must point each hostname at the cluster and public port 443 must reach Traefik.
+DNS-01 proves control of the zone with a TXT record and does not depend on the
+HTTP redirect or port 80 for certificate issuance.
 
 For the complete, repeatable procedure—including Cloudflare token handling,
 DNS propagation, route ownership, ACME recovery, and rollback—see
@@ -139,6 +132,8 @@ flux get sources git -A
 flux get kustomizations -A
 curl -fsS https://francesco.belacca.com/health
 curl -I https://belacca.com/
+curl -I https://www.belacca.com/
+curl -I https://www.francesco.belacca.com/
 ```
 
 To roll back an app, revert the deployment-tag commit in that application

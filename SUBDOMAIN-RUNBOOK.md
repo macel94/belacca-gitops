@@ -1,7 +1,9 @@
 # Adding a public subdomain
 
-This runbook describes the supported way to add a public `*.belacca.com`
-hostname to the existing `k3d-pong` cluster. It covers Cloudflare DNS, Traefik
+This runbook describes the supported way to add or update a public
+`*.belacca.com` hostname on the existing `k3d-pong` cluster. The canonical
+inventory of currently supported sites and aliases is
+[`docs/SITES.md`](docs/SITES.md). This runbook covers Cloudflare DNS, Traefik
 HTTPS, Headlamp-style authentication, and Flux GitOps ownership.
 
 The short version is:
@@ -104,7 +106,8 @@ Find the zone ID from the successful zone lookup, then list the exact record:
 
 ```bash
 ZONE_ID='<zone-id>'
-HOST='dashboard.belacca.com'
+# For the portfolio www alias requested in this change:
+HOST='www.francesco.belacca.com'
 ORIGIN='169.58.97.73'
 DNS_API="https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records"
 
@@ -120,7 +123,7 @@ The desired record for this cluster is:
 
 ```text
 Type:    A
-Name:    dashboard.belacca.com
+Name:    www.francesco.belacca.com
 Content: 169.58.97.73
 TTL:     300
 Proxied: false
@@ -143,17 +146,24 @@ payload. Do not create both an A record and an unrelated CNAME for the same
 name. Check for an unexpected AAAA record; Let’s Encrypt may try IPv6 if one is
 published, so it must also reach the correct ingress or be removed.
 
-Verify public DNS before adding or relying on the HTTPS route:
+Verify public DNS before adding or relying on the HTTPS route. For the
+portfolio alias in this change:
 
 ```bash
 curl -fsS -H 'accept: application/dns-json' \
-  'https://cloudflare-dns.com/dns-query?name=dashboard.belacca.com&type=A'
+  'https://cloudflare-dns.com/dns-query?name=www.francesco.belacca.com&type=A'
 curl -fsS -H 'accept: application/dns-json' \
-  'https://dns.google/resolve?name=dashboard.belacca.com&type=A'
+  'https://dns.google/resolve?name=www.francesco.belacca.com&type=A'
 ```
 
 Both should return `169.58.97.73`. Do not proceed to certificate verification
-while the result is NXDOMAIN or points elsewhere.
+while the result is NXDOMAIN or points elsewhere. After DNS and Flux
+reconciliation, verify the redirect while preserving a path:
+
+```bash
+curl -I https://www.francesco.belacca.com/reliability.html
+# Expected: 308/301 Location: https://francesco.belacca.com/reliability.html
+```
 
 ## Step 3: add GitOps routing
 

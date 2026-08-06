@@ -89,7 +89,13 @@ kubectl -n analytics exec statefulset/goatcounter -- \
   rm -f /tmp/goatcounter-backup.sqlite3
 ```
 
-Add this DNS record before expecting the Let's Encrypt certificate:
+The complete supported DNS record set is maintained in
+[`../../docs/SITES.md`](../../docs/SITES.md). In addition to the application
+and operator hosts, ensure the portfolio aliases `belacca.com`,
+`www.belacca.com`, and `www.francesco.belacca.com` resolve to
+`169.58.97.73` so Traefik can serve their permanent redirects and certificate.
+
+Add the analytics record before expecting the Let's Encrypt certificate:
 
 ```text
 stats.belacca.com  A  169.58.97.73
