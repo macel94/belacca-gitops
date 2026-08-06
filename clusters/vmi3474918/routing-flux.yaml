@@ -10,12 +10,13 @@ spec:
   path: ./clusters/vmi3474918/routing
   prune: true
   wait: true
+  # Ingress resources may be applied before their backend Services are Ready.
+  # Keeping routing independent of analytics allows Traefik to issue the Dex
+  # certificate, which the Dex-backed OAuth2 Proxy deployments need for OIDC
+  # discovery before the analytics health check can complete.
   dependsOn:
     - name: pong
     - name: portfolio
-    - name: analytics
-    - name: dex
-    - name: flux-web
   sourceRef:
     kind: GitRepository
     name: flux-system
