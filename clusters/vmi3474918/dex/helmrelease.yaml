@@ -63,9 +63,15 @@ spec:
       - name: dex-data
         persistentVolumeClaim:
           claimName: dex-data
+      # Dex's container entrypoint creates a short-lived rendered config in
+      # /tmp before starting the read-only-root filesystem process.
+      - name: tmp
+        emptyDir: {}
     volumeMounts:
       - name: dex-data
         mountPath: /var/dex
+      - name: tmp
+        mountPath: /tmp
     rbac:
       # SQLite storage does not use Dex's Kubernetes CRD storage backend.
       create: false
