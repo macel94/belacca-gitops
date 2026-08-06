@@ -168,11 +168,16 @@ Use the existing `ingressClassName: traefik`, the existing
 middleware references namespace-qualified in Traefik's annotation format.
 
 For the shared Google authentication, deploy Dex as a pinned HelmRelease with
-persistent state and configure its Google connector callback:
+persistent state. The canonical path-scoped issuer and Google connector callback
+reuse the existing authorized dashboard callback:
 
 ```text
-https://dex.belacca.com/callback
+issuer:   https://dashboard.belacca.com/oauth2
+callback: https://dashboard.belacca.com/oauth2/callback
 ```
+
+`dex.belacca.com` remains a TLS-protected redirect alias for operators; it is
+not the issuer used by the relying parties.
 
 Each application uses a separate Dex client. Headlamp and analytics use pinned
 OAuth2 Proxy HelmReleases whose upstreams are the private Headlamp and
@@ -352,14 +357,20 @@ an observation-only dashboard.
 ## Shared Dex/Google SSO notes
 
 Dex is the shared OIDC issuer for Flux Web UI, Headlamp OAuth2 Proxy, and the
-analytics OAuth2 Proxy. The Google web client must authorize exactly:
+analytics OAuth2 Proxy. Its canonical issuer is:
 
 ```text
-https://dex.belacca.com/callback
+https://dashboard.belacca.com/oauth2
 ```
 
-Use Dex as the proxy issuer, scopes `openid email profile`, and allow only the
-intended email address. OAuth2 Proxy's upstreams are private ClusterIP
+The existing Google web client authorizes exactly this connector callback:
+
+```text
+https://dashboard.belacca.com/oauth2/callback
+```
+
+Use the path-scoped Dex issuer for proxies, scopes `openid email profile`, and
+allow only the intended email address. OAuth2 Proxy's upstreams are private ClusterIP
 Services. Headlamp's in-cluster mode uses one backend ServiceAccount, so the
 separate `headlamp-authenticated-admin` binding grants that backend
 `cluster-admin`; never expose the ServiceAccount or remove the exact proxy

@@ -38,7 +38,7 @@ spec:
         belakkuz@gmail.com
     extraArgs:
       provider: oidc
-      oidc-issuer-url: https://dex.belacca.com
+      oidc-issuer-url: https://dashboard.belacca.com/oauth2
       redirect-url: https://stats.belacca.com/oauth2/callback
       scope: openid email profile
       reverse-proxy: true

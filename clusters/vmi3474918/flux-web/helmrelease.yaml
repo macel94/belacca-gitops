@@ -40,7 +40,7 @@ spec:
           type: OAuth2
           oauth2:
             provider: OIDC
-            issuerURL: https://dex.belacca.com
+            issuerURL: https://dashboard.belacca.com/oauth2
             scopes:
               - openid
               - profile

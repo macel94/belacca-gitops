@@ -112,9 +112,10 @@ load.
 
 1. Check `kubectl -n headlamp get helmrelease,pods,svc` and the
    `headlamp-dex-oauth` Secret's presence without printing values.
-2. Verify Dex is Ready, the callback remains exactly
-   `https://dashboard.belacca.com/oauth2/callback`, and the Google OAuth app
-   authorizes `https://dex.belacca.com/callback`.
+2. Verify Dex is Ready at the path-scoped issuer
+   `https://dashboard.belacca.com/oauth2`, the Google connector callback remains
+   exactly `https://dashboard.belacca.com/oauth2/callback`, and Headlamp's proxy
+   callback is `https://dashboard.belacca.com/headlamp-auth/callback`.
 3. Check Traefik's `dashboard.belacca.com` and `dex.belacca.com` Ingresses and
    certificates.
 4. Headlamp's backend ServiceAccount is intentionally admin only behind the

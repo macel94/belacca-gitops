@@ -30,7 +30,10 @@ spec:
       create: true
       name: dex-config
     config:
-      issuer: https://dex.belacca.com
+      # The existing Google OAuth client already authorizes the dashboard
+      # callback. Use a path-scoped issuer so Google returns there without a
+      # Google Cloud Console credential change.
+      issuer: https://dashboard.belacca.com/oauth2
       storage:
         type: sqlite3
         config:
@@ -45,7 +48,7 @@ spec:
         - id: headlamp
           name: Headlamp
           redirectURIs:
-            - https://dashboard.belacca.com/oauth2/callback
+            - https://dashboard.belacca.com/headlamp-auth/callback
         - id: stats
           name: Analytics dashboard
           redirectURIs:
@@ -55,7 +58,7 @@ spec:
           id: google
           name: Google
           config:
-            redirectURI: https://dex.belacca.com/callback
+            redirectURI: https://dashboard.belacca.com/oauth2/callback
             # Use Google's normal remembered-session behavior rather than
             # forcing a consent screen on every application login.
             promptType: ""

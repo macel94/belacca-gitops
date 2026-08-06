@@ -173,16 +173,21 @@ https://dashboard.belacca.com/
 ```
 
 Traefik redirects HTTP to HTTPS and obtains the certificate with the committed
-Let's Encrypt DNS-01 resolver. Dex uses Google OIDC and its callback is
-`https://dex.belacca.com/callback`; the Headlamp and analytics proxies use Dex
-OIDC and permit only `belakkuz@gmail.com`.
+Let's Encrypt DNS-01 resolver. Dex uses the path-scoped issuer
+`https://dashboard.belacca.com/oauth2`; its Google callback reuses the existing
+authorized URI `https://dashboard.belacca.com/oauth2/callback`. The Headlamp
+proxy uses `/headlamp-auth` for its own callback, and the analytics proxy uses
+its stats callback. All proxies permit only `belakkuz@gmail.com`; `dex.belacca.com`
+remains a redirect alias.
 
 ```text
-https://dashboard.belacca.com/oauth2/callback
+https://dashboard.belacca.com/headlamp-auth/callback
 ```
 
 The Google OAuth client ID and secret are stored in the out-of-band
-`dex-google-oauth` Secret. Dex client secrets and OAuth2 Proxy cookie secrets are
+`dex-google-oauth` Secret. The existing Google application must retain
+`https://dashboard.belacca.com/oauth2/callback`; no new Google Cloud Console
+credential is required for the path-scoped Dex issuer. Dex client secrets and OAuth2 Proxy cookie secrets are
 stored in the out-of-band `dex-client-secrets`, `flux-web-client`,
 `headlamp-dex-oauth`, and `analytics-dex-oauth` Secrets. None is represented in
 Git. The Headlamp proxy allowlist contains only `belakkuz@gmail.com`; because

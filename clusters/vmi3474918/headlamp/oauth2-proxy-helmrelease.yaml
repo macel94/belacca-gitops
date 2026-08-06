@@ -38,8 +38,11 @@ spec:
         belakkuz@gmail.com
     extraArgs:
       provider: oidc
-      oidc-issuer-url: https://dex.belacca.com
-      redirect-url: https://dashboard.belacca.com/oauth2/callback
+      oidc-issuer-url: https://dashboard.belacca.com/oauth2
+      # Keep the existing Google-authorized /oauth2/callback path available to
+      # Dex; Headlamp's own proxy callback uses a distinct path.
+      redirect-url: https://dashboard.belacca.com/headlamp-auth/callback
+      proxy-prefix: /headlamp-auth
       scope: openid email profile
       reverse-proxy: true
       trusted-proxy-ip: 10.42.0.0/16

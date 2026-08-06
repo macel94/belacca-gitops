@@ -2,16 +2,18 @@
 
 The platform uses **Dex** as the shared OpenID Connect broker. Dex federates the
 existing Google OAuth application, and each application has a separate Dex
-client. The intended administrator is `belakkuz@gmail.com`.
+client. The canonical path-scoped issuer is
+`https://dashboard.belacca.com/oauth2`; `dex.belacca.com` is a TLS-protected
+redirect alias. The intended administrator is `belakkuz@gmail.com`.
 
 ## Public endpoints
 
 | Endpoint | SSO path | Backend authorization |
 |---|---|---|
-| `https://flux.belacca.com/` | Flux Web UI OAuth2/OIDC → Dex → Google | `flux-web-admin` for the Google email claim |
-| `https://dashboard.belacca.com/` | OAuth2 Proxy → Dex → Google | Headlamp's fixed in-cluster backend ServiceAccount is bound to `cluster-admin`; the proxy allowlist contains only the intended email |
-| `https://stats.belacca.com/` | OAuth2 Proxy → Dex → Google for the dashboard UI | A higher-priority direct Ingress sends public `/count`, `/count.js`, and `/status` paths to GoatCounter; dashboard pages still require its own application session cookie |
-| `https://dex.belacca.com/` | Dex issuer and Google connector callback | Not an application dashboard |
+| `https://flux.belacca.com/` | Flux Web UI OAuth2/OIDC → Dex (`https://dashboard.belacca.com/oauth2`) → Google | `flux-web-admin` for the Google email claim |
+| `https://dashboard.belacca.com/` | OAuth2 Proxy (`/headlamp-auth`) → Dex (`/oauth2`) → Google | Headlamp's fixed in-cluster backend ServiceAccount is bound to `cluster-admin`; the proxy allowlist contains only the intended email |
+| `https://stats.belacca.com/` | OAuth2 Proxy → Dex (`https://dashboard.belacca.com/oauth2`) → Google for the dashboard UI | A higher-priority direct Ingress sends public `/count`, `/count.js`, and `/status` paths to GoatCounter; dashboard pages still require its own application session cookie |
+| `https://dex.belacca.com/` | Redirect alias to the canonical Dex issuer | Not an application dashboard |
 
 The current Headlamp deployment uses its in-cluster mode, which authenticates
 Kubernetes API calls with one pod ServiceAccount. It cannot turn the browser's
@@ -48,15 +50,16 @@ sessions to expire.
 
 ## Google OAuth application
 
-The Google OAuth application used by the existing dashboard must authorize this
-additional redirect URI exactly:
+The existing Google OAuth application already authorizes the callback Dex uses
+for its Google connector:
 
 ```text
-https://dex.belacca.com/callback
+https://dashboard.belacca.com/oauth2/callback
 ```
 
-The old direct Google callback for the dashboard is no longer used by the active
-route, but can remain temporarily while rollback is validated. Dex's Google
+Dex then returns each relying party to its own callback (`flux.belacca.com`,
+`dashboard.belacca.com/headlamp-auth`, or `stats.belacca.com`). The old direct
+Google OAuth2 Proxy path is no longer the active Headlamp path. Dex's Google
 connector uses the existing client ID/secret and requests only profile/email
 identity data; no Google Workspace service-account group delegation is needed
 because RBAC is bound directly to the email claim.
@@ -70,6 +73,7 @@ kubectl -n dex get secret dex-google-oauth dex-client-secrets
 kubectl -n flux-system get secret flux-web-client
 kubectl -n headlamp get secret headlamp-dex-oauth
 kubectl -n analytics get secret analytics-dex-oauth
+curl -fsS https://dashboard.belacca.com/oauth2/.well-known/openid-configuration
 flux reconcile kustomization dex -n flux-system --with-source
 flux reconcile kustomization flux-web -n flux-system --with-source
 flux reconcile kustomization belacca-routing -n flux-system --with-source
