@@ -55,29 +55,9 @@ spec:
     - host: stats.belacca.com
       http:
         paths:
-          # These paths are used by the public portfolio collector and remain
-          # unauthenticated. The dashboard and all other paths use Dex SSO.
-          - path: /count
-            pathType: Exact
-            backend:
-              service:
-                name: goatcounter-direct
-                port:
-                  number: 80
-          - path: /count.js
-            pathType: Exact
-            backend:
-              service:
-                name: goatcounter-direct
-                port:
-                  number: 80
-          - path: /status
-            pathType: Exact
-            backend:
-              service:
-                name: goatcounter-direct
-                port:
-                  number: 80
+          # The authenticated dashboard and all other paths use Dex SSO. The
+          # public collector paths live in analytics-public-ingress.yaml with
+          # an explicit higher priority so Traefik cannot select this prefix.
           - path: /
             pathType: Prefix
             backend:

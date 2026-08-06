@@ -10,7 +10,7 @@ client. The intended administrator is `belakkuz@gmail.com`.
 |---|---|---|
 | `https://flux.belacca.com/` | Flux Web UI OAuth2/OIDC → Dex → Google | `flux-web-admin` for the Google email claim |
 | `https://dashboard.belacca.com/` | OAuth2 Proxy → Dex → Google | Headlamp's fixed in-cluster backend ServiceAccount is bound to `cluster-admin`; the proxy allowlist contains only the intended email |
-| `https://stats.belacca.com/` | OAuth2 Proxy → Dex → Google for the dashboard UI | GoatCounter's public `/count`, `/count.js`, and `/status` paths bypass the proxy; GoatCounter dashboard pages still require its own application session cookie |
+| `https://stats.belacca.com/` | OAuth2 Proxy → Dex → Google for the dashboard UI | A higher-priority direct Ingress sends public `/count`, `/count.js`, and `/status` paths to GoatCounter; dashboard pages still require its own application session cookie |
 | `https://dex.belacca.com/` | Dex issuer and Google connector callback | Not an application dashboard |
 
 The current Headlamp deployment uses its in-cluster mode, which authenticates

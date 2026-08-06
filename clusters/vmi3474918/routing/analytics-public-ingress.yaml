@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytics-public
+  namespace: analytics
+  labels:
+    belacca.com/project: analytics
+    belacca.com/component: collector
+  annotations:
+    # Keep these public collector/status routes ahead of the authenticated /
+    # prefix route in Traefik's Kubernetes Ingress provider.
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.priority: "200"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - stats.belacca.com
+  rules:
+    - host: stats.belacca.com
+      http:
+        paths:
+          - path: /count
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
+          - path: /count.js
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
+          - path: /status
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
