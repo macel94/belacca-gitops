@@ -16,9 +16,10 @@ Use these terms explicitly in issues, runbooks, and incident notes:
   for three native servers. The documented native server addresses include
   the native server addresses `169.58.143.41` and `169.58.143.42`; they are not the old production address.
   Native staging contains the cluster foundation, published route-less
-  application Kustomizations, and manually staged Traefik. The native root is
-  intentionally suspended, so no native portfolio, Pong, analytics, SSO,
-  observability, or other application workload is currently reconciled.
+  application Kustomizations, and Flux-managed Traefik. The native root is
+  reconciled, so route-less native portfolio and Pong workloads are live for
+  private staging validation; analytics, SSO, observability, and public routes
+  are not deployed there.
 - **Native cutover** is **not started**. Native staging is not an alternate
   old production public endpoint, and no old production rollback command should be
   run against it.
@@ -45,8 +46,9 @@ The following application and platform entries describe **old production**.
 
 Native staging has published application Flux paths for the route-less Pong
 and portfolio staging definitions in `native-applications.yaml`. The native
-root remains suspended, so these definitions and their GitRepository sources
-must not be read as evidence that application workloads are currently live.
+root and both child Kustomizations reconcile successfully. Their workloads are
+private ClusterIP staging only; this is not evidence of public route, TLS,
+SSO, analytics, or production-state readiness.
 
 ## Why child GitRepositories instead of submodules?
 
@@ -89,9 +91,9 @@ cluster delete` or PVC deletion commands.
 
 Native staging is separate from this layout. Its current scope is the Flux
 foundation, encrypted Secret interfaces/namespaces, Longhorn foundation,
-published route-less Pong/portfolio Kustomizations, and manually staged
-Traefik. The root is suspended, so it has no native application routing or
-currently deployed application workloads.
+published route-less Pong/portfolio Kustomizations, and Flux-managed Traefik.
+It has no native public application routing, ACME state, SSO, analytics, or
+production database/PVC ownership.
 
 The GHCR package for `francesco-belacca-site` is anonymously pullable, like the
 existing old production Pong packages. GoatCounter uses the pinned public
@@ -143,9 +145,8 @@ checks pass. See `MIGRATION.md` for the old production incident record and safe
 ownership procedure.
 
 Native staging is not part of this old-production application delivery flow.
-Its published route-less application definitions and manually staged Traefik
-must not be described as a live native application deployment while the root
-remains suspended.
+Its published route-less application definitions and Flux-managed Traefik are
+live private staging resources, not a public native production deployment.
 
 Publish and reconcile the old production GitOps commit before relying on old
 production root pruning. Flux's old production Kustomization must have pruning

@@ -9,9 +9,10 @@ Old production is the existing `k3d-pong` cluster, reconciled from
 **Native staging** is the separate `clusters/belacca-production/` tree for
 three native servers, including `169.58.143.41` and `169.58.143.42`.
 It currently contains the cluster foundation, published route-less Pong and
-portfolio Kustomizations, and manually staged Traefik. The native root remains
-suspended, so no native application workloads, public application routes,
-native SSO, or native observability are currently reconciled.
+portfolio Kustomizations, and Flux-managed Traefik. The native root and both
+application Kustomizations reconcile successfully: private ClusterIP Pong and
+portfolio staging workloads are live. Public application routes, native SSO,
+analytics, and native observability are not deployed.
 
 **Native cutover: not started.** Native staging is not a replacement root for
 old production. Do not redirect old production DNS, move old production Flux
@@ -183,12 +184,12 @@ part of this step.
 
 The native staging tree at `clusters/belacca-production/` contains its
 foundation, published route-less Pong and portfolio Kustomizations, and
-manually staged Traefik. It is a staging target for three native servers, not
-a cutover target. The native root remains suspended, so no application
-workloads are currently reconciled. In particular:
+Flux-managed Traefik. It is a staging target for three native servers, not a
+cutover target. The root and both application Kustomizations are Ready. In
+particular:
 
-- the published Pong and portfolio definitions have no public routes, ACME,
-  OIDC, or old-production state ownership;
+- the Pong and portfolio workloads are private ClusterIP staging resources with
+  no public routes, ACME, OIDC, or old-production state ownership;
 - no native analytics, dashboard, Dex, Flux Web UI, or observability workload
   is currently deployed;
 - no old production application inventory has been adopted by native staging;

@@ -15,10 +15,9 @@ addressed at `169.58.97.73`.
 
 **Native cutover: not started.** No old production workload inventory has been
 adopted by this tree. Route-less Pong and portfolio Kustomizations are
-published, but the native root is intentionally suspended and no native
-application workload is currently reconciled. Do not point old production DNS
-at the native server addresses or use old production rollback procedures
-against this cluster.
+published and Ready through the native root, but they are private ClusterIP
+staging workloads only. Do not point old production DNS at the native server
+addresses or use old production rollback procedures against this cluster.
 
 ## Current scope
 
@@ -32,14 +31,13 @@ Native staging currently contains:
 - published route-less Pong and portfolio Kustomizations in
   `native-applications.yaml`, sourced by `native-sources.yaml`.
 
-The root is intentionally suspended, so the published application definitions
-are not currently reconciled and no native application workload is live. They
-contain no public routes, ACME state, OIDC credentials, or old-production PVC
-ownership. The encrypted Secret files are interfaces for future reconciliation
-and are not proof that Dex, Headlamp, Flux Web UI, GoatCounter, analytics,
-observability, routing, or any other application is deployed on native staging.
-No native public DNS, application certificate, application SLO, backup
-guarantee, or notification coverage is established by this tree.
+The native root and the `pong`/`portfolio` child Kustomizations are Ready.
+Their workloads contain no public routes, ACME state, OIDC credentials, or
+old-production PVC ownership. The encrypted Secret files are interfaces for
+future consumers and are not proof that Dex, Headlamp, Flux Web UI, GoatCounter,
+analytics, observability, or public routing is deployed on native staging. No
+native public DNS, application certificate, application SLO, backup guarantee,
+or notification coverage is established by this tree.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -55,18 +53,19 @@ clusters/belacca-production/
 ├── longhorn/     native storage foundation; not yet an application migration
 ├── edge/         manually staged Traefik only
 ├── native-sources.yaml       published application GitRepositories
-└── native-applications.yaml  suspended route-less app Kustomizations
+└── native-applications.yaml  Ready route-less app Kustomizations
 ```
 
-The native root currently does not contain application repositories,
-application Kustomizations, old production routing, old production ACME PVC
-ownership, or old production database/PVC resources. Adding those requires a
-separate reviewed native cutover plan.
+The native root contains the two application GitRepositories and route-less
+application Kustomizations described above, but does not contain old production
+routing, old production ACME PVC ownership, or old production database/PVC
+resources. Adding those requires a separate reviewed native cutover plan.
 
 ## Safe inspection and render checks
 
-The following are render/inspection examples for native staging only. They do
-not apply resources or establish that workloads are running:
+The following are inspection examples for native staging only. They do not
+apply resources; the live workload status must be confirmed from Flux and
+Kubernetes directly:
 
 ```bash
 kubectl config use-context belacca-native
