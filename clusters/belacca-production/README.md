@@ -27,17 +27,22 @@ Native staging currently contains:
 - the SOPS/age-encrypted Secret interfaces and target namespaces under
   `secrets/`;
 - the Longhorn storage foundation under `longhorn/`;
-- manually staged Traefik under `edge/`; and
+- Flux-managed Traefik under `edge/`;
+- the cert-manager controller and CRDs under `cert-manager/`, with no ACME
+  consumers; and
 - published route-less Pong and portfolio Kustomizations in
   `native-applications.yaml`, sourced by `native-sources.yaml`.
 
 The native root and the `pong`/`portfolio` child Kustomizations are Ready.
 Their workloads contain no public routes, ACME state, OIDC credentials, or
-old-production PVC ownership. The encrypted Secret files are interfaces for
-future consumers and are not proof that Dex, Headlamp, Flux Web UI, GoatCounter,
-analytics, observability, or public routing is deployed on native staging. No
-native public DNS, application certificate, application SLO, backup guarantee,
-or notification coverage is established by this tree.
+old-production PVC ownership. The cert-manager child is only a reversible
+controller/CRD staging boundary: it has no Cloudflare Secret, DNS solver
+configuration, Certificate, Issuer, ClusterIssuer, public route, or DNS
+record. The encrypted Secret files are interfaces for future consumers and are
+not proof that Dex, Headlamp, Flux Web UI, GoatCounter, analytics,
+observability, or public routing is deployed on native staging. No native
+public DNS, application certificate, application SLO, backup guarantee, or
+notification coverage is established by this tree.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -52,14 +57,18 @@ clusters/belacca-production/
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
 ├── edge/         Flux-managed Traefik, no application routes
+├── cert-manager/ cert-manager controller/CRDs only; no ACME consumers
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  Ready route-less app Kustomizations
 ```
 
 The native root contains the two application GitRepositories and route-less
-application Kustomizations described above, but does not contain old production
-routing, old production ACME PVC ownership, or old production database/PVC
-resources. Adding those requires a separate reviewed native cutover plan.
+application Kustomizations described above, plus the cert-manager controller
+and CRDs without any ACME consumer configuration. It does not contain old
+production routing, old production ACME PVC ownership, or old production
+database/PVC resources. Adding Cloudflare credentials, DNS solvers, Issuers,
+Certificates, routes, or DNS records requires a separate reviewed native
+cutover plan.
 
 ## Safe inspection and render checks
 
@@ -89,7 +98,8 @@ application target, operators must separately review and validate:
 3. application renders and ownership boundaries for each workload;
 4. protected old production PVC and ACME rollback procedures;
 5. DNS, certificate, SSO, notification, backup, observability, and public-route
-   contracts; and
+   contracts, including an out-of-band Cloudflare credential and narrowly
+   scoped DNS-01 plan; and
 6. a staged ownership transfer with pruning disabled before any old production
    resource is moved.
 
