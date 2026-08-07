@@ -1,0 +1,29 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: cloudnativepong
+  namespace: flux-system
+  labels:
+    belacca.com/owner: native-root
+    belacca.com/project: pong
+    belacca.com/source: application
+spec:
+  interval: 1m
+  ref:
+    branch: main
+  url: https://github.com/macel94/cloudnativepong.git
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: francesco-belacca-site
+  namespace: flux-system
+  labels:
+    belacca.com/owner: native-root
+    belacca.com/project: portfolio
+    belacca.com/source: application
+spec:
+  interval: 1m
+  ref:
+    branch: main
+  url: https://github.com/macel94/francesco-belacca-site.git

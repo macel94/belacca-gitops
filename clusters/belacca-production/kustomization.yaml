@@ -4,3 +4,6 @@ resources:
   - flux-system
   - secrets
   - longhorn
+  - edge
+  - native-sources.yaml
+  - native-applications.yaml

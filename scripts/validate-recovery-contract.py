@@ -27,13 +27,13 @@ REQUIRED_CONTRACT_MARKERS = (
     "pong-api-data",
 )
 REQUIRED_DRILL_HEADINGS = (
-    "## Gateway failure",
-    "## Static service failure",
-    "## Lobby/API failure",
-    "## Dynamic room failure",
-    "## Flux reconciliation failure",
-    "## NetworkPolicy failure",
-    "## Rollback command index",
+    "## Old production gateway failure",
+    "## Old production static service failure",
+    "## Old production lobby/API failure",
+    "## Old production dynamic room failure",
+    "## Old production Flux reconciliation failure",
+    "## Old production NetworkPolicy failure",
+    "## Old production rollback command index",
 )
 
 

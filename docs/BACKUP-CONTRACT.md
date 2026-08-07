@@ -1,35 +1,43 @@
-# Pong backup and restore contract
+# Old production Pong backup and restore contract
 
-This is a contract for a future operator-managed backup service, not a claim
-that object storage or scheduled backups exist today. The only currently
-implemented recovery capability is an operator-created local SQLite artifact
-and an opt-in restore rehearsal in the `cloudnativepong` repository. No bucket,
-CSI snapshot, CronJob, access credential, encryption key, or external storage
-endpoint is created by this repository. The checked-in helper does not upload
-backups or contact object storage.
+This is a contract for a future operator-managed backup service for **old
+production**, not a claim that object storage or scheduled backups exist today.
+Old production is `k3d-pong`, reconciled from `clusters/vmi3474918/`, with public
+address `169.58.97.73`. The only currently implemented recovery capability is
+an operator-created local SQLite artifact and an opt-in restore rehearsal in
+the `cloudnativepong` repository. No bucket, CSI snapshot, CronJob, access
+credential, encryption key, or external storage endpoint is created by this
+repository. The checked-in helper does not upload backups or contact object
+storage.
 
-## Protected source and target
+**Native staging is not a backup or restore target.** Native staging is
+`clusters/belacca-production/` on three native servers, including
+`169.58.143.41` and `169.58.143.42`; it currently contains the foundation plus
+manually staged Traefik only. Native applications are not deployed and native
+cutover is not started.
+
+## Old production protected source and target
 
 | Item | Contract |
 |---|---|
-| Source workload | `pong/pong-api` with one replica and `--db-path=/data/pong.db` |
-| Source PVC | `pong/pong-api-data`, `ReadWriteOnce`, Flux prune-disabled, never deleted for backup/recovery |
-| Logical database | `/data/pong.db` |
+| Source workload | Old production `pong/pong-api` with one replica and `--db-path=/data/pong.db` |
+| Source PVC | Old production `pong/pong-api-data`, `ReadWriteOnce`, Flux prune-disabled, never deleted for backup/recovery |
+| Logical database | `/data/pong.db` in old production |
 | Recovery target | A copied database in a newly created disposable `pong-restore-*` k3d cluster/PVC |
-| Production target | Never overwrite `k3d-pong`, `pong-api-data`, or `/data/pong.db` during a rehearsal |
+| Old production target | Never overwrite old production `k3d-pong`, `pong-api-data`, or `/data/pong.db` during a rehearsal |
 
-A source copy must be made during an approved maintenance window with the API
-stopped or otherwise quiesced. A byte-for-byte read of a mounted live SQLite
-file is not a backup procedure. The existing helper uses SQLite's online backup
-API after the operator has obtained a local copy and runs `PRAGMA
-integrity_check` on the source, backup, and temporary restored database.
+A source copy must be made during an approved old production maintenance window
+with the API stopped or otherwise quiesced. A byte-for-byte read of a mounted
+live SQLite file is not a backup procedure. The existing helper uses SQLite's
+online backup API after the operator has obtained a local copy and runs
+`PRAGMA integrity_check` on the source, backup, and temporary restored database.
 
-## Object-storage contract (not provisioned)
+## Old production object-storage contract (not provisioned)
 
-An approved S3-compatible object store is an external prerequisite. The
-operator must provision the bucket, TLS endpoint, access policy, and lifecycle
-policy out of band. GitOps must not create a bucket, guess a provider, upload a
-backup, or put credentials in this repository.
+An approved S3-compatible object store is an external prerequisite for old
+production. The operator must provision the bucket, TLS endpoint, access
+policy, and lifecycle policy out of band. GitOps must not create a bucket,
+guess a provider, upload a backup, or put credentials in this repository.
 
 Required provider behavior:
 
@@ -48,11 +56,11 @@ Required provider behavior:
   least **12 monthly verified backups**. Lifecycle deletion is not a recovery
   action and must not run during an incident without an approved exception.
 - Each object is accompanied by metadata or a sidecar manifest containing the
-  UTC creation time, source SHA-256, SQLite integrity result, source Git/Flux
-  revision, deployed image digests, and operator/runbook reference. Do not put
-  player names, tokens, or request logs in the artifact.
+  UTC creation time, source SHA-256, SQLite integrity result, old production
+  source Git/Flux revision, deployed image digests, and operator/runbook
+  reference. Do not put player names, tokens, or request logs in the artifact.
 
-## Encryption contract (not provisioned)
+## Old production encryption contract (not provisioned)
 
 - TLS protects the upload and download path.
 - Objects are encrypted at rest with the provider's approved KMS/SSE mechanism;
@@ -64,29 +72,30 @@ Required provider behavior:
 - A successful `integrity_check` is not proof that encryption, retention, or
   object immutability is configured.
 
-## Secret-name and key contract (names only; no values in Git)
+## Old production Secret-name and key contract (names only; no values in Git)
 
 These are runtime interfaces, not Secret manifests. The names are stable so a
-future operator-run Job or external backup agent can consume them without
-changing application code. Secret values, URLs, bucket names, key IDs, and
-credentials must be supplied by a protected secret manager or private operator
-procedure.
+future old production operator-run Job or external backup agent can consume
+them without changing application code. Secret values, URLs, bucket names, key
+IDs, and credentials must be supplied by a protected secret manager or private
+operator procedure.
 
 | Namespace | Secret name | Required keys | Purpose |
 |---|---|---|---|
-| `pong` | `pong-backup-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | S3-compatible endpoint and write identity; values are external |
+| `pong` | `pong-backup-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | S3-compatible endpoint and old production write identity; values are external |
 | `pong` | `pong-backup-encryption` | `kms-key-id`, `encryption-context` | Approved KMS/SSE configuration; values are external |
-| `pong` | `pong-backup-restore-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | Separate least-privilege read identity for restore verification |
+| `pong` | `pong-backup-restore-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | Separate least-privilege read identity for old production restore verification |
 
 Do not create empty placeholder Secrets: an empty Secret looks provisioned but
-cannot establish a backup guarantee. Before any automated job is introduced,
-validate that the external values exist, the endpoint is approved, the bucket
-policy and KMS policy are tested, and the operator can retrieve the values
-without exposing them in shell history, CI logs, Git, or incident tickets.
+cannot establish an old production backup guarantee. Before any automated job
+is introduced, validate that the external values exist, the endpoint is
+approved, the bucket policy and KMS policy are tested, and the operator can
+retrieve the values without exposing them in shell history, CI logs, Git, or
+incident tickets.
 
-## Automation gate and acceptance test
+## Old production automation gate and acceptance test
 
-No CronJob is committed until all of the following are true:
+No CronJob is committed for old production until all of the following are true:
 
 1. The object store and lifecycle/immutability policy are provisioned and
    independently reviewed.
@@ -96,23 +105,28 @@ No CronJob is committed until all of the following are true:
 4. A verified upload and a verified download are performed in a disposable
    environment.
 5. `cloudnativepong/scripts/restore-rehearsal.sh` passes using a downloaded
-   copy, with the existing `k3d-pong` context absent from the operation.
+   copy, with the existing old production `k3d-pong` context absent from the
+   operation.
 6. Alerting for missed backup age, failed integrity checks, upload failures, and
-   retention-policy drift has an acknowledged operator destination.
+   retention-policy drift has an acknowledged old production operator
+destination.
 
-Until these prerequisites are met, the supported procedure is manual: copy the
-quiesced database to protected local storage, run `backup-restore.sh backup` and
-`verify`, and run the isolated rehearsal. This establishes neither off-host
-retention nor an automated RPO.
+Until these prerequisites are met, the supported old production procedure is
+manual: copy the quiesced database to protected local storage, run
+`backup-restore.sh backup` and `verify`, and run the isolated rehearsal. This
+establishes neither off-host retention nor an automated RPO.
 
-## Operator rollback and emergency rules
+## Old production rollback and emergency rules
 
 - A failed rehearsal is rolled back by allowing the script to delete only its
   own `pong-restore-*` cluster, or by running the printed exact cleanup command.
-- A failed application rollout is rolled back through the application image/tag
-  commit and Flux reconciliation; do not restore the live PVC in place.
+- A failed old production application rollout is rolled back through the
+  application image/tag commit and old production Flux reconciliation; do not
+  restore the live PVC in place.
 - Never run `k3d cluster delete pong`, `k3d cluster delete k3d-pong`,
   `kubectl delete pvc pong-api-data`, or a live `kubectl cp` into
-  `/data/pong.db` as recovery.
+  `/data/pong.db` as old production recovery.
 - If an artifact fails integrity verification, quarantine it and use a different
-  verified artifact. Do not “repair” it in the production PVC.
+  verified artifact. Do not “repair” it in the old production PVC.
+- Do not use native staging `.41`/`.42` hosts as a substitute restore target or
+  claim that native foundation storage is old production backup coverage.
