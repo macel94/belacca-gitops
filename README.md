@@ -7,15 +7,15 @@ projects under `belacca.com` on the existing `k3d-pong` Kubernetes cluster.
 
 | Repository | Runtime | Public host | Flux path |
 |---|---|---|---|
-| [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, WebSockets, dynamic room Pods | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/server` |
-| [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static NGINX portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
+| [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, Caddy gateway, Distroless rooms, WebSocket fallback, opt-in WebTransport | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/server` |
+| [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static Caddy portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
 | GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
 
 The canonical site inventory, redirect aliases, operator surfaces, DNS records,
 and monitoring boundaries are maintained in [`docs/SITES.md`](docs/SITES.md).
 The canonical portfolio URL is `https://francesco.belacca.com/`; `belacca.com`,
 `www.belacca.com`, and `www.francesco.belacca.com` permanently redirect to it.
-The canonical Pong URL is `https://pong.belacca.com/`.
+The canonical Pong URL is `https://pong.belacca.com/`. Pong currently serves its public real-time journey through the WebSocket-compatible path. Native WebTransport support is implemented but remains opt-in until the cluster has a reviewed UDP-capable public service, TLS configuration, and matching network policy.
 
 ## Why child GitRepositories instead of submodules?
 

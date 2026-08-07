@@ -85,8 +85,8 @@
         "status": "proposed",
         "target": "99.5%",
         "window": "30d",
-        "indicator": "Successful HTTPS GET /api/rooms plus successful create, join, and WebSocket synthetic journeys",
-        "measurement": "The scheduled GitHub Actions runner executes the homepage, API, and two-player WebSocket journey against the canonical public URL; long-term SLO history is not yet aggregated"
+        "indicator": "Successful HTTPS GET /api/rooms plus successful create, join, and two-player real-time synthetic journey",
+        "measurement": "The scheduled GitHub Actions runner currently executes the homepage, API, and two-player WebSocket-compatible journey against the canonical public URL; native WebTransport is optional and long-term SLO history is not yet aggregated"
       },
       "rto": "4h",
       "rpo": "24h target (manual verified SQLite backup; isolated restore rehearsal available; object-storage automation is not deployed)",

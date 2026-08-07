@@ -55,7 +55,9 @@ Metric names are fixed and have no labels. Current groups include:
 - `pong_rooms_active`
 - `pong_rooms_waiting`
 - `pong_rooms_playing`
-- `pong_websockets_active`
+- `pong_websockets_active` (the compatibility WebSocket path)
+- `pong_webtransports_active` (optional native HTTP/3 path)
+- `pong_webtransport_*`
 - `pong_sqlite_*`
 - `pong_room_*`
 - `pong_websocket_*`
@@ -74,7 +76,7 @@ metric series is a diagnostic gap, not proof that reconciliation is healthy.
 `prometheus.rules.yml` contains proposed recording rules for:
 
 - Pong request/error rates
-- active rooms and WebSockets
+- active rooms, WebSocket compatibility sessions, and optional WebTransport sessions
 - Flux Ready-condition failures
 - fast and slow candidate burn-rate alerts
 
@@ -92,7 +94,9 @@ pong_rooms_active
 pong_rooms_waiting
 pong_rooms_playing
 pong_websockets_active
+pong_webtransports_active
 sum(rate(pong_websocket_proxy_dial_failure_total[5m]))
+sum(rate(pong_webtransport_proxy_dial_failure_total[5m]))
 sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
 ```
 

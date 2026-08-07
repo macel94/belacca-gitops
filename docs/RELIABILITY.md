@@ -41,7 +41,7 @@ backup credential, or scheduled backup Job is provisioned here.
 | Service | Initial target | SLI candidate | RTO | RPO |
 |---|---:|---|---:|---:|
 | Portfolio | 99.5% / 30d | External HTTPS `/health` and homepage success | 4h | N/A |
-| Pong | 99.5% / 30d | `/api/rooms` plus create/join/WebSocket synthetic success | 4h | 24h target, manual backup |
+| Pong | 99.5% / 30d | `/api/rooms` plus create/join/WebSocket-compatible real-time synthetic success | 4h | 24h target, manual backup |
 | Analytics | 99.0% / 30d | `/status` plus same-origin `/count` success | 4h | 24h target, manual backup |
 | Dashboard | 99.0% / 30d | Authenticated HTTPS probe | 4h | GitOps is versioned; OAuth Secret is operator-managed |
 
@@ -74,8 +74,10 @@ failure without checking the separate analytics SLO.
 
 ## Pong
 
-**Symptoms:** the lobby cannot list/create/join rooms, or WebSocket sessions
-fail.
+**Symptoms:** the lobby cannot list/create/join rooms, or the WebSocket-compatible
+real-time session fails. Native WebTransport is an optional UDP path and should
+only be investigated when its separate public service and TLS configuration are
+enabled.
 
 1. Check routing and the gateway: `kubectl -n pong get ingress,svc,pods`.
 2. Check `kubectl -n flux-system get kustomization pong` and recent events.
@@ -90,7 +92,9 @@ fail.
 
 The room Pod network path is intentionally not fully default-denied here: its
 creation is dynamic and its callback/WebSocket dependencies require an explicit
-application contract. The policy file documents the parts that are isolated.
+application contract. Native WebTransport is not publicly exposed by the default
+manifests; enabling it requires a separately reviewed UDP service, TLS material,
+and policy rule. The policy file documents the parts that are isolated.
 
 ## Analytics
 

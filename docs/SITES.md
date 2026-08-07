@@ -12,7 +12,7 @@ to the `k3d-pong` cluster by Flux.
 | [`belacca.com`](https://belacca.com/) | Apex alias | Permanent HTTPS redirect to `https://francesco.belacca.com/`, preserving the path | Platform routing |
 | [`www.belacca.com`](https://www.belacca.com/) | Apex `www` alias | Permanent HTTPS redirect to `https://francesco.belacca.com/`, preserving the path | Platform routing |
 | [`www.francesco.belacca.com`](https://www.francesco.belacca.com/) | Portfolio `www` alias | Permanent HTTPS redirect to `https://francesco.belacca.com/`, preserving the path | Platform routing |
-| [`pong.belacca.com`](https://pong.belacca.com/) | Cloud Native Pong | Public multiplayer game, API, and WebSocket journey | `macel94/cloudnativepong` |
+| [`pong.belacca.com`](https://pong.belacca.com/) | Cloud Native Pong | Public multiplayer game, API, and WebSocket-compatible real-time journey; native WebTransport remains opt-in | `macel94/cloudnativepong` |
 | [`stats.belacca.com`](https://stats.belacca.com/) | GoatCounter analytics | `/count`, `/count.js`, and `/status` are public collector/status paths; the dashboard is protected by Dex/OAuth2 Proxy and then GoatCounter's own session | GitOps analytics tree |
 | [`dashboard.belacca.com`](https://dashboard.belacca.com/) | Headlamp operations dashboard | Protected by OAuth2 Proxy, Dex, and Google; not a public application | GitOps Headlamp tree |
 | [`flux.belacca.com`](https://flux.belacca.com/) | Flux Web UI | Protected Flux operations UI using Dex/Google authentication | GitOps Flux Web UI tree |
@@ -30,6 +30,7 @@ supported public site is implied by the cluster configuration.
 - `belacca.com`, `www.belacca.com`, and `www.francesco.belacca.com` return a
   permanent redirect to that origin and retain the request path.
 - `https://pong.belacca.com/` is the only canonical Pong origin.
+- The public Pong synthetic currently validates the WebSocket-compatible journey. WebTransport is documented and implemented as an opt-in path, not as a deployed public ingress guarantee.
 - `https://stats.belacca.com/` is both the analytics collector origin and the
   protected GoatCounter dashboard origin; its public paths must remain available
   without authentication.
@@ -66,7 +67,7 @@ The external status publisher currently probes only these application surfaces:
 
 - `francesco.belacca.com` homepage and `/health`;
 - `pong.belacca.com` homepage, `/health`, API, room lifecycle, and two-player
-  WebSocket journey; and
+  WebSocket-compatible journey; and
 - `stats.belacca.com/status` plus the analytics endpoint contract.
 
 The redirect aliases are verified as routing behavior, not as independent

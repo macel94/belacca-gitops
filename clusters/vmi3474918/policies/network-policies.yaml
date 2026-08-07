@@ -1,7 +1,9 @@
 # These policies target only workloads with selectors verified in the checked-in
 # manifests and live cluster. They deliberately do not select dynamic room Pods:
 # room-to-lobby callbacks and room WebSockets need an explicit application-level
-# contract before isolation can safely cover them.
+# contract before isolation can safely cover them. Native WebTransport is not
+# publicly exposed by the default Pong manifests; any future UDP ingress needs
+# a separately reviewed policy and load-balancer contract.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
