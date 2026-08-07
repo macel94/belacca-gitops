@@ -1,0 +1,52 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+  labels:
+    belacca.com/component: storage
+spec:
+  interval: 15m
+  timeout: 15m
+  releaseName: longhorn
+  chart:
+    spec:
+      chart: longhorn
+      version: 1.12.0
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn
+        namespace: longhorn-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    global:
+      tolerations: []
+    networkPolicies:
+      enabled: false
+    service:
+      ui:
+        type: ClusterIP
+    persistence:
+      # Do not replace the native k3s local-path default until Longhorn has
+      # passed preflight and a dedicated migration has been reviewed.
+      createStorageClass: true
+      defaultClass: false
+      defaultClassReplicaCount: 3
+      volumeBindingMode: WaitForFirstConsumer
+      reclaimPolicy: Retain
+    defaultSettings:
+      defaultReplicaCount: '{"v1":"3","v2":"3"}'
+      defaultDataLocality: disabled
+      replicaAutoBalance: best-effort
+      v2DataEngine: false
+      storageOverProvisioningPercentage: 100
+      storageMinimalAvailablePercentage: 15
+    longhornUI:
+      replicas: 2
