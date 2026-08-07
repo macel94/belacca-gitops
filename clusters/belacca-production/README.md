@@ -51,7 +51,7 @@ clusters/belacca-production/
 ├── flux-system/  Flux controllers and native root bootstrap
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
-├── edge/         manually staged Traefik only
+├── edge/         Flux-managed Traefik, no application routes
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  Ready route-less app Kustomizations
 ```
