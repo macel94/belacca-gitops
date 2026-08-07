@@ -14,26 +14,32 @@ The old production environment remains the existing
 addressed at `169.58.97.73`.
 
 **Native cutover: not started.** No old production workload inventory has been
-adopted by this tree, and no native application deployment is claimed here.
-Do not point old production DNS at the native server addresses or use old
-production rollback procedures against this cluster.
+adopted by this tree. Route-less Pong and portfolio Kustomizations are
+published, but the native root is intentionally suspended and no native
+application workload is currently reconciled. Do not point old production DNS
+at the native server addresses or use old production rollback procedures
+against this cluster.
 
 ## Current scope
 
-Native staging currently contains only:
+Native staging currently contains:
 
 - the Flux v2 bootstrap and controllers under `flux-system/`;
 - the SOPS/age-encrypted Secret interfaces and target namespaces under
   `secrets/`;
-- the Longhorn storage foundation under `longhorn/`; and
-- manually staged Traefik under `edge/`.
+- the Longhorn storage foundation under `longhorn/`;
+- manually staged Traefik under `edge/`; and
+- published route-less Pong and portfolio Kustomizations in
+  `native-applications.yaml`, sourced by `native-sources.yaml`.
 
-This is a foundation plus manually staged Traefik only. The encrypted Secret
-files are interfaces for future reconciliation and are not proof that Dex,
-Headlamp, Flux Web UI, GoatCounter, portfolio, Pong, observability, routing, or
-any other application is deployed on native staging. No native public DNS,
-application certificate, application SLO, backup guarantee, or notification
-coverage is established by this tree.
+The root is intentionally suspended, so the published application definitions
+are not currently reconciled and no native application workload is live. They
+contain no public routes, ACME state, OIDC credentials, or old-production PVC
+ownership. The encrypted Secret files are interfaces for future reconciliation
+and are not proof that Dex, Headlamp, Flux Web UI, GoatCounter, analytics,
+observability, routing, or any other application is deployed on native staging.
+No native public DNS, application certificate, application SLO, backup
+guarantee, or notification coverage is established by this tree.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -47,7 +53,9 @@ clusters/belacca-production/
 ├── flux-system/  Flux controllers and native root bootstrap
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
-└── edge/         manually staged Traefik only
+├── edge/         manually staged Traefik only
+├── native-sources.yaml       published application GitRepositories
+└── native-applications.yaml  suspended route-less app Kustomizations
 ```
 
 The native root currently does not contain application repositories,

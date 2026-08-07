@@ -8,9 +8,10 @@ Old production is the existing `k3d-pong` cluster, reconciled from
 
 **Native staging** is the separate `clusters/belacca-production/` tree for
 three native servers, including `169.58.143.41` and `169.58.143.42`.
-It currently contains the cluster foundation plus manually staged Traefik
-only. No native application workloads, public application routes, native SSO,
-or native observability are deployed.
+It currently contains the cluster foundation, published route-less Pong and
+portfolio Kustomizations, and manually staged Traefik. The native root remains
+suspended, so no native application workloads, public application routes,
+native SSO, or native observability are currently reconciled.
 
 **Native cutover: not started.** Native staging is not a replacement root for
 old production. Do not redirect old production DNS, move old production Flux
@@ -180,12 +181,16 @@ part of this step.
 
 ## Native staging boundary — cutover not started
 
-The native staging tree at `clusters/belacca-production/` is currently limited
-to its foundation and manually staged Traefik. It is a staging target for
-three native servers, not an application migration target. In particular:
+The native staging tree at `clusters/belacca-production/` contains its
+foundation, published route-less Pong and portfolio Kustomizations, and
+manually staged Traefik. It is a staging target for three native servers, not
+a cutover target. The native root remains suspended, so no application
+workloads are currently reconciled. In particular:
 
-- no native portfolio, Pong, analytics, dashboard, Dex, Flux Web UI, or
-  observability application deployment is claimed here;
+- the published Pong and portfolio definitions have no public routes, ACME,
+  OIDC, or old-production state ownership;
+- no native analytics, dashboard, Dex, Flux Web UI, or observability workload
+  is currently deployed;
 - no old production application inventory has been adopted by native staging;
 - no old production DNS record points to the native `.41`/`.42` hosts; and
 - no native cutover date, ownership transfer, or rollback target has started.
