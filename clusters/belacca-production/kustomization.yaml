@@ -6,5 +6,8 @@ resources:
   - longhorn
   - edge
   - cert-manager
+  - tls
+  - routing
   - native-sources.yaml
   - native-applications.yaml
+  - native-platform-applications.yaml

@@ -14,10 +14,11 @@ The old production environment remains the existing
 addressed at `169.58.97.73`.
 
 **Native cutover: not started.** No old production workload inventory has been
-adopted by this tree. Route-less Pong and portfolio Kustomizations are
-published and Ready through the native root, but they are private ClusterIP
-staging workloads only. Do not point old production DNS at the native server
-addresses or use old production rollback procedures against this cluster.
+adopted by this tree. Pong and portfolio Kustomizations are published through
+the native root, with native-only Traefik routes and cert-manager Certificates
+now staged for those deployed services. Do not point old production DNS at the
+native server addresses or use old production rollback procedures against this
+cluster.
 
 ## Current scope
 
@@ -28,21 +29,20 @@ Native staging currently contains:
   `secrets/`;
 - the Longhorn storage foundation under `longhorn/`;
 - Flux-managed Traefik under `edge/`;
-- the cert-manager controller and CRDs under `cert-manager/`, with no ACME
-  consumers; and
-- published route-less Pong and portfolio Kustomizations in
-  `native-applications.yaml`, sourced by `native-sources.yaml`.
+- the cert-manager controller and CRDs under `cert-manager/`, plus the native
+  Cloudflare DNS-01 ClusterIssuer and application Certificates under `tls/`;
+  and
+- published Pong and portfolio Kustomizations plus their native Traefik routes
+  under `routing/`, sourced by `native-sources.yaml`.
 
 The native root and the `pong`/`portfolio` child Kustomizations are Ready.
-Their workloads contain no public routes, ACME state, OIDC credentials, or
-old-production PVC ownership. The cert-manager child is only a reversible
-controller/CRD staging boundary: it has no Cloudflare Secret, DNS solver
-configuration, Certificate, Issuer, ClusterIssuer, public route, or DNS
-record. The encrypted Secret files are interfaces for future consumers and are
-not proof that Dex, Headlamp, Flux Web UI, GoatCounter, analytics,
-observability, or public routing is deployed on native staging. No native
-public DNS, application certificate, application SLO, backup guarantee, or
-notification coverage is established by this tree.
+Their workloads have no old-production PVC ownership. Native cert-manager
+now owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer,
+and Certificates only for the deployed portfolio and Pong services. Native
+Traefik routes only target those two services. Dex, Headlamp, Flux Web UI,
+GoatCounter, analytics, observability, and their hostnames remain undeployed.
+No public DNS changes, application SLO, backup guarantee, or notification
+coverage is established by this tree.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -56,19 +56,20 @@ clusters/belacca-production/
 ├── flux-system/  Flux controllers and native root bootstrap
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
-├── edge/         Flux-managed Traefik, no application routes
-├── cert-manager/ cert-manager controller/CRDs only; no ACME consumers
+├── edge/         Flux-managed Traefik
+├── cert-manager/ cert-manager controller and CRDs
+├── tls/          encrypted Cloudflare DNS-01 and app Certificates
+├── routing/      native portfolio and Pong Traefik routes
 ├── native-sources.yaml       published application GitRepositories
-└── native-applications.yaml  Ready route-less app Kustomizations
+└── native-applications.yaml  native app Kustomizations
 ```
 
-The native root contains the two application GitRepositories and route-less
-application Kustomizations described above, plus the cert-manager controller
-and CRDs without any ACME consumer configuration. It does not contain old
-production routing, old production ACME PVC ownership, or old production
-database/PVC resources. Adding Cloudflare credentials, DNS solvers, Issuers,
-Certificates, routes, or DNS records requires a separate reviewed native
-cutover plan.
+The native root contains the two application GitRepositories and application
+Kustomizations described above, plus cert-manager DNS-01 resources in `tls/`
+and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
+not contain old production routing, old production ACME PVC ownership, or old
+production database/PVC resources. It does not change public DNS. Additional
+hostnames or services require a separate reviewed native cutover plan.
 
 ## Safe inspection and render checks
 

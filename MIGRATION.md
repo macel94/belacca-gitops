@@ -183,32 +183,33 @@ part of this step.
 ## Native staging boundary — cutover not started
 
 The native staging tree at `clusters/belacca-production/` contains its
-foundation, published route-less Pong and portfolio Kustomizations,
-Flux-managed Traefik, and a cert-manager controller/CRD staging boundary. It
-is a staging target for three native servers, not a cutover target. The root
-and both application Kustomizations are Ready. In particular:
+foundation, published Pong and portfolio Kustomizations, Flux-managed Traefik,
+and native cert-manager DNS-01/TLS and routing resources. It is a staging
+target for three native servers, not a cutover target. The root and both
+application Kustomizations are Ready. In particular:
 
-- the Pong and portfolio workloads are private ClusterIP staging resources with
-  no public routes, ACME, OIDC, or old-production state ownership;
-- cert-manager is installed only as a reversible controller/CRD boundary: no
-  Cloudflare credential, DNS solver, DNS record, public route, Certificate,
-  Issuer, or ClusterIssuer is present;
+- native routes target only the deployed portfolio and Pong Services, with
+  explicit cert-manager TLS Secrets and no old-production state ownership;
+- the Cloudflare DNS-01 credential is SOPS/age-encrypted in Git, while its
+  plaintext remains out of band; no public DNS record is changed by this tree;
 - no native analytics, dashboard, Dex, Flux Web UI, or observability workload
-  is currently deployed;
+  is currently deployed, so their hostnames have no native Certificates or
+  routes;
 - no old production application inventory has been adopted by native staging;
 - no old production DNS record points to the native `.41`/`.42` hosts; and
 - no native cutover date, ownership transfer, or rollback target has started.
 
 A future native cutover requires a separate reviewed sequence: establish the
 native cluster and storage/network prerequisites, render and validate each
-application tree, stage ownership with pruning disabled, define and validate
-an out-of-band Cloudflare DNS-01 credential plan, add ACME consumers only
-through a reviewed change, verify protected state and certificate handling,
-and only then plan DNS and workload migration. Removing the cert-manager child
-from the native root is the rollback boundary for this staging step; its CRDs
-are configured to be kept, and no certificate state is owned by this tree.
-Until that work is explicitly completed, old production remains the only
-application production environment.
+application tree, stage ownership with pruning disabled, validate the
+out-of-band Cloudflare DNS-01 credential and native certificate handling,
+verify protected state and route behavior, and only then plan DNS and workload
+migration. The native TLS/routing directories remain limited to the deployed
+portfolio and Pong targets; adding other services or changing public DNS is a
+separate gate. Removing the cert-manager child from the native root is the
+rollback boundary for the controller staging step; its CRDs are configured to
+be kept. Until that work is explicitly completed, old production remains the
+only application production environment.
 
 ## Old production rollback
 

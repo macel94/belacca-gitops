@@ -1,0 +1,40 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: portfolio-tls
+  namespace: portfolio
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: portfolio
+    belacca.com/stage: native-staging
+spec:
+  secretName: portfolio-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - francesco.belacca.com
+    - belacca.com
+    - www.belacca.com
+    - www.francesco.belacca.com
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pong-tls
+  namespace: pong
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: pong
+    belacca.com/stage: native-staging
+spec:
+  secretName: pong-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - pong.belacca.com

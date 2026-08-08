@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - rbac.yaml
+  - helmrepository.yaml
+  - helmrelease.yaml
+  - oauth2-proxy-helmrepository.yaml
+  - oauth2-proxy-helmrelease.yaml
+  - secret-headlamp-dex-oauth.yaml

@@ -36,6 +36,38 @@ spec:
       kind: HelmRelease
       name: cert-manager
       namespace: cert-manager
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: pong
+      namespace: flux-system
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: portfolio
+      namespace: flux-system
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: native-dex
+      namespace: flux-system
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: native-analytics
+      namespace: flux-system
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: native-headlamp
+      namespace: flux-system
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: native-flux-web
+      namespace: flux-system
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: portfolio-tls
+      namespace: portfolio
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: pong-tls
+      namespace: pong
   decryption:
     provider: sops
     secretRef:

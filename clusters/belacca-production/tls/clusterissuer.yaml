@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-cloudflare
+  labels:
+    belacca.com/component: tls
+    belacca.com/stage: native-staging
+spec:
+  acme:
+    email: francesco.belacca@hotmail.it
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-cloudflare-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cert-manager-cloudflare
+              key: CLOUDFLARE_DNS_API_TOKEN
+---

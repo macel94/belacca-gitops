@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: dex
+  namespace: dex
+  labels:
+    belacca.com/stage: native-staging
+    belacca.com/project: platform
+    belacca.com/component: identity
+spec:
+  interval: 1h
+  url: https://charts.dexidp.io
