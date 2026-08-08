@@ -1,4 +1,4 @@
-# Old production to native staging migration runbook
+# Old production to native production migration runbook
 
 ## Status and vocabulary
 
@@ -6,18 +6,17 @@ The historical application ownership move into **old production** is complete.
 Old production is the existing `k3d-pong` cluster, reconciled from
 `clusters/vmi3474918/`, with public address `169.58.97.73`.
 
-**Native staging** is the separate `clusters/belacca-production/` tree for
+**Native production** is the separate `clusters/belacca-production/` tree for
 three native servers, including `169.58.143.41` and `169.58.143.42`.
-It currently contains the cluster foundation, Flux-managed Traefik, native
-cert-manager DNS-01/TLS, routes, and published Pong, portfolio, Dex, Headlamp,
-Flux Web, and analytics Kustomizations. The native root and all child
-Kustomizations reconcile successfully; direct SNI probes against `.41` and
-`.42` return the expected staging responses. Public DNS and production state
-remain on `.73`.
+It contains the Flux foundation, Longhorn, Traefik, cert-manager DNS-01/TLS,
+routes, and published Pong, portfolio, Dex, Headlamp, Flux Web, and analytics
+Kustomizations. The native root and all child Kustomizations reconcile
+successfully; direct and public probes pass on `.41` and `.42`. Cloudflare
+application/API DNS records contain `.41` and `.42` only.
 
-**Native cutover: not started.** Native staging is not a replacement root for
-old production. Do not redirect old production DNS, move old production Flux
-inventories, or use old production rollback commands against native staging.
+**Native cutover: complete.** The former `k3d-pong` application runtime was
+retired after controlled state handoff. Do not recreate the old runtime or
+reconcile its historical tree as a second public owner.
 
 This runbook therefore has two clearly separated parts: the completed old
 production ownership history and the safety boundary for a future native
@@ -181,40 +180,26 @@ owns platform resources and child Flux objects; the Pong child owns Pong
 workloads. Never remove the prune annotations or delete a database/ACME PVC as
 part of this step.
 
-## Native staging boundary — cutover not started
+## Native production ownership and post-cutover hardening
 
-The native staging tree at `clusters/belacca-production/` contains its
-foundation, published Pong and portfolio Kustomizations, Flux-managed Traefik,
-and native cert-manager DNS-01/TLS and routing resources. It is a staging
-target for three native servers, not a cutover target. The root and both
-application Kustomizations are Ready. In particular:
+The native production tree at `clusters/belacca-production/` contains the
+foundation, published application Kustomizations, Flux-managed Traefik,
+cert-manager DNS-01/TLS, and native routing resources. The root and all child
+Kustomizations are Ready.
 
-- native routes target staged portfolio, Pong, analytics, Dex, Headlamp, and
-  Flux Web Services, with explicit cert-manager TLS Secrets and no old-production
-  state ownership;
-- the Cloudflare DNS-01 credential is SOPS/age-encrypted in Git, while its
-  plaintext remains out of band; all seven native staging Certificates are
-  Ready, and no public DNS record is changed by this tree;
-- native analytics, dashboard, Dex, and Flux Web workloads are deployed and
-  direct-route tested, but authenticated OIDC journeys and state migration are
-  still separate cutover gates;
-- no old production application inventory has been adopted by native staging;
-- no old production DNS record points to the native `.41`/`.42` hosts; and
-- no native cutover date, ownership transfer, or rollback target has started;
-- no production database, SQLite state, ACME state, or protected production PVC
-  has been copied or adopted.
+- native routes target portfolio, Pong, analytics, Dex, Headlamp, and Flux Web
+  Services through explicit TLS Secrets and private ClusterIP Services;
+- the Cloudflare DNS-01 credential is SOPS/age-encrypted in Git while its
+  plaintext remains out of band; all seven Certificates are Ready;
+- Pong, GoatCounter, and Dex state was quiesced, integrity-checked, and
+  restored into native Longhorn RWO PVCs;
+- direct and public checks pass on both native edges, including Pong WebSocket,
+  analytics collector, and OIDC discovery/redirect checks; and
+- the former k3d application runtime is retired and is not a second owner.
 
-A future native cutover requires a separate reviewed sequence: establish the
-native cluster and storage/network prerequisites, render and validate each
-application tree, stage ownership with pruning disabled, validate the
-out-of-band Cloudflare DNS-01 credential and native certificate handling,
-verify protected state and route behavior, and only then plan DNS and workload
-migration. The native TLS/routing directories remain limited to the deployed
-portfolio and Pong targets; adding other services or changing public DNS is a
-separate gate. Removing the cert-manager child from the native root is the
-rollback boundary for the controller staging step; its CRDs are configured to
-be kept. Until that work is explicitly completed, old production remains the
-only application production environment.
+Post-cutover hardening remains: external backup retention and restore rehearsal,
+a health-aware API/ingress endpoint, authenticated browser journeys, a
+one-node failure drill, and a review of the native Traefik UID 0 exception.
 
 ## Old production rollback
 
@@ -238,4 +223,4 @@ switching sources. If old production routing is already switched, revert the
 old production platform routing commit and reconcile the old production source.
 Never delete `pong-api-data`, its PV, `analytics/goatcounter-data`,
 `kube-system/traefik-acme`, or the entire old production cluster as a rollback.
-Do not use this rollback block as a native staging cutover procedure.
+Do not use this historical rollback block to recreate the retired k3d runtime.

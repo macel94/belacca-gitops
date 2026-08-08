@@ -1,24 +1,24 @@
-# Native staging cluster
+# Native production cluster
 
 ## Status
 
-This directory is the GitOps root for **native staging**, not old production.
-Native staging targets three native servers:
+This directory is the GitOps root for **native production**. It targets three
+native k3s servers:
 
 - `belacca-k3s-01` — `169.58.97.73`
 - `belacca-k3s-02` — `169.58.143.41`
 - `belacca-k3s-03` — `169.58.143.42`
 
-The old production environment remains the existing
-`k3d-pong` cluster, reconciled from `clusters/vmi3474918/`, and publicly
-addressed at `169.58.97.73`.
+The former `k3d-pong` application cluster on `.73` was retired after the
+controlled state handoff. Its historical GitOps tree remains under
+`clusters/vmi3474918/` for audit/reference and is not a second live owner.
 
-**Native cutover: not started.** No old production workload inventory has been
-adopted by this tree. Pong and portfolio Kustomizations are published through
-the native root, with native-only Traefik routes and cert-manager Certificates
-now staged for those deployed services. Do not point old production DNS at the
-native server addresses or use old production rollback procedures against this
-cluster.
+**Native cutover: complete.** Native Flux, Longhorn, Traefik, cert-manager,
+TLS, Pong, portfolio, analytics, Dex, Headlamp, and Flux Web are reconciled
+and public DNS-only records contain `.41` and `.42` only. Pong, GoatCounter,
+and Dex state was restored into native Longhorn-backed single-writer PVCs.
+Direct DNS is round-robin rather than health-aware failover; monitor both edges
+and remove an unhealthy address manually if required.
 
 ## Current scope
 
@@ -35,13 +35,13 @@ Native staging currently contains:
 - published Pong and portfolio Kustomizations plus their native Traefik routes
   under `routing/`, sourced by `native-sources.yaml`.
 
-The native root and all child Kustomizations are Ready. Their workloads have
-no old-production PVC ownership. Native cert-manager owns a SOPS/age-encrypted
-Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready staging
-Certificates. Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI,
-and analytics through private ClusterIP Services; direct SNI probes succeed on
-both `.41` and `.42`. No public DNS change, production SLO, backup guarantee,
-or production-state ownership is established by this tree.
+The native root and all child Kustomizations are Ready. Native cert-manager
+owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer, and
+seven Ready Certificates. Native Traefik routes portfolio, Pong, Dex,
+Headlamp, Flux Web UI, and analytics through private ClusterIP Services;
+direct and public probes succeed on both `.41` and `.42`. External backup
+retention, authenticated browser completion, and a one-node failure drill are
+post-cutover hardening items.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -63,47 +63,40 @@ clusters/belacca-production/
 └── native-applications.yaml  native app Kustomizations
 ```
 
-The native root contains the two application GitRepositories and application
+The native root contains the application GitRepositories and application
 Kustomizations described above, plus cert-manager DNS-01 resources in `tls/`
 and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
-not contain old production routing, old production ACME PVC ownership, or old
-production database/PVC resources. It does not change public DNS. Additional
-hostnames or services require a separate reviewed native cutover plan.
+not contain the retired old-production ACME PVC or old local-path PVCs. Public
+DNS is managed out of band at Cloudflare; additional hostnames or services
+require a separate reviewed change.
 
 ## Safe inspection and render checks
 
-The following are inspection examples for native staging only. They do not
+The following are inspection examples for native production only. They do not
 apply resources; the live workload status must be confirmed from Flux and
 Kubernetes directly:
 
 ```bash
 kubectl config use-context belacca-native
-kubectl kustomize clusters/belacca-production >/tmp/native-staging-render.yaml
+kubectl kustomize clusters/belacca-production >/tmp/native-production-render.yaml
 kubectl get nodes
 kubectl -n flux-system get gitrepositories,kustomizations
 ```
 
-Do not run old production commands such as `kubectl config use-context
-k3d-pong`, old production PVC recovery, or old production ACME rollback against
-native staging unless a future migration runbook explicitly changes the
-context and ownership contract.
+The old `k3d-pong` runtime is retired. Do not recreate it or apply old
+production PVC/ACME recovery commands against native production. Use the
+post-cutover hardening and manual DNS-removal procedures instead.
 
-## Future cutover gate
+## Post-cutover hardening
 
-Native cutover remains **not started**. Before native staging could become an
-application target, operators must separately review and validate:
+Native cutover is complete. Remaining operator work is:
 
-1. all three native server identities and the `.41`/`.42` network addresses;
-2. Flux bootstrap, SOPS/age decryption, CNI, ingress, and Longhorn health;
-3. application renders and ownership boundaries for each workload;
-4. protected old production PVC and ACME rollback procedures;
-5. DNS, certificate, SSO, notification, backup, observability, and public-route
-   contracts, including an out-of-band Cloudflare credential and narrowly
-   scoped DNS-01 plan; and
-6. a staged ownership transfer with pruning disabled before any old production
-   resource is moved.
+1. select a health-aware API/ingress VIP or load balancer instead of direct
+   DNS round-robin;
+2. configure encrypted external backups and complete an isolated restore
+   rehearsal;
+3. complete authenticated browser journeys and a one-node failure drill; and
+4. review the native Traefik UID 0 low-port-binding exception.
 
-Until those gates are complete, old production is the only environment covered
-by the application runbooks in [`../../docs/SITES.md`](../../docs/SITES.md),
-[`../../docs/RELIABILITY.md`](../../docs/RELIABILITY.md), and
-[`../../MIGRATION.md`](../../MIGRATION.md).
+The retired old-production manifests and rollback history remain available for
+reference, but the old k3d runtime is not a live rollback target.
