@@ -45,7 +45,6 @@ spec:
     # Bind the native edge directly to the host network. The DaemonSet is
     # restricted to .41/.42, while .73 remains the old public k3d edge.
     hostNetwork: true
-    dnsPolicy: ClusterFirstWithHostNet
     service:
       enabled: false
     ingressClass:
