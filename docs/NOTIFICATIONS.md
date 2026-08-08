@@ -1,27 +1,23 @@
-# Old production Flux notifications
+# Native production Flux notifications
 
-This document applies to **old production**: `k3d-pong`, reconciled from
-`clusters/vmi3474918/`, with public address `169.58.97.73`.
+This document applies to **native production**: `clusters/belacca-production/`
+on three native servers, with public edges at `169.58.143.41` and
+`169.58.143.42`. No notification destination Secret is currently provisioned;
+this document defines the names-only follow-up contract.
 
-**Native staging** is the separate `clusters/belacca-production/` tree for
-three native servers, including `169.58.143.41` and `169.58.143.42`. It currently
-contains the foundation plus manually staged Traefik only; no native
-application notification resources are deployed. **Native cutover is not
-started.**
-
-[`../clusters/vmi3474918/notifications.yaml`](../clusters/vmi3474918/notifications.yaml)
+[`../clusters/belacca-production/notifications.yaml`](../clusters/belacca-production/notifications.yaml)
 defines two Flux `Alert` resources and one generic-webhook `Provider` in the
-old production `flux-system` namespace:
+native production `flux-system` namespace:
 
-- `platform-errors` forwards error events from all old production Flux
+- `platform-errors` forwards error events from all native production Flux
   GitRepositories, Kustomizations, and HelmReleases in `flux-system`.
-- `platform-deployments` forwards only success/ready events from those same old
-  production resource classes.
+- `platform-deployments` forwards only success/ready events from those same
+  native production resource classes.
 - `platform-webhook` uses the `generic` provider and reads the destination from
-  the out-of-band old production Secret
+  the out-of-band native production Secret
   `flux-system/platform-notification-webhook`.
 
-No endpoint, token, header, or Secret data is committed. The old production
+No endpoint, token, header, or Secret data is committed. The native production
 provider remains unusable until an operator creates the Secret with the
 following runtime contract:
 
@@ -36,11 +32,11 @@ headers: |
 
 Do not replace the placeholders above with a guessed destination. The address,
 receiver type, authentication scheme, ownership, retention, and rotation
-schedule are operator-owned old production prerequisites. Create the Secret
+schedule are operator-owned native production prerequisites. Create the Secret
 using a protected secret manager or a private shell, for example:
 
 ```bash
-kubectl config use-context k3d-pong
+kubectl config use-context belacca-native
 kubectl -n flux-system create secret generic platform-notification-webhook \
   --from-literal=address='https://<approved-endpoint>' \
   --from-literal=token='<approved-token>' \
@@ -48,41 +44,39 @@ kubectl -n flux-system create secret generic platform-notification-webhook \
 ```
 
 The command is documentation only; do not put its real values in Git, shell
-history, CI logs, or issue comments. If the old production receiving system
+history, CI logs, or issue comments. If the native production receiving system
 needs a custom header, put a `headers` key in the same Secret as described by
 the Flux notification-controller API. The generic provider posts Flux event
 JSON and supports HTTPS endpoints; test with a harmless non-paging diagnostic
-event before using it for old production paging.
+event before using it for native production paging.
 
-## Old production verification
+## Native production verification
 
-After the Secret exists in old production:
+After the Secret exists in native production:
 
 ```bash
-kubectl config use-context k3d-pong
+kubectl config use-context belacca-native
 kubectl -n flux-system get provider platform-webhook
 kubectl -n flux-system describe provider platform-webhook
 kubectl -n flux-system get alert platform-errors platform-deployments
 kubectl -n flux-system logs deploy/notification-controller --since=10m
 ```
 
-A missing Secret is an expected, visible prerequisite in old production when
+A missing Secret is an expected, visible prerequisite in native production when
 notifications have not yet been provisioned. It must not be “fixed” by adding
 a fake Secret or a real endpoint to this repository.
 
-Native staging is separate: `clusters/belacca-production/` targets three native
-servers including `169.58.143.41` and `169.58.143.42`, and currently contains the
-native foundation plus manually staged Traefik only, with no native
-application notification contract. Native cutover is not started, so old
-production notification checks must not be presented as native staging
-coverage.
+Native production is the active `clusters/belacca-production/` tree targeting
+three native servers including `169.58.143.41` and `169.58.143.42`. The
+application notification Secret and endpoint remain unprovisioned. Notification delivery remains a native-production follow-up and must not be
+described as provisioned until its out-of-band Secret and endpoint are verified.
 
 ## Notification hygiene
 
-Old production alerts contain Flux object metadata and reconciliation messages.
+Native production alerts contain Flux object metadata and reconciliation messages.
 Receivers must be configured to retain only the minimum operational data,
 restrict access, and avoid forwarding Secret values or private application
-payloads. Review the receiver and token after any incident involving old
+payloads. Review the receiver and token after any incident involving native
 production notification logs.
 
 References: <https://fluxcd.io/flux/components/notification/providers/> and

@@ -3,7 +3,7 @@ kind: ClusterRole
 metadata:
   name: headlamp-read-only
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: headlamp
 rules:
@@ -70,7 +70,7 @@ metadata:
   name: headlamp-service-account-reader
   namespace: headlamp
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: headlamp
 rules:
@@ -84,7 +84,7 @@ metadata:
   name: headlamp-service-account-reader
   namespace: headlamp
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: headlamp
 subjects:
@@ -101,7 +101,7 @@ kind: ClusterRoleBinding
 metadata:
   name: headlamp-authenticated-admin
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: headlamp
     belacca.com/authentication: dex-google

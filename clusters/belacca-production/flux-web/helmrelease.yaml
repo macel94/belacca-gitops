@@ -4,7 +4,7 @@ metadata:
   name: flux-web
   namespace: flux-system
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: flux-web
   annotations:

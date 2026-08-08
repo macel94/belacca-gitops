@@ -22,7 +22,7 @@ and remove an unhealthy address manually if required.
 
 ## Current scope
 
-Native staging currently contains:
+Native production currently contains:
 
 - the Flux v2 bootstrap and controllers under `flux-system/`;
 - the SOPS/age-encrypted Secret interfaces and target namespaces under

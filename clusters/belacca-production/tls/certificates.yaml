@@ -6,7 +6,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: portfolio
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: portfolio-tls
   issuerRef:
@@ -28,7 +28,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: pong
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: pong-tls
   issuerRef:

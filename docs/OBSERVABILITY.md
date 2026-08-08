@@ -1,20 +1,19 @@
-# Old production observability contract
+> **Historical retired-runtime document.** The Prometheus manifests below
+> belong to the retired old-production tree and are not active native
+> production coverage. Do not execute its retired k3d context commands.
+
+# Native production observability contract
 
 ## Deployment vocabulary and boundary
 
-This document describes the staged observability component for **old
-production**: the existing `k3d-pong` cluster, reconciled from
-`clusters/vmi3474918/` and publicly addressed at `169.58.97.73`.
+Native production currently has application metrics in Pong and Flux health
+signals, but no dedicated Prometheus, Grafana, blackbox exporter, or external
+paging system is provisioned by this repository. The native cluster is
+reconciled from `clusters/belacca-production/` and public edges are
+`169.58.143.41` and `169.58.143.42`. Observability expansion is a post-cutover
+follow-up, not evidence of an existing SLO.
 
-**Native staging** is the separate `clusters/belacca-production/` tree for
-three native servers, including `169.58.143.41` and `169.58.143.42`.
-Native staging currently contains the foundation plus manually staged Traefik
-only. It has no native Prometheus, application metrics targets, dashboards, or
-native application workloads. **Native cutover is not started.** Do not use a
-native staging render as evidence of old production observability or native
-application deployment.
-
-## Current old production implementation
+## Historical retired implementation
 
 The old production cluster tree contains an opt-in, private Prometheus collector
 under `clusters/vmi3474918/observability/`.
@@ -55,7 +54,7 @@ validation. The public site status page remains externally published and
 unknown by default; Prometheus is not treated as its own external status
 authority.
 
-## Old production scrape contract
+## Historical scrape contract
 
 The old production application contract is:
 
@@ -89,7 +88,7 @@ service port; the collector uses a sample limit of 500 for that target group. A
 missing Flux metric series is a diagnostic gap, not proof that old production
 reconciliation is healthy.
 
-## Old production rules and dashboards
+## Historical rules and dashboards
 
 `prometheus.rules.yml` contains proposed recording rules for:
 
@@ -119,12 +118,12 @@ sum(rate(pong_webtransport_proxy_dial_failure_total[5m]))
 sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
 ```
 
-If a future old production dashboard is installed, keep it private through
+If a future native production dashboard is installed, keep it private through
 Headlamp/port-forward or an identity-aware route. Do not expose Prometheus or
-Grafana directly on an old production public hostname. Native staging has no
-such dashboard claim.
+Grafana directly on a public application hostname. Native production has no
+dedicated Prometheus/Grafana dashboard claim yet.
 
-## Old production runtime validation checklist
+## Historical runtime validation checklist
 
 Before treating old production observability as deployed and healthy:
 
@@ -141,22 +140,21 @@ curl -fsS http://127.0.0.1:9090/-/ready
 Then verify from the old production Prometheus target page that the Pong and
 Flux jobs are healthy, and use a non-destructive connectivity check to confirm
 the old production observability → Pong allow rule. Do not widen policies to
-`0.0.0.0/0` as a shortcut. If resource pressure or CNI incompatibility
-appears, suspend the old production `observability` Kustomization and revert
-this staged component through old production GitOps; do not delete old
-production application PVCs or the cluster.
+`0.0.0.0/0` as a shortcut. If resource pressure or CNI incompatibility appears in the historical tree,
+leave it retired; do not reintroduce it into native production without a
+separate reviewed observability change.
 
-For native staging, a Kustomize render only confirms the foundation and
-manually staged Traefik syntax. It does not confirm applications or
-observability are deployed:
+For native production, a Kustomize render confirms the committed resource
+shape; live application and observability health must still be checked through
+Flux and Kubernetes:
 
 ```bash
-kubectl kustomize clusters/belacca-production >/tmp/native-staging.yaml
+kubectl kustomize clusters/belacca-production >/tmp/native-production.yaml
 ```
 
 ## Research basis
 
-The old production configuration follows the current Prometheus documentation
+The historical configuration follows the current Prometheus documentation
 for `scrape_configs`, `rule_files`, recording/alerting rule groups, and
 per-scrape sample limits:
 

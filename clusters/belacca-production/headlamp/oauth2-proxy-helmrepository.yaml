@@ -4,7 +4,7 @@ metadata:
   name: oauth2-proxy
   namespace: headlamp
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: headlamp-auth
 spec:

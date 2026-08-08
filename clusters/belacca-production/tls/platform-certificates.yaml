@@ -6,7 +6,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: platform
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: dex-tls
   issuerRef:
@@ -25,7 +25,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: platform
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: dashboard-tls
   issuerRef:
@@ -44,7 +44,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: platform
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: dashboard-tls
   issuerRef:
@@ -63,7 +63,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: platform
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: flux-web-tls
   issuerRef:
@@ -82,7 +82,7 @@ metadata:
   labels:
     belacca.com/component: tls
     belacca.com/project: analytics
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   secretName: stats-tls
   issuerRef:

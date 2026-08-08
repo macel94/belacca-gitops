@@ -1,9 +1,10 @@
-# Native cluster secrets
+# Native production secrets
 
-Native staging currently contains namespace declarations only. It does not
-reconcile old-production OAuth, Cloudflare, analytics-admin, or other runtime
-credential manifests. Those values must not be copied into native staging
-before a separately reviewed native application and Secret lifecycle exists.
+Native production contains reviewed namespace declarations and encrypted
+runtime Secret interfaces owned by Flux. Plaintext OAuth, Cloudflare,
+analytics-admin, and other credential values remain out of Git and are not
+copied from the retired k3d runtime. Secret consumers and lifecycle changes
+require a reviewed production GitOps change.
 
 The native Flux root still decrypts its out-of-band `flux-system/sops-age`
 Secret, whose private key is backed up through the private infrastructure

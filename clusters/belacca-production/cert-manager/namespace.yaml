@@ -4,4 +4,4 @@ metadata:
   name: cert-manager
   labels:
     belacca.com/component: cert-manager
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production

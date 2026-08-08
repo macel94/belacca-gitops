@@ -4,7 +4,7 @@ metadata:
   name: letsencrypt-cloudflare
   labels:
     belacca.com/component: tls
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   acme:
     email: francesco.belacca@hotmail.it

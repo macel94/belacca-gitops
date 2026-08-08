@@ -4,7 +4,7 @@ metadata:
   name: analytics-oauth2-proxy
   namespace: analytics
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: analytics
     belacca.com/component: analytics-auth
 spec:

@@ -53,9 +53,9 @@ verification work:
 5. Keep the current old production cluster context as `k3d-pong` and do not
    delete or recreate it.
 
-Native staging has separate infrastructure prerequisites and must not be
-substituted for any of these old production checks. Its native `.41`/`.42` hosts are
-not the old production public DNS target.
+Native production is the current infrastructure and application target. The
+historical old-production checks below are retained for audit only and must not
+be executed against the retired k3d runtime.
 
 ## Old production Stage 1 — publish the portfolio repository only
 

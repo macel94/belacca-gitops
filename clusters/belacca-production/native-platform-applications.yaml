@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: identity
 spec:
@@ -29,7 +29,7 @@ metadata:
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: analytics
     belacca.com/component: analytics
 spec:
@@ -55,7 +55,7 @@ metadata:
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: dashboard
 spec:
@@ -81,7 +81,7 @@ metadata:
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: flux-web
 spec:

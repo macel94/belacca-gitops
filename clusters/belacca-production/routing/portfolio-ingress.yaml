@@ -6,7 +6,7 @@ metadata:
   labels:
     belacca.com/component: routing
     belacca.com/project: portfolio
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: portfolio-portfolio-redirect-https@kubernetescrd
@@ -62,7 +62,7 @@ metadata:
   labels:
     belacca.com/component: routing
     belacca.com/project: portfolio
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
@@ -125,7 +125,7 @@ metadata:
   labels:
     belacca.com/component: routing
     belacca.com/project: portfolio
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   redirectScheme:
     scheme: https

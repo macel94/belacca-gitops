@@ -1,21 +1,22 @@
-# Old production Cloud Native Pong game-day drills
+> **Historical retired-runtime document.** These drills describe the former
+> single-host k3d environment and are retained for audit/history only. The k3d
+> containers, volumes, and auto-start unit were removed after native cutover.
+> Do not execute these commands against production. Native failure drills remain
+> a post-cutover hardening task.
 
-These drills are designed for the existing old production single-host
-`k3d-pong` deployment, reconciled from `clusters/vmi3474918/` and publicly
-addressed at `169.58.97.73`. They are **operator-run and non-destructive by
-default**: inspect first, use one bounded failure injection at a time, wait for
-the stated observation, and restore the old production GitOps state
-immediately.
+> **Historical retired-runtime document.** These drills describe the former
+> single-host k3d environment and are retained for audit/history only. The k3d
+> containers, volumes, and auto-start unit were removed after native cutover.
+> Do not execute these commands against production. Native failure drills remain
+> a post-cutover hardening task.
 
-**Native staging is not a drill target.** Native staging means
-`clusters/belacca-production/` on three native servers, including
-`169.58.143.41` and `169.58.143.42`; it currently contains the foundation plus
-manually staged Traefik only. Native cutover is not started, and no native
-Pong/application workload is deployed. Do not run these old production drills
-against native staging.
+# Historical retired k3d Cloud Native Pong game-day drills
 
-Do not delete old production `k3d-pong`, its namespace, `pong-api-data`, its PV,
-or `kube-system/traefik-acme`.
+These drills were designed for the former `k3d-pong` deployment at `.73`.
+They are retained to explain the previous failure-injection contract; they are
+not valid production commands now that native production owns the service.
+
+Do not recreate the retired cluster or its local PVCs.
 
 ## Common old production preflight
 
@@ -275,7 +276,7 @@ failure and changes the security boundary.
 | Gateway/static/lobby/room image or config | `cloudnativepong` | Revert the image/tag commit, reconcile `cloudnativepong`, reconcile old production `pong` |
 | Host routing / Traefik config / policy | `belacca-gitops` | Revert the GitOps commit, reconcile old production `flux-system` |
 | Flux source/Kustomization state | Flux operator | Fix/revert the source commit; reconcile old production source then Kustomization |
-| SQLite restore rehearsal | Local operator | `k3d cluster delete pong-restore-<exact-name>` only; never old production or native staging |
+| SQLite restore rehearsal | Local operator | `k3d cluster delete pong-restore-<exact-name>` only; never native production |
 
 The rehearsal cleanup command is intentionally exact:
 
@@ -286,4 +287,4 @@ k3d cluster delete pong-restore-<exact-name>
 Do not substitute `pong`, `k3d-pong`, a wildcard, or a context selected by
 current kubeconfig. The isolated runner itself refuses those names. This
 isolated deletion is the only deletion described by the rehearsal procedure;
-it is not an old production or native staging operation.
+it is not a native production operation.

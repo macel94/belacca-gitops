@@ -5,7 +5,7 @@ metadata:
   namespace: cert-manager
   labels:
     belacca.com/component: cert-manager
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
 spec:
   interval: 1h
   url: https://charts.jetstack.io

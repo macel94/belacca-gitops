@@ -3,7 +3,7 @@ kind: ClusterRoleBinding
 metadata:
   name: flux-web-admin-belakkuz
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: flux-web
 subjects:

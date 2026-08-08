@@ -4,7 +4,7 @@ metadata:
   name: goatcounter-data
   namespace: analytics
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     app: goatcounter
     belacca.com/project: analytics
   annotations:
@@ -26,7 +26,7 @@ metadata:
   name: goatcounter
   namespace: analytics
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     app: goatcounter
     belacca.com/project: analytics
 spec:
@@ -38,7 +38,7 @@ spec:
   template:
     metadata:
       labels:
-        belacca.com/stage: native-staging
+        belacca.com/stage: native-production
         app: goatcounter
         belacca.com/project: analytics
     spec:

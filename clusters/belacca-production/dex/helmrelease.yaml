@@ -4,7 +4,7 @@ metadata:
   name: dex
   namespace: dex
   labels:
-    belacca.com/stage: native-staging
+    belacca.com/stage: native-production
     belacca.com/project: platform
     belacca.com/component: identity
   annotations:

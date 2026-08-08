@@ -1,7 +1,13 @@
+> **Historical retired-runtime document.** This runbook describes the former
+> k3d routing procedure and is retained for audit/history only. Current public
+> routing is native production on `.41` and `.42`, with DNS-only Cloudflare
+> round-robin records and Flux ownership under `clusters/belacca-production/`.
+> Do not execute the retired k3d context commands.
+
 # Adding a public subdomain
 
-This runbook describes the supported way to add or update a public
-`*.belacca.com` hostname on the existing `k3d-pong` cluster. The canonical
+This historical runbook describes the former way to add or update a public
+`*.belacca.com` hostname on the retired `k3d-pong` cluster. The canonical
 inventory of currently supported sites and aliases is
 [`docs/SITES.md`](docs/SITES.md). This runbook covers Cloudflare DNS, Traefik
 HTTPS, Headlamp-style authentication, and Flux GitOps ownership.
@@ -21,11 +27,11 @@ The short version is:
 
 - `belacca-platform` is the parent workspace.
 - `belacca-gitops` is a gitlink/submodule and the cluster-level source of truth.
-- Flux watches `belacca-gitops` and reconciles `clusters/vmi3474918`.
-- `clusters/vmi3474918/routing/` owns public host routing.
-- Traefik is the existing ingress controller in `kube-system`.
-- The public address is `169.58.97.73`.
-- The Kubernetes context is `k3d-pong`.
+- Flux watches `belacca-gitops` and reconciles `clusters/belacca-production`.
+- `clusters/belacca-production/routing/` owns current public host routing.
+- Native Traefik is the ingress controller in `kube-system` on `.41` and `.42`.
+- Cloudflare DNS-only records use both native edge addresses.
+- The retired Kubernetes context was `k3d-pong`; do not use it for production.
 
 Do not make a manual `kubectl apply` the permanent deployment. A manual apply
 can be useful for server-side validation or short-lived diagnosis, but the
@@ -100,7 +106,7 @@ read-only ServiceAccount, and grant only `get`, `list`, and `watch` permissions
 needed for health and logs. Do not grant create, update, delete, or Secret-read
 permissions unless there is a separately reviewed requirement.
 
-## Step 2: create DNS first
+## Step 2: create DNS first (historical procedure; use native-production records)
 
 Find the zone ID from the successful zone lookup, then list the exact record:
 
@@ -119,7 +125,7 @@ curl -fsS -G \
   "${DNS_API}"
 ```
 
-The desired record for this cluster is:
+The former desired record for the retired cluster was:
 
 ```text
 Type:    A
@@ -129,8 +135,10 @@ TTL:     300
 Proxied: false
 ```
 
-Use DNS-only (`proxied: false`) because Traefik terminates TLS and this cluster
-uses an ACME DNS-01 challenge. If an exact A record exists, update it rather
+Use DNS-only (`proxied: false`) because native Traefik terminates TLS and
+cert-manager uses the Cloudflare DNS-01 challenge. Native production uses two A
+records, `.41` and `.42`; this historical single-origin example must not be
+copied as-is. If an exact A record exists, update it rather
 than creating a duplicate. If it does not exist, create it:
 
 ```bash
@@ -165,9 +173,11 @@ curl -I https://www.francesco.belacca.com/reliability.html
 # Expected: 308/301 Location: https://francesco.belacca.com/reliability.html
 ```
 
-## Step 3: add GitOps routing
+## Step 3: add GitOps routing (native production)
 
-Put the route in `clusters/vmi3474918/routing/`. For a normal public service,
+For current production, put the route in `clusters/belacca-production/routing/`.
+The remaining examples below describe the retired layout and must be adapted
+before use. For a normal public service,
 add two Ingress objects:
 
 1. `web` entrypoint: redirect HTTP to HTTPS.

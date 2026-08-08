@@ -8,6 +8,8 @@ metadata:
     belacca.com/project: pong
 spec:
   interval: 10m
+  # The application repository retains this path for compatibility; the live
+  # deployment is native production, not a staging environment.
   path: ./k8s/overlays/native-staging
   prune: false
   wait: true
