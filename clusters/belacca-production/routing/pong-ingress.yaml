@@ -9,7 +9,7 @@ metadata:
     belacca.com/stage: native-staging
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: pong-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: pong-pong-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
