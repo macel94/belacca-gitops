@@ -76,7 +76,7 @@ The supported native production host and alias list is in [`SITES.md`](SITES.md)
    immutable image/tag commit and reconcile the native production child
    Kustomization.
 5. Verify `belacca.com`, `www.belacca.com`, and
-   `www.francesco.belacca.com` return a permanent redirect to the canonical old
+   `www.francesco.belacca.com` return a permanent redirect to the canonical
    native production portfolio origin while preserving the request path.
 6. The service is stateless; do not create or delete a PVC as recovery.
 
