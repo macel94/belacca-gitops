@@ -5,4 +5,5 @@ resources:
   - oci-repository.yaml
   - helmrelease.yaml
   - rbac.yaml
+  - network-policy-node-ingress.yaml
   - secret-flux-web-client.yaml

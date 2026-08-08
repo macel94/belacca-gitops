@@ -21,6 +21,10 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
       ports:
         - protocol: TCP
           port: 4180
@@ -55,6 +59,10 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: portfolio

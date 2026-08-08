@@ -1,30 +1,25 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: dex-traffic
-  namespace: dex
+  name: flux-web-node-ingress
+  namespace: flux-system
   labels:
     belacca.com/stage: native-staging
     belacca.com/project: platform
-    belacca.com/component: identity
+    belacca.com/component: flux-web
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: dex
+      app.kubernetes.io/instance: flux-web
+      app.kubernetes.io/name: flux-operator
   policyTypes:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: traefik
         - ipBlock:
             cidr: 169.58.143.41/32
         - ipBlock:
             cidr: 169.58.143.42/32
       ports:
         - protocol: TCP
-          port: 5556
+          port: 9080
