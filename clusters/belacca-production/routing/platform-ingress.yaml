@@ -1,0 +1,389 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dex-http
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: dex-dex-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: dex.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dex
+                port:
+                  number: 5556
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dex-https
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: dex-tls
+      hosts: [dex.belacca.com]
+  rules:
+    - host: dex.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dex
+                port:
+                  number: 5556
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashboard-dex-http
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: dex-dex-dashboard-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: dashboard.belacca.com
+      http:
+        paths:
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: dex
+                port:
+                  number: 5556
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashboard-dex-https
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: dashboard-tls
+      hosts: [dashboard.belacca.com]
+  rules:
+    - host: dashboard.belacca.com
+      http:
+        paths:
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: dex
+                port:
+                  number: 5556
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dex-redirect-https
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dex-dashboard-redirect-https
+  namespace: dex
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp-http
+  namespace: headlamp
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: headlamp-headlamp-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: dashboard.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: headlamp-oauth2-proxy
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp-https
+  namespace: headlamp
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: dashboard-tls
+      hosts: [dashboard.belacca.com]
+  rules:
+    - host: dashboard.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: headlamp-oauth2-proxy
+                port:
+                  number: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: headlamp-redirect-https
+  namespace: headlamp
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flux-web-http
+  namespace: flux-system
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: flux-system-flux-web-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: flux.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flux-web
+                port:
+                  number: 9080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flux-web-https
+  namespace: flux-system
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: flux-web-tls
+      hosts: [flux.belacca.com]
+  rules:
+    - host: flux.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flux-web
+                port:
+                  number: 9080
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: flux-web-redirect-https
+  namespace: flux-system
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytics-http
+  namespace: analytics
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: analytics
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: analytics-analytics-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: stats.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: analytics-oauth2-proxy
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytics-https
+  namespace: analytics
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: analytics
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: stats-tls
+      hosts: [stats.belacca.com]
+  rules:
+    - host: stats.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: analytics-oauth2-proxy
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytics-public
+  namespace: analytics
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: analytics
+    belacca.com/stage: native-staging
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "200"
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: stats-tls
+      hosts: [stats.belacca.com]
+  rules:
+    - host: stats.belacca.com
+      http:
+        paths:
+          - path: /count
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
+          - path: /count.js
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
+          - path: /status
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter-direct
+                port:
+                  number: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: analytics-redirect-https
+  namespace: analytics
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: analytics
+    belacca.com/stage: native-staging
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true

@@ -68,6 +68,26 @@ spec:
       kind: Certificate
       name: pong-tls
       namespace: pong
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: dex-tls
+      namespace: dex
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: dashboard-tls
+      namespace: dex
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: dashboard-headlamp-tls
+      namespace: headlamp
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: flux-web-tls
+      namespace: flux-system
+    - apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: stats-tls
+      namespace: analytics
   decryption:
     provider: sops
     secretRef:

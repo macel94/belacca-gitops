@@ -1,0 +1,94 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dex-tls
+  namespace: dex
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  secretName: dex-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - dex.belacca.com
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dashboard-tls
+  namespace: dex
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  secretName: dashboard-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - dashboard.belacca.com
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dashboard-headlamp-tls
+  namespace: headlamp
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  secretName: dashboard-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - dashboard.belacca.com
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: flux-web-tls
+  namespace: flux-system
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: platform
+    belacca.com/stage: native-staging
+spec:
+  secretName: flux-web-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - flux.belacca.com
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: stats-tls
+  namespace: analytics
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: analytics
+    belacca.com/stage: native-staging
+spec:
+  secretName: stats-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - stats.belacca.com
