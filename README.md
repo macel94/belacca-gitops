@@ -15,11 +15,10 @@ Use these terms explicitly in issues, runbooks, and incident notes:
 - **Native staging** means the separate tree at `clusters/belacca-production/`
   for three native servers. The documented native server addresses include
   the native server addresses `169.58.143.41` and `169.58.143.42`; they are not the old production address.
-  Native staging contains the cluster foundation, published route-less
-  application Kustomizations, and Flux-managed Traefik. The native root is
-  reconciled, so route-less native portfolio and Pong workloads are live for
-  private staging validation; analytics, SSO, observability, and public routes
-  are not deployed there.
+  Native staging contains the cluster foundation, Flux-managed Traefik, TLS,
+  native routes, and published Pong, portfolio, analytics, Dex, Headlamp, and
+  Flux Web Kustomizations. Direct SNI validation against `.41` and `.42` is
+  healthy; public DNS and production state remain on `.73`.
 - **Native cutover** is **not started**. Native staging is not an alternate
   old production public endpoint, and no old production rollback command should be
   run against it.
@@ -44,11 +43,11 @@ The following application and platform entries describe **old production**.
 | [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static Caddy portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
 | GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
 
-Native staging has published application Flux paths for the route-less Pong
-and portfolio staging definitions in `native-applications.yaml`. The native
-root and both child Kustomizations reconcile successfully. Their workloads are
-private ClusterIP staging only; this is not evidence of public route, TLS,
-SSO, analytics, or production-state readiness.
+Native staging has published application Flux paths for Pong, portfolio,
+analytics, Dex, Headlamp, and Flux Web in the native application definitions.
+The native root and all child Kustomizations reconcile successfully. Workloads
+remain private ClusterIP services behind native Traefik; direct `.41`/`.42`
+SNI success is not a public DNS cutover or production-state readiness signal.
 
 ## Why child GitRepositories instead of submodules?
 
@@ -90,10 +89,10 @@ recreate the old production cluster and must not be used with destructive `k3d
 cluster delete` or PVC deletion commands.
 
 Native staging is separate from this layout. Its current scope is the Flux
-foundation, encrypted Secret interfaces/namespaces, Longhorn foundation,
-published route-less Pong/portfolio Kustomizations, and Flux-managed Traefik.
-It has no native public application routing, ACME state, SSO, analytics, or
-production database/PVC ownership.
+foundation, encrypted Secret interfaces, Longhorn, cert-manager DNS-01/TLS,
+Flux-managed Traefik, native routing, and staged Pong/portfolio/Dex/Headlamp/
+Flux Web/analytics workloads. It has no production database/PVC ownership and
+public DNS still points to old production.
 
 The GHCR package for `francesco-belacca-site` is anonymously pullable, like the
 existing old production Pong packages. GoatCounter uses the pinned public
@@ -145,8 +144,9 @@ checks pass. See `MIGRATION.md` for the old production incident record and safe
 ownership procedure.
 
 Native staging is not part of this old-production application delivery flow.
-Its published route-less application definitions and Flux-managed Traefik are
-live private staging resources, not a public native production deployment.
+Its published routed application definitions and Flux-managed Traefik are live
+private staging resources validated by direct node probes, not a public native
+production deployment.
 
 Publish and reconcile the old production GitOps commit before relying on old
 production root pruning. Flux's old production Kustomization must have pruning

@@ -8,11 +8,12 @@ Old production is the existing `k3d-pong` cluster, reconciled from
 
 **Native staging** is the separate `clusters/belacca-production/` tree for
 three native servers, including `169.58.143.41` and `169.58.143.42`.
-It currently contains the cluster foundation, published route-less Pong and
-portfolio Kustomizations, and Flux-managed Traefik. The native root and both
-application Kustomizations reconcile successfully: private ClusterIP Pong and
-portfolio staging workloads are live. Public application routes, native SSO,
-analytics, and native observability are not deployed.
+It currently contains the cluster foundation, Flux-managed Traefik, native
+cert-manager DNS-01/TLS, routes, and published Pong, portfolio, Dex, Headlamp,
+Flux Web, and analytics Kustomizations. The native root and all child
+Kustomizations reconcile successfully; direct SNI probes against `.41` and
+`.42` return the expected staging responses. Public DNS and production state
+remain on `.73`.
 
 **Native cutover: not started.** Native staging is not a replacement root for
 old production. Do not redirect old production DNS, move old production Flux
@@ -188,16 +189,20 @@ and native cert-manager DNS-01/TLS and routing resources. It is a staging
 target for three native servers, not a cutover target. The root and both
 application Kustomizations are Ready. In particular:
 
-- native routes target only the deployed portfolio and Pong Services, with
-  explicit cert-manager TLS Secrets and no old-production state ownership;
+- native routes target staged portfolio, Pong, analytics, Dex, Headlamp, and
+  Flux Web Services, with explicit cert-manager TLS Secrets and no old-production
+  state ownership;
 - the Cloudflare DNS-01 credential is SOPS/age-encrypted in Git, while its
-  plaintext remains out of band; no public DNS record is changed by this tree;
-- no native analytics, dashboard, Dex, Flux Web UI, or observability workload
-  is currently deployed, so their hostnames have no native Certificates or
-  routes;
+  plaintext remains out of band; all seven native staging Certificates are
+  Ready, and no public DNS record is changed by this tree;
+- native analytics, dashboard, Dex, and Flux Web workloads are deployed and
+  direct-route tested, but authenticated OIDC journeys and state migration are
+  still separate cutover gates;
 - no old production application inventory has been adopted by native staging;
 - no old production DNS record points to the native `.41`/`.42` hosts; and
-- no native cutover date, ownership transfer, or rollback target has started.
+- no native cutover date, ownership transfer, or rollback target has started;
+- no production database, SQLite state, ACME state, or protected production PVC
+  has been copied or adopted.
 
 A future native cutover requires a separate reviewed sequence: establish the
 native cluster and storage/network prerequisites, render and validate each

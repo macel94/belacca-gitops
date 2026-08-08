@@ -35,14 +35,13 @@ Native staging currently contains:
 - published Pong and portfolio Kustomizations plus their native Traefik routes
   under `routing/`, sourced by `native-sources.yaml`.
 
-The native root and the `pong`/`portfolio` child Kustomizations are Ready.
-Their workloads have no old-production PVC ownership. Native cert-manager
-now owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer,
-and Certificates only for the deployed portfolio and Pong services. Native
-Traefik routes only target those two services. Dex, Headlamp, Flux Web UI,
-GoatCounter, analytics, observability, and their hostnames remain undeployed.
-No public DNS changes, application SLO, backup guarantee, or notification
-coverage is established by this tree.
+The native root and all child Kustomizations are Ready. Their workloads have
+no old-production PVC ownership. Native cert-manager owns a SOPS/age-encrypted
+Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready staging
+Certificates. Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI,
+and analytics through private ClusterIP Services; direct SNI probes succeed on
+both `.41` and `.42`. No public DNS change, production SLO, backup guarantee,
+or production-state ownership is established by this tree.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
