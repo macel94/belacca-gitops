@@ -66,6 +66,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: portfolio-apex-to-portfolio@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
@@ -116,6 +117,21 @@ spec:
                 name: francesco-site
                 port:
                   name: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: apex-to-portfolio
+  namespace: portfolio
+  labels:
+    belacca.com/component: routing
+    belacca.com/project: portfolio
+    belacca.com/stage: native-production
+spec:
+  redirectRegex:
+    regex: ^https?://(?:www\.)?(?:belacca\.com|francesco\.belacca\.com)/(.*)
+    replacement: https://francesco.belacca.com/${1}
+    permanent: true
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
