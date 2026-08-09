@@ -74,20 +74,26 @@ is an out-of-band Kubernetes Secret and no credential belongs in Git.
 
 ## Native production monitoring coverage
 
-The external status publisher currently probes only these old production
-application surfaces:
+The external status publisher runs outside the native cluster and currently
+checks these public journeys:
 
-- `francesco.belacca.com` homepage and `/health`;
-- `pong.belacca.com` homepage, `/health`, API, room lifecycle, and two-player
-  WebSocket-compatible journey; and
-- `stats.belacca.com/status` plus the old production analytics endpoint
-  contract.
+- `francesco.belacca.com`: homepage and `/health`;
+- `pong.belacca.com`: homepage, `/health`, room API, two-player
+  WebSocket-compatible journey, and cleanup;
+- `stats.belacca.com`: `/status`, a harmless `/count` collector probe, and
+  `/count.js` availability; and
+- portfolio aliases: permanent redirect and path preservation diagnostics.
 
-The redirect aliases are verified as routing behavior, not as independent
-applications. The authenticated dashboard, Flux UI, and Dex alias are not part
-of the automated public status claim because they require operator credentials. See
+The 99% availability objective is internal, per public service over 30 days,
+with no SLA. Sanitized observations and `slo.json` are durable evidence, but
+values remain not reportable until a complete valid 720-hour window exists.
+Native Prometheus is private diagnostic telemetry, not the public SLO source.
+The authenticated dashboard, Flux UI, and Dex alias remain unconfigured because
+safe operator credentials are not provisioned for an external probe. See
 [`macel94/belacca-status`](https://github.com/macel94/belacca-status) and its
 [`POLICY.md`](https://github.com/macel94/belacca-status/blob/main/POLICY.md).
 
-This monitoring list is the current native production coverage. Authenticated
-browser journeys and one-node failure checks remain separate hardening work.
+The separate controlled-drill recovery objective is P95 under six minutes; it
+is not established by synthetic observations, capacity baselines, or internal
+metrics. One-node failure drills and authenticated browser journeys remain
+hardening work.

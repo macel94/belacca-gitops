@@ -26,11 +26,11 @@ surfaces, DNS records, and monitoring boundaries are maintained in
 [`docs/SITES.md`](docs/SITES.md).
 The canonical portfolio URL is `https://francesco.belacca.com/`;
 `belacca.com`, `www.belacca.com`, and `www.francesco.belacca.com` permanently
-redirect to it. The canonical Pong URL is `https://pong.belacca.com/`. Pong
-currently serves its public real-time journey through the WebSocket-compatible
-path. Pong application-native WebTransport support is implemented but remains opt-in
-until old production has a reviewed UDP-capable public service, TLS configuration, and
-matching network policy.
+redirect to it while preserving paths. The canonical Pong URL is
+`https://pong.belacca.com/`. Pong serves its public real-time journey through the
+WebSocket-compatible path. Pong application-native WebTransport remains opt-in
+until a reviewed UDP-capable public service, TLS configuration, and matching
+network policy exist.
 
 ## Repository map
 
@@ -43,10 +43,13 @@ The following application and platform entries describe **old production**.
 | GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
 
 Native production has published application Flux paths for Pong, portfolio,
-analytics, Dex, Headlamp, and Flux Web in the native application definitions.
-The native root and all child Kustomizations reconcile successfully. Workloads
-remain private ClusterIP services behind native Traefik; public traffic enters
-through the two direct host-network edges.
+analytics, Dex, Headlamp, Flux Web, private Prometheus diagnostics, and native
+Flux notification contracts. The native root and all child Kustomizations
+reconcile successfully. Workloads remain private ClusterIP services behind
+native Traefik; public traffic enters through the two direct host-network edges.
+The external status repository is the source of the public 99%/30d SLO evidence;
+native Prometheus is diagnostic and the notification destination remains out of
+band/unprovisioned.
 
 ## Why child GitRepositories instead of submodules?
 
@@ -111,7 +114,10 @@ The former `.73` application records were removed. The `.73` host remains a
 native k3s control-plane member, but the retired k3d application containers no
 longer own public ports or DNS.
 
-## Old production delivery flow
+## Retired old-production delivery flow (historical)
+
+The following section is retained for audit/reference only. Native production
+is the current delivery plane and is described above.
 
 The old production platform root at `clusters/vmi3474918/` is set to
 `prune: true` after its ownership migration was verified. Its checked-in root

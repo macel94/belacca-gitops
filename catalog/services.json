@@ -35,7 +35,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /health and homepage responses from an external probe",
-        "measurement": "External durable evidence is not operational; establish and retain a 30-day external probe history before treating this as a measured SLO"
+        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists"
       },
       "rto": "4h",
       "rpo": "N/A (stateless image and GitOps configuration)",
@@ -85,8 +85,8 @@
         "status": "proposed",
         "target": "99%",
         "window": "30d",
-        "indicator": "Successful HTTPS GET /api/rooms plus successful create, join, and two-player real-time synthetic journey",
-        "measurement": "A synthetic runner may execute the public journey, but durable 30-day external evidence is not operational; native WebTransport is optional and the SLO remains not measured"
+        "indicator": "Successful external homepage, health, room create/join, two-player WebSocket-compatible playing-state, and cleanup journey",
+        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists; native WebTransport is optional"
       },
       "rto": "4h",
       "rpo": "24h target (manual verified SQLite backup; isolated restore rehearsal available; object-storage automation is not deployed)",
@@ -142,7 +142,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /status and successful same-origin /count requests",
-        "measurement": "The endpoint is implemented, but durable 30-day external synthetic evidence is not operational"
+        "measurement": "External hourly /status plus harmless /count evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists"
       },
       "rto": "4h",
       "rpo": "24h target (manual SQLite backup; automation is not yet deployed)",
@@ -199,7 +199,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful authenticated HTTPS dashboard probe",
-        "measurement": "Authentication-aware durable external collection is not operational; dashboard SLO remains proposed"
+        "measurement": "Authenticated external collection remains unconfigured; dashboard SLO remains proposed and is not part of the public status claim"
       },
       "rto": "4h",
       "rpo": "GitOps configuration is versioned; the out-of-band OAuth Secret requires operator-managed backup and rotation",

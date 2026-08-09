@@ -39,9 +39,12 @@ The native root and all child Kustomizations are Ready. Native cert-manager
 owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer, and
 seven Ready Certificates. Native Traefik routes portfolio, Pong, Dex,
 Headlamp, Flux Web UI, and analytics through private ClusterIP Services;
-direct and public probes succeed on both `.41` and `.42`. External backup
-retention, authenticated browser completion, and a one-node failure drill are
-post-cutover hardening items.
+direct and public probes succeed on both `.41` and `.42`. A private native
+Prometheus diagnostic child and Flux notification contract are now committed,
+but external backup retention, authenticated browser completion, notification
+destination provisioning, and one-node failure drills remain hardening items.
+The public 99%/30d SLO is measured by the external status repository, not by
+native Prometheus, and is not yet reportable until its complete window exists.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret
@@ -59,6 +62,8 @@ clusters/belacca-production/
 ├── cert-manager/ cert-manager controller and CRDs
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
+├── observability/ private Prometheus diagnostics and SLO-source contract
+├── notifications.yaml native Flux notification contract (destination out of band)
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
 ```
