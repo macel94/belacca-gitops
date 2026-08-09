@@ -1,0 +1,120 @@
+# Native production notification contract. The destination Secret is
+# intentionally out of band; no endpoint or credential belongs in Git.
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: platform-webhook
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: diagnostic
+spec:
+  type: generic
+  secretRef:
+    name: platform-notification-webhook
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-errors
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: diagnostic
+    belacca.com/page-policy: not-configured
+spec:
+  providerRef:
+    name: platform-webhook
+  eventSeverity: error
+  eventMetadata:
+    cluster: belacca-native
+    environment: native-production
+    notificationClass: diagnostic
+    pagePolicy: not-configured
+    runbook: docs/NOTIFICATIONS.md
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+      namespace: flux-system
+    - kind: Kustomization
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: analytics
+    - kind: HelmRelease
+      name: '*'
+      namespace: cert-manager
+    - kind: HelmRelease
+      name: '*'
+      namespace: dex
+    - kind: HelmRelease
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: headlamp
+    - kind: HelmRelease
+      name: '*'
+      namespace: kube-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: longhorn-system
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-deployments
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: diagnostic
+    belacca.com/page-policy: not-configured
+spec:
+  providerRef:
+    name: platform-webhook
+  eventSeverity: info
+  inclusionList:
+    - '.*succeeded.*'
+    - '.*ready.*'
+  eventMetadata:
+    cluster: belacca-native
+    environment: native-production
+    notificationClass: diagnostic
+    pagePolicy: not-configured
+    runbook: docs/NOTIFICATIONS.md
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+      namespace: flux-system
+    - kind: Kustomization
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: analytics
+    - kind: HelmRelease
+      name: '*'
+      namespace: cert-manager
+    - kind: HelmRelease
+      name: '*'
+      namespace: dex
+    - kind: HelmRelease
+      name: '*'
+      namespace: flux-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: headlamp
+    - kind: HelmRelease
+      name: '*'
+      namespace: kube-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: longhorn-system

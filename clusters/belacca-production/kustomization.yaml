@@ -11,3 +11,4 @@ resources:
   - native-sources.yaml
   - native-applications.yaml
   - native-platform-applications.yaml
+  - notifications.yaml
