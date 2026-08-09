@@ -45,7 +45,7 @@ native production configuration.
 - `belacca.com`, `www.belacca.com`, and `www.francesco.belacca.com` return a
   permanent redirect to that origin and retain the request path.
 - `https://pong.belacca.com/` is the only canonical native production Pong origin.
-- The old production Pong synthetic currently validates the WebSocket-compatible
+- The external status publisher currently validates the WebSocket-compatible
   journey. Application-native WebTransport is documented and implemented as an
   opt-in path, not as a deployed public ingress guarantee.
 - `https://stats.belacca.com/` is both the native production analytics collector

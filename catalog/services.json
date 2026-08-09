@@ -95,7 +95,7 @@
         "access": "OAuth2-protected Headlamp; inspect pong workloads, events, PVC, and Flux state"
       },
       "runbook": "docs/RELIABILITY.md#pong",
-      "implementation": "clusters/belacca-production/native-applications.yaml (source: cloudnativepong/k8s/overlays/native-staging)"
+      "implementation": "clusters/belacca-production/native-applications.yaml (source: cloudnativepong/k8s/overlays/native-staging; compatibility-labelled path, native production target)"
     },
     {
       "id": "analytics",
