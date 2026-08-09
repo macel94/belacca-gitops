@@ -32,8 +32,13 @@ jobs:
             promtool check rules /tmp/prometheus.rules.yml
             promtool check config /tmp/prometheus.yml
           else
-            echo 'promtool unavailable; staged contract and Kustomize validation still run.'
+            echo 'promtool unavailable; deterministic config/rule checks in validate-observability.py and Kustomize validation are the fallback.'
           fi
+      - name: Render native observability Kustomization
+        run: |
+          set -eu
+          kubectl kustomize clusters/belacca-production/observability >/tmp/native-observability.yaml
+          test -s /tmp/native-observability.yaml
       - name: Render every checked-in Kustomization
         # kubectl kustomize parses every YAML document in each active manifest
         # tree while rendering; this avoids adding a second YAML parser just for CI.

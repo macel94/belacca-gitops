@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-native-config
+  namespace: observability
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: observability
+    belacca.com/component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+      external_labels:
+        platform: belacca
+        cluster: belacca-native
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+    scrape_configs:
+      # Native Pong aggregate metrics are diagnostics, not the external 99% SLI.
+      - job_name: native-pong-api-diagnostic
+        metrics_path: /metrics
+        static_configs:
+          - targets: [pong-api.pong.svc.cluster.local:8080]
+            labels:
+              service: pong
+              signal: native-diagnostic
+        sample_limit: 100
+      # Flux controller metrics are diagnostics about reconciliation machinery.
+      - job_name: native-flux-controllers-diagnostic
+        metrics_path: /metrics
+        static_configs:
+          - targets:
+              - source-controller.flux-system.svc.cluster.local:80
+              - kustomize-controller.flux-system.svc.cluster.local:80
+              - helm-controller.flux-system.svc.cluster.local:80
+              - notification-controller.flux-system.svc.cluster.local:80
+            labels:
+              service: flux
+              signal: native-diagnostic
+        sample_limit: 500
+      # The external synthetic source and status Git repository are intentionally
+      # not scraped here. Internal metrics cannot stand in for public availability.
+  prometheus.rules.yml: |
+    groups:
+      - name: belacca-native-diagnostic-recording
+        interval: 30s
+        rules:
+          - record: belacca:native:pong:http_requests:rate5m
+            expr: sum(rate(pong_http_requests_total[5m]))
+          - record: belacca:native:pong:http_failures:rate5m
+            expr: sum(rate(pong_http_requests_failure_total[5m]))
+          - record: belacca:native:pong:http_error_ratio:rate5m
+            expr: belacca:native:pong:http_failures:rate5m / clamp_min(belacca:native:pong:http_requests:rate5m, 1)
+          - record: belacca:native:pong:rooms_active
+            expr: pong_rooms_active
+          - record: belacca:native:pong:websockets_active
+            expr: pong_websockets_active
+          - record: belacca:native:flux:reconciliation_failures:rate5m
+            expr: sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
+      - name: belacca-native-slo-source-readiness
+        interval: 30s
+        rules:
+          # Placeholder only: zero means no external durable SLO source is
+          # operational here. It is not a public availability calculation.
+          - record: belacca:slo_source:external_probe:coverage
+            expr: vector(0)
+            labels:
+              source: external-durable-synthetic
+              status: proposed

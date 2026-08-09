@@ -2,7 +2,7 @@
   "apiVersion": "belacca.com/v1alpha1",
   "kind": "ServiceCatalog",
   "metadata": {
-    "cluster": "k3d-pong",
+    "cluster": "belacca-native",
     "sourceOfTruth": "belacca-gitops",
     "status": "initial-operational-metadata"
   },
@@ -32,10 +32,10 @@
       ],
       "slo": {
         "status": "proposed",
-        "target": "99.5%",
+        "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /health and homepage responses from an external probe",
-        "measurement": "Not currently collected in GitOps; establish an external probe before treating this as a measured SLO"
+        "measurement": "External durable evidence is not operational; establish and retain a 30-day external probe history before treating this as a measured SLO"
       },
       "rto": "4h",
       "rpo": "N/A (stateless image and GitOps configuration)",
@@ -44,7 +44,7 @@
         "access": "OAuth2-protected Headlamp; cluster workload view, not a service-specific metrics dashboard"
       },
       "runbook": "docs/RELIABILITY.md#portfolio",
-      "implementation": "francesco-belacca-site/deploy"
+      "implementation": "clusters/belacca-production/native-applications.yaml (source: francesco-belacca-site/deploy)"
     },
     {
       "id": "pong",
@@ -83,10 +83,10 @@
       ],
       "slo": {
         "status": "proposed",
-        "target": "99.5%",
+        "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /api/rooms plus successful create, join, and two-player real-time synthetic journey",
-        "measurement": "The scheduled GitHub Actions runner currently executes the homepage, API, and two-player WebSocket-compatible journey against the canonical public URL; native WebTransport is optional and long-term SLO history is not yet aggregated"
+        "measurement": "A synthetic runner may execute the public journey, but durable 30-day external evidence is not operational; native WebTransport is optional and the SLO remains not measured"
       },
       "rto": "4h",
       "rpo": "24h target (manual verified SQLite backup; isolated restore rehearsal available; object-storage automation is not deployed)",
@@ -95,7 +95,7 @@
         "access": "OAuth2-protected Headlamp; inspect pong workloads, events, PVC, and Flux state"
       },
       "runbook": "docs/RELIABILITY.md#pong",
-      "implementation": "cloudnativepong/k8s/overlays/server"
+      "implementation": "clusters/belacca-production/native-applications.yaml (source: cloudnativepong/k8s/overlays/native-staging)"
     },
     {
       "id": "analytics",
@@ -139,10 +139,10 @@
       ],
       "slo": {
         "status": "proposed",
-        "target": "99.0%",
+        "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /status and successful same-origin /count requests",
-        "measurement": "The endpoint is implemented; external synthetic collection is not currently deployed"
+        "measurement": "The endpoint is implemented, but durable 30-day external synthetic evidence is not operational"
       },
       "rto": "4h",
       "rpo": "24h target (manual SQLite backup; automation is not yet deployed)",
@@ -151,7 +151,7 @@
         "access": "Dex SSO permits belakkuz@gmail.com; GoatCounter still requires its application session cookie for dashboard features"
       },
       "runbook": "docs/RELIABILITY.md#analytics",
-      "implementation": "clusters/vmi3474918/analytics"
+      "implementation": "clusters/belacca-production/analytics"
     },
     {
       "id": "dashboard",
@@ -196,10 +196,10 @@
       ],
       "slo": {
         "status": "proposed",
-        "target": "99.0%",
+        "target": "99%",
         "window": "30d",
         "indicator": "Successful authenticated HTTPS dashboard probe",
-        "measurement": "Authentication-aware external collection is not currently deployed"
+        "measurement": "Authentication-aware durable external collection is not operational; dashboard SLO remains proposed"
       },
       "rto": "4h",
       "rpo": "GitOps configuration is versioned; the out-of-band OAuth Secret requires operator-managed backup and rotation",
@@ -208,7 +208,7 @@
         "access": "Dex SSO permits belakkuz@gmail.com for Headlamp and Flux Web UI; Headlamp is backed by a cluster-admin ServiceAccount because this deployment mode cannot impersonate each browser user"
       },
       "runbook": "docs/RELIABILITY.md#dashboard",
-      "implementation": "clusters/vmi3474918/headlamp and clusters/vmi3474918/routing/headlamp-ingress.yaml"
+      "implementation": "clusters/belacca-production/headlamp and clusters/belacca-production/routing/platform-ingress.yaml"
     }
   ]
 }

@@ -1,17 +1,45 @@
-> **Historical retired-runtime document.** The Prometheus manifests below
-> belong to the retired old-production tree and are not active native
-> production coverage. Do not execute its retired k3d context commands.
-
 # Native production observability contract
 
 ## Deployment vocabulary and boundary
 
-Native production currently has application metrics in Pong and Flux health
-signals, but no dedicated Prometheus, Grafana, blackbox exporter, or external
-paging system is provisioned by this repository. The native cluster is
-reconciled from `clusters/belacca-production/` and public edges are
-`169.58.143.41` and `169.58.143.42`. Observability expansion is a post-cutover
-follow-up, not evidence of an existing SLO.
+Native production is reconciled from `clusters/belacca-production/`. The
+private, plain-Prometheus diagnostic child is at
+`clusters/belacca-production/observability/`; the retired old-production
+implementation remains at `clusters/vmi3474918/observability/` and is not
+native coverage. No cluster is changed by this document.
+
+The current platform policy is **99% availability over 30 days for each public
+service, with no SLA**. The public SLI source is an external durable synthetic
+probe for portfolio, Pong, and analytics. The native Prometheus metrics below
+are diagnostics only and must not be used as the external 99% SLI. A controlled
+drift/recovery drill P95 under six minutes is a separate recovery objective; it
+must not enter availability arithmetic.
+
+## Native production implementation
+
+The native child is reconciled by `native-observability` in
+`clusters/belacca-production/native-platform-applications.yaml` with
+`prune: false`, `wait: true`, and a dependency on `flux-system`. It contains:
+
+- one immutable, digest-pinned Prometheus deployment with bounded resources;
+- a Longhorn-backed `ReadWriteOnce` PVC with 45-day retention and a 4 GB
+  retention cap, exceeding the 30-day policy window;
+- only a private ClusterIP Service; no Ingress, NodePort, or LoadBalancer; and
+- strict DNS, native Pong API, Flux-controller, and authenticated Headlamp
+  operator NetworkPolicy paths.
+
+The Prometheus image pin is deliberately reused from the historical
+configuration. Revalidate that digest against the official registry before a
+native rollout or future upgrade. The native config scrapes only aggregate
+Pong `/metrics` and Flux controller metrics as diagnostic signals. It does not
+scrape the status Git repository, and its SLO-source coverage recording rule
+is an explicit proposed/zero placeholder rather than an availability result.
+
+`clusters/belacca-production/observability/synthetic-contracts.json` records
+the external SLO source and the portfolio, Pong, and analytics contracts. The
+authenticated dashboard check remains proposed and external-only/not deployed;
+no dashboard is installed by this slice. Durable external evidence is not yet
+operational, so all catalog SLO status remains proposed/not measured.
 
 ## Historical retired implementation
 

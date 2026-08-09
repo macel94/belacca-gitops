@@ -9,11 +9,15 @@ source for service owners, hosts, tier, dependencies, SLO intent, RTO, RPO,
 dashboard, and runbook references. It is validated in CI with
 `scripts/validate-catalog.py`. The former `.73` k3d runtime is retired.
 
-The SLOs below are **proposed**, not measured. No Prometheus or external
-synthetic system is committed here, so the target percentages must not be
-reported as achieved availability. Measurement is a follow-up capability. The
-failure drills are in [`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md), and the
-backup/object-storage contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
+The SLOs below are **proposed**, not measured. Each public service targets
+**99% availability over 30 days**, with **no SLA**. The native Prometheus child
+provides private diagnostic signals, but no internal metric is the external
+availability SLI and the status Git repository is not scraped into Prometheus.
+Durable external measurement remains a follow-up capability. A controlled
+recovery drill P95 under six minutes is a separate recovery objective and must
+not be included in availability arithmetic. The failure drills are in
+[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md), and the backup/object-storage
+contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
 The latter is a names-and-policy contract only: no object store, encryption key,
 backup credential, or scheduled backup Job is provisioned here.
 
@@ -51,10 +55,10 @@ into a second writer or use ad-hoc restore commands against live data.
 
 | Service | Initial target | SLI candidate | RTO | RPO |
 |---|---:|---|---:|---:|
-| Native production portfolio | 99.5% / 30d | External HTTPS `/health` and homepage success | 4h | N/A |
-| Native production Pong | 99.5% / 30d | `/api/rooms` plus create/join/WebSocket-compatible real-time synthetic success | 4h | 24h target, manual backup |
-| Native production analytics | 99.0% / 30d | `/status` plus same-origin `/count` success | 4h | 24h target, manual backup |
-| Native production dashboard | 99.0% / 30d | Authenticated HTTPS probe | 4h | GitOps is versioned; OAuth Secret is operator-managed |
+| Native production portfolio | 99% / 30d | External HTTPS `/health` and homepage success | 4h | N/A |
+| Native production Pong | 99% / 30d | External `/api/rooms` plus create/join/WebSocket-compatible real-time synthetic success | 4h | 24h target, manual backup |
+| Native production analytics | 99% / 30d | External `/status` plus same-origin `/count` success | 4h | 24h target, manual backup |
+| Native production dashboard | 99% / 30d | Proposed authenticated external HTTPS probe | 4h | GitOps is versioned; OAuth Secret is operator-managed |
 
 Before paging on a native production target, install a measurement source and
 define the event classification, probe locations, aggregation window, and

@@ -1,0 +1,99 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-native-egress
+  namespace: observability
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: observability
+    belacca.com/component: prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+      belacca.com/stage: native-production
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: pong
+          podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: api
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: source-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: kustomize-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: helm-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: notification-controller
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-native-ingress
+  namespace: observability
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: observability
+    belacca.com/component: prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+      belacca.com/stage: native-production
+  policyTypes:
+    - Ingress
+  ingress:
+    # Headlamp's chart selector is app.kubernetes.io/name plus release instance;
+    # this is the private operator path, not a public metrics route.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: headlamp
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: headlamp
+              app.kubernetes.io/instance: headlamp
+      ports:
+        - protocol: TCP
+          port: 9090
