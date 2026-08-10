@@ -65,6 +65,8 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: dex-dex-dashboard-redirect-https@kubernetescrd
+    # The /oauth2 Dex route must win over Headlamp's / catch-all route.
+    traefik.ingress.kubernetes.io/router.priority: "200"
 spec:
   ingressClassName: traefik
   rules:
@@ -91,6 +93,8 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    # The /oauth2 Dex route must win over Headlamp's / catch-all route.
+    traefik.ingress.kubernetes.io/router.priority: "200"
 spec:
   ingressClassName: traefik
   tls:

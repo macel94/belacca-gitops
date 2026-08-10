@@ -162,6 +162,37 @@ unavailable.
 6. If native production OAuth is unavailable, use the documented private
    port-forward/token procedure rather than weakening the public route.
 
+## Incident: dashboard OAuth redirect loop (2025-08-11)
+
+**Observed live evidence:** both native dashboard VIPs (`169.58.143.41` and
+`169.58.143.42`) returned `302` from `/` and `/headlamp-auth/start` to an
+OAuth2 Proxy authorization URL whose `redirect_uri` was
+`https://dashboard.belacca.com/headlamp-auth/callback`. `/headlamp-auth/auth`
+returned `401`, while `/headlamp-auth/callback` returned `500`. Flux remained
+`200` at `/`, and `/oauth2/callback` returned `303 Location: /`.
+
+**Root cause and fix:** the dashboard Headlamp Ingress is a `/` catch-all and
+was also receiving the path-scoped Dex issuer at `/oauth2`. OAuth2 Proxy's
+issuer was therefore routed back through itself, producing a self-referential
+login loop. The Dex `/oauth2` Ingresses now have explicit Traefik priority 200,
+above the Headlamp catch-all. Flux's intended configuration was already
+correct: its base URL is `https://flux.belacca.com`, its Dex issuer is
+`https://dashboard.belacca.com/oauth2`, and its callback is
+`https://flux.belacca.com/oauth2/callback` (owned by the Flux Web chart).
+
+**Expected behavior:** dashboard `/` challenges once via `/headlamp-auth` and
+Dex is served only under `/oauth2`; after authentication the callback is
+`/headlamp-auth/callback` and the user returns to the requested dashboard
+path. Flux challenges via its own OAuth2 flow and returns to
+`https://flux.belacca.com/` after `/oauth2/callback`.
+
+**Verification, deploy, and rollback:** render
+`kubectl kustomize clusters/belacca-production`, reconcile the native
+Kustomizations, and curl both VIPs/hosts. Confirm `/oauth2/.well-known/openid-configuration`
+is Dex (not an OAuth2 Proxy 302), dashboard `/` is a single challenge, and
+Flux remains 200. Roll back by reverting the focused GitOps commit and
+reconciling; do not edit OAuth secrets or weaken the allowlist.
+
 ## Native production Flux and notifications
 
 1. Check `flux get sources git -A` and `flux get kustomizations -A`, or the
