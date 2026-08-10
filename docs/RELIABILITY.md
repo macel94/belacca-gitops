@@ -162,7 +162,7 @@ unavailable.
 6. If native production OAuth is unavailable, use the documented private
    port-forward/token procedure rather than weakening the public route.
 
-## Incident: dashboard OAuth redirect loop (2025-08-11)
+## Incident: dashboard OAuth redirect loop (2026-08-11)
 
 **Observed live evidence:** both native dashboard VIPs (`169.58.143.41` and
 `169.58.143.42`) returned `302` from `/` and `/headlamp-auth/start` to an
