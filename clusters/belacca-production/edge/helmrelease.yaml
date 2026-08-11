@@ -124,6 +124,7 @@ spec:
                 - key: kubernetes.io/hostname
                   operator: In
                   values:
+                    - belacca-k3s-01
                     - belacca-k3s-02
                     - belacca-k3s-03
       podAntiAffinity:
