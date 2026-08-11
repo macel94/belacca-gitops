@@ -195,7 +195,7 @@ Kustomizations are Ready.
   plaintext remains out of band; all seven Certificates are Ready;
 - Pong, GoatCounter, and Dex state was quiesced, integrity-checked, and
   restored into native Longhorn RWO PVCs;
-- direct and public checks pass on both native edges, including Pong WebSocket,
+- direct and public checks pass on all native edges, including Pong WebSocket,
   analytics collector, and OIDC discovery/redirect checks; and
 - the former k3d application runtime is retired and is not a second owner.
 

@@ -14,7 +14,7 @@ Cloudflare DNS-only records contain all three native addresses.
   `clusters/vmi3474918/` / `169.58.97.73`. Its Podman containers were removed
   after state migration and it is not a live public origin.
 - Direct DNS round-robin is used instead of a health-aware load balancer.
-  Operators must monitor both native edges and manually remove a failed A
+  Operators must monitor all native edges and manually remove a failed A
   record if necessary.
 
 ## Native production public endpoints

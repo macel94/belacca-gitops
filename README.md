@@ -102,11 +102,12 @@ rather than relying on anonymous pulls.
 
 ## Current native production DNS
 
-Cloudflare DNS-only records for every supported application hostname and
-`k3s-api.belacca.com` contain `169.58.143.41` and `169.58.143.42` with short
-TTLs. This direct DNS round-robin has no health-aware withdrawal; operators must
-monitor both edges and manually remove an unhealthy address if necessary.
-Traefik terminates TLS on both native edges. cert-manager uses Cloudflare
+Cloudflare DNS-only records for every supported application hostname contain
+`169.58.97.73`, `169.58.143.41`, and `169.58.143.42` with short
+TTLs; `k3s-api.belacca.com` remains on `169.58.143.41` and `169.58.143.42`.
+This direct DNS round-robin has no health-aware withdrawal; operators must
+monitor all edges and manually remove an unhealthy address if necessary.
+Traefik terminates TLS on all native edges. cert-manager uses Cloudflare
 DNS-01 and namespace-local Kubernetes TLS Secrets; the API token remains
 out-of-band in the native cluster and is not stored in Git.
 
