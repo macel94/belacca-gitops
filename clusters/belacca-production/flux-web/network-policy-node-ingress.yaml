@@ -24,6 +24,10 @@ spec:
             cidr: 10.42.0.0/24
         - ipBlock:
             cidr: 10.42.1.0/24
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 10.42.2.0/24
       ports:
         - protocol: TCP
           port: 9080
