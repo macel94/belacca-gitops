@@ -3,13 +3,13 @@
 This is the canonical inventory of the public sites and operator surfaces for
 **native production**. Native production is the three-server k3s cluster,
 reconciled from `clusters/belacca-production/` and publicly addressed through
-`169.58.143.41` and `169.58.143.42`. Host routing is owned by this repository;
-Cloudflare DNS-only records contain both native addresses.
+`169.58.143.41`, `169.58.143.42`, and `169.58.97.73`. Host routing is owned by this repository;
+Cloudflare DNS-only records contain all three native addresses.
 
 ## Deployment boundary
 
 - **Native production:** `clusters/belacca-production/`, with public edges on
-  `169.58.143.41` and `169.58.143.42`.
+  `169.58.143.41`, `169.58.143.42`, and `169.58.97.73`.
 - **Retired old production:** historical `k3d-pong` /
   `clusters/vmi3474918/` / `169.58.97.73`. Its Podman containers were removed
   after state migration and it is not a live public origin.
@@ -58,11 +58,12 @@ native production configuration.
 ## Native production DNS
 
 DNS is managed out of band at Cloudflare. Each application hostname and
-`k3s-api.belacca.com` has DNS-only A records for both native edges:
+`k3s-api.belacca.com` has DNS-only A records for all three native edges:
 
 ```text
 all supported application hosts  A 169.58.143.41
 all supported application hosts  A 169.58.143.42
+all supported application hosts  A 169.58.97.73
 k3s-api.belacca.com             A 169.58.143.41
 k3s-api.belacca.com             A 169.58.143.42
 ```

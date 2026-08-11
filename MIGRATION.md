@@ -7,12 +7,14 @@ Old production is the existing `k3d-pong` cluster, reconciled from
 `clusters/vmi3474918/`, with public address `169.58.97.73`.
 
 **Native production** is the separate `clusters/belacca-production/` tree for
-three native servers, including `169.58.143.41` and `169.58.143.42`.
+three native servers, including `169.58.97.73`, `169.58.143.41`, and
+`169.58.143.42`.
 It contains the Flux foundation, Longhorn, Traefik, cert-manager DNS-01/TLS,
 routes, and published Pong, portfolio, Dex, Headlamp, Flux Web, and analytics
 Kustomizations. The native root and all child Kustomizations reconcile
-successfully; direct and public probes pass on `.41` and `.42`. Cloudflare
-application/API DNS records contain `.41` and `.42` only.
+successfully; direct and public probes pass on the native edges. Cloudflare
+application DNS records contain `169.58.97.73`, `169.58.143.41`, and
+`169.58.143.42`; API DNS remains on `.41` and `.42` only.
 
 **Native cutover: complete.** The former `k3d-pong` application runtime was
 retired after controlled state handoff. Do not recreate the old runtime or

@@ -3,7 +3,7 @@
 This repository describes the current reliability contract for **native
 production**. Native production is the three-server k3s cluster, reconciled
 from `clusters/belacca-production/` and publicly addressed through
-`169.58.143.41` and `169.58.143.42`. The catalog in
+`169.58.143.41`, `169.58.143.42`, and `169.58.97.73`. The catalog in
 [`../catalog/services.json`](../catalog/services.json) is the machine-readable
 source for service owners, hosts, tier, dependencies, SLO intent, RTO, RPO,
 dashboard, and runbook references. It is validated in CI with
@@ -28,8 +28,8 @@ backup credential, or scheduled backup Job is provisioned here.
   in this document refer to native production.
 - **Retired old production** is the historical `k3d-pong` tree at
   `clusters/vmi3474918/`. It is not a live runtime or rollback target.
-- Native production uses direct DNS round-robin on `.41` and `.42`; it is not a
-  health-aware load balancer.
+- Native production uses direct DNS round-robin on `.73`, `.41`, and `.42`;
+  it is not a health-aware load balancer.
 
 ## Native production platform boundary and failure domain
 

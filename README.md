@@ -2,7 +2,7 @@
 
 This repository is the cluster-level source of truth for the **native production**
 platform: the three-server k3s cluster at `clusters/belacca-production/`,
-publicly served through `169.58.143.41` and `169.58.143.42`.
+publicly served through `169.58.143.41`, `169.58.143.42`, and `169.58.97.73`.
 
 ## Deployment vocabulary
 
@@ -15,9 +15,9 @@ Use these terms explicitly in issues, runbooks, and incident notes:
   historical GitOps tree at `clusters/vmi3474918/`. Its Podman containers were
   removed after the controlled state handoff; its manifests and Git history are
   retained for audit/reference, not live reconciliation.
-- Cloudflare DNS-only A records for application hostnames and
-  `k3s-api.belacca.com` contain `.41` and `.42` only. This is direct DNS
-  round-robin, not health-aware failover.
+- Cloudflare DNS-only A records for application hostnames contain `.73`,
+  `.41`, and `.42`; `k3s-api.belacca.com` remains `.41` and `.42` only. This
+  is direct DNS round-robin, not health-aware failover.
 - The native edge uses namespace-local cert-manager TLS Secrets and does not
   mount the retired old-production `acme.json`.
 

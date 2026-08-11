@@ -4,7 +4,7 @@
 
 This SSO contract applies to **native production**: the three-server k3s
 cluster reconciled from `clusters/belacca-production/`, with public edges at
-`169.58.143.41` and `169.58.143.42`. The platform uses **Dex** as the shared
+`169.58.143.41`, `169.58.143.42`, and `169.58.97.73`. The platform uses **Dex** as the shared
 OpenID Connect broker. Dex federates the existing Google OAuth application,
 and each native application has a separate Dex client. The canonical
 path-scoped issuer is `https://dashboard.belacca.com/oauth2`; `dex.belacca.com`

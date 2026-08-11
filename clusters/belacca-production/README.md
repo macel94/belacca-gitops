@@ -15,7 +15,8 @@ controlled state handoff. Its historical GitOps tree remains under
 
 **Native cutover: complete.** Native Flux, Longhorn, Traefik, cert-manager,
 TLS, Pong, portfolio, analytics, Dex, Headlamp, and Flux Web are reconciled
-and public DNS-only records contain `.41` and `.42` only. Pong, GoatCounter,
+and public DNS-only records for application hosts contain `.73`, `.41`, and
+`.42`. Pong, GoatCounter,
 and Dex state was restored into native Longhorn-backed single-writer PVCs.
 Direct DNS is round-robin rather than health-aware failover; monitor both edges
 and remove an unhealthy address manually if required.
@@ -39,7 +40,8 @@ The native root and all child Kustomizations are Ready. Native cert-manager
 owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer, and
 seven Ready Certificates. Native Traefik routes portfolio, Pong, Dex,
 Headlamp, Flux Web UI, and analytics through private ClusterIP Services;
-direct and public probes succeed on both `.41` and `.42`. A private native
+direct and public probes succeed on all three native edges (`.73`, `.41`, and
+`.42`). A private native
 Prometheus diagnostic child and Flux notification contract are now committed,
 but external backup retention, authenticated browser completion, notification
 destination provisioning, and one-node failure drills remain hardening items.

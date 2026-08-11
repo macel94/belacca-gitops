@@ -1,6 +1,6 @@
 > **Historical retired-runtime document.** This runbook describes the former
 > k3d routing procedure and is retained for audit/history only. Current public
-> routing is native production on `.41` and `.42`, with DNS-only Cloudflare
+> routing is native production on `.73`, `.41`, and `.42`, with DNS-only Cloudflare
 > round-robin records and Flux ownership under `clusters/belacca-production/`.
 > Do not execute the retired k3d context commands.
 
@@ -29,8 +29,8 @@ The short version is:
 - `belacca-gitops` is a gitlink/submodule and the cluster-level source of truth.
 - Flux watches `belacca-gitops` and reconciles `clusters/belacca-production`.
 - `clusters/belacca-production/routing/` owns current public host routing.
-- Native Traefik is the ingress controller in `kube-system` on `.41` and `.42`.
-- Cloudflare DNS-only records use both native edge addresses.
+- Native Traefik is the ingress controller in `kube-system` on `.73`, `.41`, and `.42`.
+- Cloudflare DNS-only records use all three native edge addresses.
 - The retired Kubernetes context was `k3d-pong`; do not use it for production.
 
 Do not make a manual `kubectl apply` the permanent deployment. A manual apply
