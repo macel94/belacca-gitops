@@ -45,6 +45,12 @@ spec:
       provider: oidc
       oidc-issuer-url: https://dashboard.belacca.com/oauth2
       redirect-url: https://stats.belacca.com/oauth2/callback
+      # Empty approval-prompt: do NOT append approval_prompt=force to the Dex
+      # authorize URL. oauth2-proxy defaults it to "force", which forces the
+      # connector approval screen on every login (overriding Dex's
+      # skipApprovalScreen) and correlates with a duplicate Google callback
+      # race that surfaces as oauth2 "invalid_grant".
+      approval-prompt: ""
       scope: openid email profile
       reverse-proxy: true
       trusted-proxy-ip: 10.42.0.0/16

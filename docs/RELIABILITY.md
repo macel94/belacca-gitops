@@ -193,6 +193,49 @@ is Dex (not an OAuth2 Proxy 302), dashboard `/` is a single challenge, and
 Flux remains 200. Roll back by reverting the focused GitOps commit and
 reconciling; do not edit OAuth secrets or weaken the allowlist.
 
+## Incident: dashboard login "invalid_grant" after allowed "Grant Access" (2026-08-11)
+
+**Observed live evidence (UTC):** Dex logged `login successful
+connector_id=google username="Francesco Belacca"` and then, ~0.7s later,
+`failed to authenticate err="google: failed to get token: oauth2:
+\"invalid_grant\" \"Bad Request\""` for every dashboard login attempt at
+19:07 and 19:08. The OAuth2 Proxy access log showed no `/headlamp-auth/callback`
+arrival for those attempts, so the user's tab rendered Dex's error page instead
+of completing the callback. A later attempt (19:19) reached the OAuth2 Proxy
+callback but failed with `could not verify id_token ... fetching keys context
+canceled`; the next attempt (19:20) completed successfully. The auth requests
+for the failed pairs remained in Dex SQLite with `force_approval_prompt=1`,
+confirming that `approval_prompt=force` was present and that Dex's code response
+had not been finalized.
+
+**Root cause and fix:** oauth2-proxy v7.15.3 defaults `--approval-prompt` to
+`force` (`pkg/apis/options/legacy_options.go`), so every authorization URL for
+Dex carried `approval_prompt=force`. Dex records `force_approval_prompt=1`, which
+overrides `oauth2.skipApprovalScreen: true` (server handles render the explicit
+"Grant Access" approval page) and forwards the forced-consent behavior into the
+Google flow. On the login page the browser then replayed the same Google callback
+URL within ~1s; the first redemption succeeded and the replay raced Dex and
+failed with Google `invalid_grant`, and the error page replaced the in-flight
+successful redirect chain. Fix: both native OAuth2 Proxy HelmReleases
+(dashboard Headlamp and analytics) now set `approval-prompt: ""` so the
+authorize URL carries no `approval_prompt=force`, Dex honors
+`skipApprovalScreen: true`, and login completes in a single clean callback.
+
+**Expected behavior:** dashboard `/` challenges once, Google redirection
+returns directly to `https://dashboard.belacca.com/oauth2/callback` without a
+forced consent/approval page, Dex skips its own approval screen, and the user
+lands on the requested dashboard path with one `/headlamp-auth/callback`
+exchange. `stats.belacca.com` follows the same contract.
+
+**Verification, deploy, and rollback:** render
+`kubectl kustomize clusters/belacca-production`, reconcile the native
+Kustomizations, and confirm the rendered OAuth2 Proxy args contain
+`--approval-prompt=`. Verify `curl -sI https://dashboard.belacca.com/` returns
+302 to `/oauth2/auth` **without** `approval_prompt=force`, then complete one
+fresh login. Check Dex logs for a single `login successful` with no following
+`invalid_grant`. Roll back by reverting this GitOps commit and reconciling; do
+not edit OAuth secrets or weaken the allowlist.
+
 ## Native production Flux and notifications
 
 1. Check `flux get sources git -A` and `flux get kustomizations -A`, or the
