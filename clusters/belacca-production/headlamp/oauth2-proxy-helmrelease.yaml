@@ -45,12 +45,13 @@ spec:
       provider: oidc
       oidc-issuer-url: https://dashboard.belacca.com/oauth2
       redirect-url: https://dashboard.belacca.com/headlamp-auth/callback
-      # Empty approval-prompt: do NOT append approval_prompt=force to the Dex
-      # authorize URL. oauth2-proxy defaults it to "force", which forces the
-      # connector approval screen on every login (overriding Dex's
-      # skipApprovalScreen) and correlates with a duplicate Google callback
-      # race that surfaces as oauth2 "invalid_grant".
-      approval-prompt: ""
+      # approval-prompt=auto: oauth2-proxy always appends an approval_prompt
+      # parameter (its empty-value default case re-injects "force", which makes
+      # Dex record force_approval_prompt=1, overrides skipApprovalScreen, and
+      # correlates with a duplicate Google callback race surfacing as oauth2
+      # "invalid_grant"). Dex only forces the approval screen when the value is
+      # exactly "force", so "auto" keeps the single-callback flow intact.
+      approval-prompt: auto
       proxy-prefix: /headlamp-auth
       scope: openid email profile
       reverse-proxy: true

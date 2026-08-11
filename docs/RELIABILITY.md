@@ -217,9 +217,12 @@ Google flow. On the login page the browser then replayed the same Google callbac
 URL within ~1s; the first redemption succeeded and the replay raced Dex and
 failed with Google `invalid_grant`, and the error page replaced the in-flight
 successful redirect chain. Fix: both native OAuth2 Proxy HelmReleases
-(dashboard Headlamp and analytics) now set `approval-prompt: ""` so the
-authorize URL carries no `approval_prompt=force`, Dex honors
-`skipApprovalScreen: true`, and login completes in a single clean callback.
+(dashboard Headlamp and analytics) now set `approval-prompt: auto`; oauth2-proxy
+appends `approval_prompt=auto` instead of `force` (an empty value re-enters its
+legacy `force` default), Dex only forces the approval screen when the value is
+exactly `force` (server/oauth2.go: `ForceApprovalPrompt: q.Get("approval_prompt") == "force"`),
+so `skipApprovalScreen: true` is honored and login completes in a single clean
+callback.
 
 **Expected behavior:** dashboard `/` challenges once, Google redirection
 returns directly to `https://dashboard.belacca.com/oauth2/callback` without a
@@ -230,11 +233,11 @@ exchange. `stats.belacca.com` follows the same contract.
 **Verification, deploy, and rollback:** render
 `kubectl kustomize clusters/belacca-production`, reconcile the native
 Kustomizations, and confirm the rendered OAuth2 Proxy args contain
-`--approval-prompt=`. Verify `curl -sI https://dashboard.belacca.com/` returns
-302 to `/oauth2/auth` **without** `approval_prompt=force`, then complete one
-fresh login. Check Dex logs for a single `login successful` with no following
-`invalid_grant`. Roll back by reverting this GitOps commit and reconciling; do
-not edit OAuth secrets or weaken the allowlist.
+`--approval-prompt=auto`. Verify `curl -sI https://dashboard.belacca.com/` returns
+302 to `/oauth2/auth` **with** `approval_prompt=auto` (never `force`), then
+complete one fresh login. Check Dex logs for a single `login successful` with no
+following `invalid_grant`. Roll back by reverting this GitOps commit and
+reconciling; do not edit OAuth secrets or weaken the allowlist.
 
 ## Native production Flux and notifications
 
