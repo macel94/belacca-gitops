@@ -65,6 +65,9 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: longhorn-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: kyverno
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -118,3 +121,6 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: longhorn-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: kyverno

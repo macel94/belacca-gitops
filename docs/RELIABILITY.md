@@ -239,6 +239,28 @@ complete one fresh login. Check Dex logs for a single `login successful` with no
 following `invalid_grant`. Roll back by reverting this GitOps commit and
 reconciling; do not edit OAuth secrets or weaken the allowlist.
 
+## Native production image provenance and vulnerability enforcement
+
+Native production image admission is now fail-closed for Pods in the native
+production namespaces. Flux reconciles Kyverno first through
+`native-policy-system`, then reconciles the `native-image-policy` Kustomization;
+application and platform children depend on that policy gate. The digest rule
+rejects tags without a complete `@sha256:` digest. First-party Pong and
+portfolio images additionally require matching GitHub Actions keyless SLSA
+provenance, CycloneDX SBOM, and vulnerability-decision attestations. Fixed
+HIGH/CRITICAL and all known-unfixed findings block; only NONE/LOW/MEDIUM with a
+signed `native-production-v1` decision may pass. See
+[`IMAGE-PROVENANCE-POLICY.md`](IMAGE-PROVENANCE-POLICY.md) for the exception
+process and exact publisher follow-up.
+
+This branch has no production kubeconfig or registry credentials, so it records
+policy and offline negative-test evidence only; it does not claim a live
+admission attempt. Before rollout, operators must verify Kyverno webhook health,
+reconcile both policy Kustomizations, and record a redacted rejected admission
+for an invalid test Pod. Until the application publisher workflows emit the
+required signed vulnerability decision, their first-party images are correctly
+blocked rather than promoted.
+
 ## Native production Flux and notifications
 
 1. Check `flux get sources git -A` and `flux get kustomizations -A`, or the

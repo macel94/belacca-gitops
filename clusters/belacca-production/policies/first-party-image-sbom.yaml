@@ -1,0 +1,82 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: native-first-party-image-sbom
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: admission-policy
+  annotations:
+    policies.kyverno.io/title: Verify first-party CycloneDX SBOM attestation
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+spec:
+  background: false
+  webhookConfiguration:
+    failurePolicy: Fail
+    timeoutSeconds: 30
+  rules:
+    - name: verify-pong-sbom
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - pong
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/macel94/cloudnativepong-api*
+            - ghcr.io/macel94/cloudnativepong-room*
+            - ghcr.io/macel94/cloudnativepong-static*
+            - ghcr.io/macel94/cloudnativepong-gateway*
+          type: SigstoreBundle
+          required: true
+          failureAction: Enforce
+          mutateDigest: false
+          verifyDigest: true
+          attestations:
+            - predicateType: https://cyclonedx.org/bom
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/macel94/cloudnativepong/.github/workflows/publish-images.yml@refs/heads/main
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ predicate.bomFormat }}"
+                      operator: Equals
+                      value: CycloneDX
+    - name: verify-portfolio-sbom
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - portfolio
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/macel94/francesco-belacca-site*
+          type: SigstoreBundle
+          required: true
+          failureAction: Enforce
+          mutateDigest: false
+          verifyDigest: true
+          attestations:
+            - predicateType: https://cyclonedx.org/bom
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/macel94/francesco-belacca-site/.github/workflows/test-and-publish.yml@refs/heads/main
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ predicate.bomFormat }}"
+                      operator: Equals
+                      value: CycloneDX

@@ -22,6 +22,7 @@ NATIVE_HELM_NAMESPACES = {
     "headlamp",
     "kube-system",
     "longhorn-system",
+    "kyverno",
 }
 NATIVE_SOURCES = {
     ("GitRepository", "flux-system"),

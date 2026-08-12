@@ -65,6 +65,8 @@ clusters/belacca-production/
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
 ├── observability/ private Prometheus diagnostics and SLO-source contract
+├── policy-system/ Kyverno admission controller HelmRelease
+├── policies/ native image digest, provenance, SBOM, and vulnerability policies
 ├── notifications.yaml native Flux notification contract (destination out of band)
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
