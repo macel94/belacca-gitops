@@ -130,7 +130,7 @@ metadata are recorded in [`catalog/services.json`](catalog/services.json) and
 validated in CI. Old production reliability boundaries and response procedures
 are in [`docs/RELIABILITY.md`](docs/RELIABILITY.md); operator failure drills
 for the gateway, static service, lobby, rooms, Flux, and NetworkPolicy are in
-[`docs/GAME-DAY-DRILLS.md`](docs/GAME-DAY-DRILLS.md). The backup retention,
+[`docs/GAME-DAY-DRILLS-HISTORICAL.md`](docs/GAME-DAY-DRILLS-HISTORICAL.md). The backup retention,
 encryption, object-storage, and no-values Secret contract is in
 [`docs/BACKUP-CONTRACT.md`](docs/BACKUP-CONTRACT.md); notification Secret
 provisioning is in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md). The scoped
@@ -142,7 +142,10 @@ ownership procedure.
 
 Native production is the current application delivery plane. Its published
 routed application definitions and Flux-managed Traefik are live public
-production resources validated by direct and pinned-edge probes.
+production resources validated by direct and pinned-edge probes. The native
+failure-drill runbook, fail-closed safety gate, and sanitized evidence contract
+are in [`docs/GAME-DAY-DRILLS.md`](docs/GAME-DAY-DRILLS.md); the former k3d
+procedure is retained separately as [`docs/GAME-DAY-DRILLS-HISTORICAL.md`](docs/GAME-DAY-DRILLS-HISTORICAL.md).
 
 Publish and reconcile the old production GitOps commit before relying on old
 production root pruning. Flux's old production Kustomization must have pruning
@@ -190,7 +193,7 @@ To roll back an old production app, revert the deployment-tag commit in that
 application repository and reconcile its old production child Kustomization.
 To roll back old production routing or policies, revert this repository's
 commit and reconcile the old production root Kustomization. The detailed,
-scoped commands are in [`docs/GAME-DAY-DRILLS.md`](docs/GAME-DAY-DRILLS.md).
+scoped commands are in [`docs/GAME-DAY-DRILLS-HISTORICAL.md`](docs/GAME-DAY-DRILLS-HISTORICAL.md).
 Never remove `pong-api-data`, its PV, or `kube-system/traefik-acme` during an
 old production rollback.
 

@@ -15,8 +15,12 @@ provides private diagnostic signals, but no internal metric is the external
 availability SLI and the status Git repository is not scraped into Prometheus.
 Durable external measurement remains a follow-up capability. A controlled
 recovery drill P95 under six minutes is a separate recovery objective and must
-not be included in availability arithmetic. The failure drills are in
-[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md), and the backup/object-storage
+not be included in availability arithmetic. The native failure drills,
+fail-closed operator gate, evidence schema, and review limitation are in
+[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md). The
+retired-runtime drills are preserved in
+[`GAME-DAY-DRILLS-HISTORICAL.md`](GAME-DAY-DRILLS-HISTORICAL.md). The
+backup/object-storage
 contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
 The latter is a names-and-policy contract only: no object store, encryption key,
 backup credential, or scheduled backup Job is provisioned here.

@@ -21,7 +21,7 @@ Flux reconciles this directory into the existing `k3d-pong` cluster.
 - [`../../docs/BACKUP-CONTRACT.md`](../../docs/BACKUP-CONTRACT.md) documents the
   names-only backup/object-storage/encryption contract; no backup Secret,
   bucket, or scheduled Job is provisioned by this cluster tree.
-- [`../../docs/GAME-DAY-DRILLS.md`](../../docs/GAME-DAY-DRILLS.md) contains
+- [`../../docs/GAME-DAY-DRILLS-HISTORICAL.md`](../../docs/GAME-DAY-DRILLS-HISTORICAL.md) contains
   bounded gateway, static, lobby, room, Flux, and NetworkPolicy drills with
   rollback commands. The existing `k3d-pong` cluster and protected PVCs are
   never disposable rehearsal targets.
