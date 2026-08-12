@@ -40,6 +40,14 @@ data:
               service: flux
               signal: native-diagnostic
         sample_limit: 500
+      - job_name: native-backup-diagnostic
+        metrics_path: /metrics
+        static_configs:
+          - targets: [backup-metrics.backup-system.svc.cluster.local:9091]
+            labels:
+              service: backup
+              signal: native-diagnostic
+        sample_limit: 100
       # The external synthetic source and status Git repository are intentionally
       # not scraped here. Internal metrics cannot stand in for public availability.
   prometheus.rules.yml: |
@@ -59,6 +67,44 @@ data:
             expr: pong_websockets_active
           - record: belacca:native:flux:reconciliation_failures:rate5m
             expr: sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
+      - name: belacca-native-backup-alerts
+        interval: 30s
+        rules:
+          - alert: NativeBackupStale
+            expr: time() - belacca_backup_last_success_timestamp_seconds > 93600
+            for: 15m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} backup is stale"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupIntegrityFailed
+            expr: belacca_backup_integrity_ok < 1
+            for: 5m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} backup integrity verification failed"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupDailyRetentionLow
+            expr: belacca_backup_daily_retention_count < 35
+            for: 1h
+            labels: {severity: warning, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} has fewer than 35 verified daily backups"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupMonthlyRetentionLow
+            expr: belacca_backup_monthly_retention_count < 12
+            for: 1h
+            labels: {severity: warning, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} has fewer than 12 verified monthly backups"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupUploadOrVerificationMissing
+            expr: absent(belacca_backup_last_success_timestamp_seconds)
+            for: 30m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native backup metrics are absent; upload or verification may be failing"
+              runbook: docs/BACKUP-RUNBOOK.md
       - name: belacca-native-slo-source-readiness
         interval: 30s
         rules:

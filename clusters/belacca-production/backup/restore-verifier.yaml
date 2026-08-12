@@ -1,0 +1,168 @@
+# Restore verification deliberately has no production PVC mount. Each run
+# downloads one artifact into an ephemeral filesystem, checks it, and removes
+# the plaintext copy when the Pod exits.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pong-restore-verification
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: pong, belacca.com/component: restore-verifier}
+spec:
+  schedule: "47 3 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: pong}}
+        spec:
+          serviceAccountName: backup-restore-verifier
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: verifier
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "pong"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
+                - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint}}}
+                - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket}}}
+                - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix}}}
+                - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region}}}
+                - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id}}}
+                - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner, defaultMode: 0444}}]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: goatcounter-restore-verification
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: goatcounter, belacca.com/component: restore-verifier}
+spec:
+  schedule: "53 3 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: goatcounter}}
+        spec:
+          serviceAccountName: backup-restore-verifier
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: verifier
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "goatcounter"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
+                - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint}}}
+                - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket}}}
+                - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix}}}
+                - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region}}}
+                - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id}}}
+                - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner, defaultMode: 0444}}]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dex-restore-verification
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: dex, belacca.com/component: restore-verifier}
+spec:
+  schedule: "59 3 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: dex}}
+        spec:
+          serviceAccountName: backup-restore-verifier
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: verifier
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "dex"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
+                - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint}}}
+                - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket}}}
+                - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix}}}
+                - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region}}}
+                - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id}}}
+                - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner, defaultMode: 0444}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-metrics
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: metrics}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: backup-metrics}}
+  template:
+    metadata: {labels: {app: backup-metrics, belacca.com/stage: native-production, belacca.com/project: backup}}
+    spec:
+      serviceAccountName: backup-restore-verifier
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: metrics
+          image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+          command: ["python3", "/opt/backup/backup_runner.py", "metrics-server"]
+          env:
+            - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
+            - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
+            - {name: METRICS_PORT, value: "9091"}
+            - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint}}}
+            - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket}}}
+            - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix}}}
+            - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region}}}
+            - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id}}}
+            - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key}}}
+          ports: [{name: metrics, containerPort: 9091}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          readinessProbe: {httpGet: {path: /metrics, port: metrics}, periodSeconds: 30}
+          volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}]
+      volumes: [{name: runner, configMap: {name: backup-runner, defaultMode: 0444}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-metrics
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: metrics}
+spec:
+  type: ClusterIP
+  selector: {app: backup-metrics}
+  ports: [{name: metrics, port: 9091, targetPort: metrics}]

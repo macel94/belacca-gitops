@@ -24,6 +24,8 @@ jobs:
         run: python3 -m json.tool catalog/services.json >/tmp/services.pretty.json
       - name: Validate recovery contract and drills
         run: python3 scripts/validate-recovery-contract.py
+      - name: Validate encrypted backup implementation
+        run: python3 scripts/validate-backup.py
       - name: Validate notification contracts
         run: python3 scripts/validate-notifications.py
       - name: Validate observability contracts

@@ -18,8 +18,11 @@ recovery drill P95 under six minutes is a separate recovery objective and must
 not be included in availability arithmetic. The failure drills are in
 [`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md), and the backup/object-storage
 contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
-The latter is a names-and-policy contract only: no object store, encryption key,
-backup credential, or scheduled backup Job is provisioned here.
+The latter defines the external storage/key policy and the fail-closed native
+backup implementation. Scheduled writer and isolated restore-verification Jobs
+are under `clusters/belacca-production/backup/`; bucket, encryption key,
+credentials, notification destination, and production evidence remain external.
+See [`BACKUP-RUNBOOK.md`](BACKUP-RUNBOOK.md).
 
 ## Deployment boundary
 
@@ -56,8 +59,8 @@ into a second writer or use ad-hoc restore commands against live data.
 | Service | Initial target | SLI candidate | RTO | RPO |
 |---|---:|---|---:|---:|
 | Native production portfolio | 99% / 30d | External HTTPS `/health` and homepage success | 4h | N/A |
-| Native production Pong | 99% / 30d | External `/api/rooms` plus create/join/WebSocket-compatible real-time synthetic success | 4h | 24h target, manual backup |
-| Native production analytics | 99% / 30d | External `/status` plus same-origin `/count` success | 4h | 24h target, manual backup |
+| Native production Pong | 99% / 30d | External `/api/rooms` plus create/join/WebSocket-compatible real-time synthetic success | 4h | 24h target, scheduled backup fail-closed until external gate/evidence |
+| Native production analytics | 99% / 30d | External `/status` plus same-origin `/count` success | 4h | 24h target, scheduled backup fail-closed until external gate/evidence |
 | Native production dashboard | 99% / 30d | Proposed authenticated external HTTPS probe | 4h | GitOps is versioned; OAuth Secret is operator-managed |
 
 Before paging on a native production target, install a measurement source and

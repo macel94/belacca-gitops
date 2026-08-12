@@ -22,7 +22,7 @@ REQUIRED_CONTRACT_MARKERS = (
     "bucket",
     "secret-access-key",
     "kms-key-id",
-    "No CronJob is committed",
+    "CronJobs are committed in a fail-closed state",
     "k3d-pong",
     "pong-api-data",
 )

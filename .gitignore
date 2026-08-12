@@ -1,2 +1,9 @@
 *.swp
 .DS_Store
+
+# Local backup artifacts and evidence (never commit plaintext state)
+*.sqlite
+*.sqlite3
+*.db
+*.backup
+backup-evidence/

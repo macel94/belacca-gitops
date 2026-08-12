@@ -43,8 +43,11 @@ Headlamp, Flux Web UI, and analytics through private ClusterIP Services;
 direct and public probes succeed on all three native edges (`.73`, `.41`, and
 `.42`). A private native
 Prometheus diagnostic child and Flux notification contract are now committed,
-but external backup retention, authenticated browser completion, notification
-destination provisioning, and one-node failure drills remain hardening items.
+but external backup bucket/KMS/identity provisioning and verification evidence,
+authenticated browser completion, notification destination provisioning, and
+one-node failure drills remain hardening items. The fail-closed backup and
+isolated restore-verification Jobs are under `backup/`; they do not create
+storage or credentials.
 The public 99%/30d SLO is measured by the external status repository, not by
 native Prometheus, and is not yet reportable until its complete window exists.
 
@@ -65,6 +68,7 @@ clusters/belacca-production/
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
 ├── observability/ private Prometheus diagnostics and SLO-source contract
+├── backup/       fail-closed encrypted backup and isolated restore Jobs
 ├── notifications.yaml native Flux notification contract (destination out of band)
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
@@ -100,8 +104,8 @@ Native cutover is complete. Remaining operator work is:
 
 1. select a health-aware API/ingress VIP or load balancer instead of direct
    DNS round-robin;
-2. configure encrypted external backups and complete an isolated restore
-   rehearsal;
+2. provision/test the external encrypted backup destination and identities,
+   then complete isolated Pong, GoatCounter, and Dex restore rehearsals;
 3. complete authenticated browser journeys and a one-node failure drill; and
 4. review the native Traefik UID 0 low-port-binding exception.
 

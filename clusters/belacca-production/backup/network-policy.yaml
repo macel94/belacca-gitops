@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-metrics-ingress
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: metrics}
+spec:
+  podSelector: {matchLabels: {app: backup-metrics}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: observability}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+      ports: [{protocol: TCP, port: 9091}]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - ports: [{protocol: TCP, port: 443}]

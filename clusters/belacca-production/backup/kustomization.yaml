@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - serviceaccount.yaml
+  - rbac.yaml
+  - source-jobs.yaml
+  - restore-verifier.yaml
+  - network-policy.yaml
+configMapGenerator:
+  - name: backup-runner
+    namespace: backup-system
+    files:
+      - backup_runner.py=backup_runner.py
+    options:
+      disableNameSuffixHash: true
+  - name: backup-runner-pong
+    namespace: pong
+    files:
+      - backup_runner.py=backup_runner.py
+    options:
+      disableNameSuffixHash: true
+  - name: backup-runner-analytics
+    namespace: analytics
+    files:
+      - backup_runner.py=backup_runner.py
+    options:
+      disableNameSuffixHash: true
+  - name: backup-runner-dex
+    namespace: dex
+    files:
+      - backup_runner.py=backup_runner.py
+    options:
+      disableNameSuffixHash: true

@@ -1,0 +1,137 @@
+# Each writer runs in the namespace that owns its RWO PVC. The jobs mount the
+# source read-only and use no Kubernetes API token. Runtime Secrets are
+# external and deliberately not represented by Secret manifests here.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pong-backup
+  namespace: pong
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: pong}
+spec:
+  schedule: "17 2 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: pong}}
+        spec:
+          serviceAccountName: pong-backup-writer
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: runner
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "upload", "pong", "/source/pong.db"]
+              args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: pong-backup-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: pong-backup-runtime, key: consistency-acknowledged}}}
+                - {name: SOURCE_REVISION, valueFrom: {secretKeyRef: {name: pong-backup-runtime, key: source-revision}}}
+                - {name: IMAGE_DIGESTS, valueFrom: {secretKeyRef: {name: pong-backup-runtime, key: image-digests}}}
+                - {name: S3_ENDPOINT, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: endpoint}}}
+                - {name: S3_BUCKET, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: bucket}}}
+                - {name: S3_PREFIX, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: prefix}}}
+                - {name: S3_REGION, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: region}}}
+                - {name: S3_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: access-key-id}}}
+                - {name: S3_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: pong-backup-object-store, key: secret-access-key}}}
+                - {name: S3_KMS_KEY_ID, valueFrom: {secretKeyRef: {name: pong-backup-encryption, key: kms-key-id}}}
+                - {name: S3_ENCRYPTION_CONTEXT, valueFrom: {secretKeyRef: {name: pong-backup-encryption, key: encryption-context}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}, {name: source, mountPath: /source, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner-pong, defaultMode: 0444}}, {name: source, persistentVolumeClaim: {claimName: pong-api-data, readOnly: true}}]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: goatcounter-backup
+  namespace: analytics
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: goatcounter}
+spec:
+  schedule: "29 2 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: goatcounter}}
+        spec:
+          serviceAccountName: analytics-backup-writer
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: runner
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "upload", "goatcounter", "/source/db.sqlite3"]
+              args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: analytics-backup-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: analytics-backup-runtime, key: consistency-acknowledged}}}
+                - {name: SOURCE_REVISION, valueFrom: {secretKeyRef: {name: analytics-backup-runtime, key: source-revision}}}
+                - {name: IMAGE_DIGESTS, valueFrom: {secretKeyRef: {name: analytics-backup-runtime, key: image-digests}}}
+                - {name: S3_ENDPOINT, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: endpoint}}}
+                - {name: S3_BUCKET, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: bucket}}}
+                - {name: S3_PREFIX, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: prefix}}}
+                - {name: S3_REGION, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: region}}}
+                - {name: S3_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: access-key-id}}}
+                - {name: S3_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: analytics-backup-object-store, key: secret-access-key}}}
+                - {name: S3_KMS_KEY_ID, valueFrom: {secretKeyRef: {name: analytics-backup-encryption, key: kms-key-id}}}
+                - {name: S3_ENCRYPTION_CONTEXT, valueFrom: {secretKeyRef: {name: analytics-backup-encryption, key: encryption-context}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}, {name: source, mountPath: /source, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner-analytics, defaultMode: 0444}}, {name: source, persistentVolumeClaim: {claimName: goatcounter-data, readOnly: true}}]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dex-backup
+  namespace: dex
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/service: dex}
+spec:
+  schedule: "41 2 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: dex}}
+        spec:
+          serviceAccountName: dex-backup-writer
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: runner
+              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              command: ["python3", "/opt/backup/backup_runner.py", "upload", "dex", "/source/dex.db"]
+              args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
+              env:
+                - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: dex-backup-runtime, key: automation-enabled}}}
+                - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: dex-backup-runtime, key: consistency-acknowledged}}}
+                - {name: SOURCE_REVISION, valueFrom: {secretKeyRef: {name: dex-backup-runtime, key: source-revision}}}
+                - {name: IMAGE_DIGESTS, valueFrom: {secretKeyRef: {name: dex-backup-runtime, key: image-digests}}}
+                - {name: S3_ENDPOINT, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: endpoint}}}
+                - {name: S3_BUCKET, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: bucket}}}
+                - {name: S3_PREFIX, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: prefix}}}
+                - {name: S3_REGION, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: region}}}
+                - {name: S3_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: access-key-id}}}
+                - {name: S3_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: dex-backup-object-store, key: secret-access-key}}}
+                - {name: S3_KMS_KEY_ID, valueFrom: {secretKeyRef: {name: dex-backup-encryption, key: kms-key-id}}}
+                - {name: S3_ENCRYPTION_CONTEXT, valueFrom: {secretKeyRef: {name: dex-backup-encryption, key: encryption-context}}}
+              volumeMounts: [{name: runner, mountPath: /opt/backup, readOnly: true}, {name: source, mountPath: /source, readOnly: true}]
+          volumes: [{name: runner, configMap: {name: backup-runner-dex, defaultMode: 0444}}, {name: source, persistentVolumeClaim: {claimName: dex-data, readOnly: true}}]

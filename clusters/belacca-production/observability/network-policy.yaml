@@ -30,6 +30,16 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: backup-system
+          podSelector:
+            matchLabels:
+              app: backup-metrics
+      ports:
+        - protocol: TCP
+          port: 9091
+    - to:
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: pong
           podSelector:
             matchLabels:

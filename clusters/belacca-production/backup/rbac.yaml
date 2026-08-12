@@ -1,0 +1,17 @@
+# The runner needs no Kubernetes API access. PVC access is granted by mounts,
+# not RBAC, and both ServiceAccounts have token automount disabled.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: backup-system-bounded
+  namespace: backup-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: backup
+spec:
+  hard:
+    pods: "4"
+    requests.cpu: 500m
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
