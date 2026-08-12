@@ -73,6 +73,32 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: native-policies
+  namespace: flux-system
+  labels:
+    belacca.com/owner: native-root
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: network-policy
+spec:
+  interval: 10m
+  path: ./clusters/belacca-production/policies
+  prune: true
+  wait: true
+  timeout: 10m
+  dependsOn:
+    - name: pong
+    - name: native-observability
+    - name: native-dex
+    - name: native-analytics
+    - name: native-headlamp
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: native-headlamp
   namespace: flux-system
   labels:

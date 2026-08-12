@@ -28,8 +28,11 @@ spec:
   values:
     global:
       tolerations: []
+    # Use Longhorn's complete k3s policy graph; do not duplicate a partial
+    # manager/engine/webhook policy in the platform policy bundle.
     networkPolicies:
-      enabled: false
+      enabled: true
+      type: k3s
     service:
       ui:
         type: ClusterIP

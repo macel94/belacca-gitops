@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - network-policies.yaml
+  - platform-egress.yaml
+
+configMapGenerator:
+  - name: native-network-policy-contract
+    namespace: pong
+    files:
+      - edge-contract.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        belacca.com/stage: native-production
+        belacca.com/project: platform
+        belacca.com/component: network-policy

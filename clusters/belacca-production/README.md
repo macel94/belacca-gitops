@@ -65,6 +65,7 @@ clusters/belacca-production/
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
 ├── observability/ private Prometheus diagnostics and SLO-source contract
+├── policies/     native NetworkPolicy boundary and machine-readable edge contract
 ├── notifications.yaml native Flux notification contract (destination out of band)
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
@@ -103,7 +104,10 @@ Native cutover is complete. Remaining operator work is:
 2. configure encrypted external backups and complete an isolated restore
    rehearsal;
 3. complete authenticated browser journeys and a one-node failure drill; and
-4. review the native Traefik UID 0 low-port-binding exception.
+4. review the native Traefik UID 0 low-port-binding exception; and
+5. run the fail-closed native NetworkPolicy probe from
+   [`../../docs/NATIVE-NETWORK-POLICY.md`](../../docs/NATIVE-NETWORK-POLICY.md)
+   after recording the enforcing CNI identity.
 
 The retired old-production manifests and rollback history remain available for
 reference, but the old k3d runtime is not a live rollback target.
