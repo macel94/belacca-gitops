@@ -1,150 +1,199 @@
-# Native production Flux notifications
+# Native production Flux notifications and paging
 
-This document records the current, intentionally incomplete notification
-boundary for **native production** (`clusters/belacca-production/`). Native
-production is the active platform. The former `k3d-pong` tree under
-`clusters/vmi3474918/` is historical and is not a live notification target.
+This document is the operator contract for **native production**
+(`clusters/belacca-production/`). Native production is the active platform; the
+former `k3d-pong` tree under `clusters/vmi3474918/` is historical and is not a
+live notification target.
 
-## Current state
+## Status and ownership
 
-The names-only platform-notification-webhook contract is committed in
+The checked-in resources in
 [`../clusters/belacca-production/notifications.yaml`](../clusters/belacca-production/notifications.yaml)
-and is wired into the native root Kustomization. It contains:
+provide separate diagnostic and page lanes, plus a matching recovery lane:
 
-- `Provider/platform-webhook` in `flux-system`, using Flux's `generic`
-  provider and referring only to the out-of-band Secret named
-  `platform-notification-webhook`;
-- `Alert/platform-errors` for error events from native Flux
-  `GitRepository`, `Kustomization`, and `HelmRelease` resources; and
-- `Alert/platform-deployments` for `info` events whose messages match the
-  `succeeded` or `ready` inclusion patterns.
+- **Ticket/dashboard lane:** `Provider/platform-webhook` uses a generic HTTPS
+  webhook and sends covered Flux errors plus successful/ready deployment
+  context. It is diagnostic and never a page.
+- **Page and recovery lane:** `Provider/platform-page-webhook` uses a generic
+  HMAC webhook. `Alert/platform-page-errors` is narrowly scoped to the named
+  root/application Kustomizations and the Traefik, Longhorn, and cert-manager
+  HelmReleases. `Alert/platform-page-recovery` sends matching successful/ready
+  events so the receiver can resolve or update the existing incident.
 
-The source coverage is intentionally explicit. Both Alerts cover
-GitRepositories and Kustomizations in `flux-system`, and HelmReleases in
-`analytics`, `cert-manager`, `dex`, `flux-system`, `headlamp`, `kube-system`,
-and `longhorn-system`. The event metadata identifies the cluster as
-`belacca-native` and the environment as `native-production`.
+The approved destination is an **operator-owned PagerDuty-compatible incident
+ gateway** in an independent failure domain managed outside native
+production. It must not be hosted by
+native k3s, Flux, native DNS, Traefik, Prometheus, or Longhorn. The platform
+owner owns approval, access control, retention, receiver policy, and the
+incident handoff. The on-call owner and next escalation contact are recorded in
+the private operator incident record, not in this repository.
 
-The destination Secret is **intentionally absent**. No endpoint, token,
-header, fake destination, Secret object, or Secret data is committed. No live
-cluster mutation has been performed. The Provider is therefore a contract
-only and is expected to remain unable to deliver events until its out-of-band
-prerequisite exists. There is no paging claim, and no notification delivery
-should be described as provisioned.
+The destination is **not provisioned by this worktree**. No endpoint, token, or Secret value is committed; routing keys are also kept out of Git. The page destination contract is the
+out-of-band Secret `flux-system/platform-page-notification-webhook`, with
+`address` and `token` keys. The diagnostic destination contract remains
+`flux-system/platform-notification-webhook`; its `address`, optional `token`,
+and optional `headers` are also out of band. A missing Secret is an expected,
+visible prerequisite and must not be replaced by a fake value.
 
-The labels and event metadata mark both Alerts as `diagnostic`, with
-`page-policy: not-configured`. The deployment Alert is not a page route: its
-success/ready events are diagnostic or ticket context only until a destination
-owner separately approves and configures a notification policy.
+The machine-readable policy is
+[`../clusters/belacca-production/notification-routing.json`](../clusters/belacca-production/notification-routing.json).
+The evidence file deliberately records
+`not-performed-in-worktree`; it is not a claim of live delivery:
+[`notification-verification-evidence.json`](notification-verification-evidence.json).
 
-This notification boundary does not change service objectives. Public services
-target 99% availability over 30 days; this is a policy target, not an SLA.
-Controlled-drill recovery P95 under six minutes is a separate recovery measure
-and must not be inferred from notification delivery.
+## Actionability policy
 
-## Event classification and handling
+Flux readiness events alone are not a user-facing SLO alert. Page-worthy
+signals require a high-level impact gate:
 
-| Flux event | GitOps classification now | Page status | Expected handling |
-| --- | --- | --- | --- |
-| `error` from a covered Flux source | reconciliation incident candidate | no page configured | create or update an operational ticket after review; escalate through the incident process if impact or persistence is confirmed |
-| `info` matching `succeeded` or `ready` | deployment/reconciliation diagnostic | never a page in this contract | retain as deployment context or a low-urgency ticket when useful |
-| any event from an uncovered kind or namespace | outside this contract | none | use the owning system's existing telemetry and runbook |
+1. **SLO burn:** an approved external durable SLO source must assert both the
+   short and long burn thresholds (14.4x for 5 minutes and 6x for 1 hour in the
+   native Prometheus contract). The external status repository remains the
+   public SLO source; native Prometheus currently has a fail-closed proposed
+   zero placeholder, so it cannot claim an achieved SLO or create a page.
+2. **Routing failure:** a routing failure must page only after an independent routing health gate
+   confirms customer impact for 10 minutes. A single Traefik or low-level
+   component error remains diagnostic.
+3. **Storage failure:** page only after an independent storage health gate
+   confirms customer impact for 10 minutes. A single Longhorn warning, PVC
+   event, or replica problem does not page without the impact gate.
+4. **Flux reconciliation:** page-lane Flux events are limited to named parent
+   Kustomizations and platform HelmReleases. Individual low-level component
+   failures go to the diagnostic lane unless a confirmed SLO, routing, storage,
+   or parent-impact condition exists.
 
-These classifications are policy labels, not a claim that an operator currently
-receives the events. The missing Secret and destination mean delivery remains
-unprovisioned.
+The public service policy remains 99% availability over 30 days, not an SLA.
+The controlled-drill recovery P95 under six minutes is a separate recovery
+measure and is not an alert threshold.
 
-Receivers should deduplicate repeated reconciliation events using a stable
-identity such as:
+The native Prometheus rules expose the proposed SLO/routing/storage signals and
+an observable `BelaccaNotificationPathNotProvisioned` warning. Notification failure is observable through Provider conditions, Kubernetes warning events, and the independent receiver monitor. The rules do not
+silently convert missing metrics into pages. The notification controller's
+Provider conditions, Kubernetes `NotificationDispatchFailed` warning events,
+and redacted controller logs are the native failure signals. Because a failed
+notification path cannot page through itself, the independent receiver owner
+must monitor endpoint health and run periodic diagnostic delivery.
+
+## Deduplication, grouping, inhibition, and recovery
+
+The receiver must use this stable incident identity:
 
 ```text
-cluster + namespace + involved kind + involved name + severity + reason
+cluster + environment + routingClass + namespace + kind + name + reason
 ```
 
-The Flux revision, message, and timestamp should remain event details rather
-than create unbounded groups. A new revision or a materially different reason
-may start a new group; a recovery (`succeeded`/`ready`) should close or update
-the corresponding error group instead of creating an unrelated incident.
-Receiver owners must define retry, retention, rate-limit, and group windows
-before treating these events as operational notifications. No receiver-side
-policy is committed here.
+Use a 10-minute grouping window. The Flux revision, message, and timestamp are
+event details, not grouping identity; otherwise every reconciliation would make
+another incident. A materially different reason or approved new revision may
+start a new group.
 
-## Harmless diagnostic verification
+The receiver policy is:
 
-Verification is deliberately non-paging and read-only until an authorized
-operator provisions the destination. A safe verification should:
+- repeated events with the same identity deduplicate;
+- a parent service/page identity inhibits duplicate child component pages while
+  the parent incident is active;
+- deployment success/ready diagnostics never suppress or create pages;
+- approved maintenance suppresses page delivery while diagnostics remain
+  available; and
+- `page-recovery` with the same identity resolves or updates the existing
+  incident and never opens a second incident.
 
-1. confirm that the active cluster context is the native-production context;
-2. inspect the Provider and both Alerts for their conditions and the expected
-   Secret-reference error, without creating or applying a resource;
-3. after an approved out-of-band destination exists, send or induce one
-   harmless, non-paging diagnostic event in a controlled window;
-4. confirm the receiver's deduplication, metadata, retention, and redaction;
-   and
-5. remove the diagnostic test record according to the receiver's retention
-   policy, without retaining credentials or event payloads unnecessarily.
+Recovery notifications are delivered through the page provider and are verified
+against the original incident identity before closure.
 
-A missing `platform-notification-webhook` Secret is an expected visible
-prerequisite, not a reason to add a fake Secret or endpoint to Git. Do not use a
-production failure, a public route, or a paging test as notification
-verification.
+The receiver owner must configure retry, retention, rate limiting, redaction,
+and maintenance suppression before enabling the page lane. Flux itself does
+not implement receiver-side deduplication or inhibition.
 
-## Escalation and incident handoff
+## Safe out-of-band provisioning and rotation
 
-The platform owner reviews a covered `error` event for scope, duration, and
-customer impact. If it is actionable, the reviewer opens or updates the
-incident/ticket with the Flux object identity, reason, revision, first and
-latest timestamps, affected service, and the applicable runbook. The handoff
-must identify the current incident owner and the next escalation contact; it
-must not rely on an unprovisioned webhook.
-
-When public impact is confirmed, use the normal incident process and service
-owner escalation. When reconciliation recovers, record the recovery and close
-or downgrade the incident only after checking service health. Notification
-signals do not replace probes, dashboards, or the separate controlled-drill
-recovery measurement. Do not announce a page, an acknowledgement, or an SLA
-response based solely on these manifests.
-
-## Safe out-of-band provisioning and rotation placeholders
-
-Provisioning and rotation are operator-owned follow-up work. They must happen
-through the approved private secret manager or protected administrative path,
-not through Git, issue comments, shell history, CI logs, or this document.
-There is intentionally no real command here.
-
-The out-of-band record to complete is:
+Provisioning is an operator-owned action through the approved private secret
+manager or protected administrative path. Do not put values in Git, issue
+comments, shell history, CI logs, or this document. The operator record must
+capture, outside Git:
 
 ```text
 cluster context: <approved-native-production-context>
-namespace: <flux-system>
-Secret name: <platform-notification-webhook>
-required key: address = <approved-HTTPS-notification-endpoint>
-optional key: token = <operator-managed-token>
-optional key: headers = <operator-managed-header-map>
-owner: <approved-platform-or-receiver-owner>
+namespace: flux-system
+diagnostic Secret: platform-notification-webhook
+page Secret: platform-page-notification-webhook
+page receiver: <approved-independent-operator-owned-gateway>
+page owner: <approved-platform-on-call-owner>
+next escalation: <approved-escalation-contact>
 retention: <approved-receiver-retention>
 rotation schedule: <approved-rotation-schedule>
 ```
 
-Before provisioning, the owner selects and approves the receiver, HTTPS
-endpoint, authentication scheme, access controls, retention, and page-vs-ticket
-policy. The Secret must contain only the receiver's documented keys. The
-endpoint and authentication values remain outside Git. Provisioning is not
-complete until the Secret exists in the native `flux-system` namespace and a
-harmless diagnostic has been verified without paging.
+The receiver must accept HTTPS and verify Flux generic-HMAC `X-Signature` using
+the page Secret's `token`. The page endpoint is supplied by the Secret's
+`address`; no endpoint is present in the Provider manifest. Provisioning is not
+complete until both Secret references have valid conditions and a harmless
+non-paging diagnostic is verified.
 
-For rotation, the owner prepares a replacement credential in the approved
-secret manager, updates the same out-of-band Secret reference without changing
-this manifest, verifies a harmless diagnostic, confirms the old credential is
-revoked, and records the rotation date and owner outside Git. If the receiver
-requires a header map, its values follow the same private handling rules.
+For rotation, generate a replacement credential in the approved secret
+manager, update the same out-of-band Secret, run the harmless diagnostic,
+confirm the receiver accepted the replacement, revoke the old credential, and
+record the date, owner, and result privately. Do not change the manifest or
+copy the credential into this repository.
 
-A future change that enables paging requires a separate reviewed policy change
-covering severity mapping, on-call ownership, escalation timing, deduplication,
-maintenance suppression, and a harmless test. This contract alone does not
-authorize paging.
+## Harmless diagnostic verification matrix
+
+Live verification was not performed in this worktree: there is no native
+cluster context, approved receiver, endpoint, routing key, or token here. Do
+not fake a received event. An authorized operator must perform the following
+in a controlled window, without a production outage or a paging test:
+
+1. Confirm the active context is the approved native-production context and
+   inspect Provider/Alert conditions without printing Secret data.
+2. Verify the diagnostic Secret and page Secret exist with only the documented
+   keys; redact all values.
+3. Induce one harmless, reversible reconciliation event on a non-critical test
+   object covered by the diagnostic lane. Do not inject a production failure or
+   use a public route.
+4. Verify one received diagnostic event has cluster/environment/object identity,
+   redacted message data, and no credential or private payload leakage.
+5. Deliver the same event repeatedly and verify deduplication and the 10-minute
+   grouping window.
+6. Verify a child event is inhibited while its parent page identity is active,
+   and verify deployment info does not page.
+7. Induce or observe the corresponding successful/ready event and verify the
+   receiver resolves or updates the same incident identity; recovery must be
+   delivered and must not create a new incident.
+8. Temporarily exercise the receiver failure path in an approved test window
+   and verify Provider conditions, `NotificationDispatchFailed`, redacted logs,
+   and the independent receiver monitor. Restore the receiver and clean up the
+   diagnostic record according to retention policy.
+
+Record only redacted outcome metadata in
+`docs/notification-verification-evidence.json`. Never commit event payloads,
+URLs, tokens, routing keys, or screenshots containing secrets.
+
+## Escalation and incident handoff
+
+The platform owner reviews every page-lane event for scope, persistence, and
+customer impact. The handoff record must contain:
+
+- stable incident identity and Flux involved object;
+- reason, first/latest timestamps, and source revision;
+- affected public service and SLO/routing/storage impact evidence;
+- the applicable runbook in `docs/RELIABILITY.md`;
+- current incident owner and acknowledgement time; and
+- the next escalation contact and escalation deadline.
+
+The operator opens or updates the incident in the independent paging service,
+then checks public probes, dashboards, Flux conditions, and service health.
+Escalate to the platform owner immediately when the impact gate is confirmed;
+escalate to the next contact at the privately approved deadline if the owner
+has not acknowledged or impact persists. A recovered Flux event alone does not
+close an incident: verify customer health first.
+
+Notification signals do not replace external probes, dashboards, or the
+controlled-drill recovery measure. Do not announce a page, acknowledgement,
+recovery, or SLA response from the manifests alone.
 
 ## References
 
 - [Flux Provider API](https://fluxcd.io/flux/components/notification/providers/)
 - [Flux Alert API](https://fluxcd.io/flux/components/notification/alerts/)
+- [Flux monitoring metrics](https://fluxcd.io/flux/monitoring/metrics/)
+- [PagerDuty Events API v2](https://developer.pagerduty.com/api-reference/368ae3d938c9e-send-an-event-to-pager-duty)
