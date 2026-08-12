@@ -23,7 +23,9 @@ Use these terms explicitly in issues, runbooks, and incident notes:
 
 The supported site inventory, current owners, redirect aliases, operator
 surfaces, DNS records, and monitoring boundaries are maintained in
-[`docs/SITES.md`](docs/SITES.md).
+[`docs/SITES.md`](docs/SITES.md). Progressive delivery, user-facing promotion
+gates, disposable-canary isolation, release evidence, DORA metrics, and
+reviewed Git rollback are defined in [`docs/RELEASE-GATES.md`](docs/RELEASE-GATES.md).
 The canonical portfolio URL is `https://francesco.belacca.com/`;
 `belacca.com`, `www.belacca.com`, and `www.francesco.belacca.com` permanently
 redirect to it while preserving paths. The canonical Pong URL is
