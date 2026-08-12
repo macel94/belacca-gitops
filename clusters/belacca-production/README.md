@@ -60,7 +60,7 @@ clusters/belacca-production/
 ├── flux-system/  Flux controllers and native root bootstrap
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
-├── edge/         Flux-managed Traefik
+├── edge/         Flux-managed Traefik and API/public-edge failover contract
 ├── cert-manager/ cert-manager controller and CRDs
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
@@ -76,6 +76,13 @@ and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
 not contain the retired old-production ACME PVC or old local-path PVCs. Public
 DNS is managed out of band at Cloudflare; additional hostnames or services
 require a separate reviewed change.
+
+The selected health-aware design for `k3s-api.belacca.com` and public ingress
+is the provider-managed L4 contract in `edge/failover-contract.json`, with the
+operator procedure in [`../../docs/EDGE-FAILOVER.md`](../../docs/EDGE-FAILOVER.md).
+The contract is selected but not provisioned: no VIP, firewall mutation, DNS
+cutover, or live failure evidence is claimed by this repository-only change.
+Until the evidence gates pass, use the documented manual DNS-removal fallback.
 
 ## Safe inspection and render checks
 
@@ -98,11 +105,12 @@ post-cutover hardening and manual DNS-removal procedures instead.
 
 Native cutover is complete. Remaining operator work is:
 
-1. select a health-aware API/ingress VIP or load balancer instead of direct
-   DNS round-robin;
+1. provision and live-validate the selected health-aware API/ingress VIP under
+   [`../../docs/EDGE-FAILOVER.md`](../../docs/EDGE-FAILOVER.md);
 2. configure encrypted external backups and complete an isolated restore
    rehearsal;
-3. complete authenticated browser journeys and a one-node failure drill; and
+3. complete authenticated browser journeys and the remaining one-node drill;
+   and
 4. review the native Traefik UID 0 low-port-binding exception.
 
 The retired old-production manifests and rollback history remain available for

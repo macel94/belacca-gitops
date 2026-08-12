@@ -17,7 +17,10 @@ Use these terms explicitly in issues, runbooks, and incident notes:
   retained for audit/reference, not live reconciliation.
 - Cloudflare DNS-only A records for application hostnames contain `.73`,
   `.41`, and `.42`; `k3s-api.belacca.com` remains `.41` and `.42` only. This
-  is direct DNS round-robin, not health-aware failover.
+  is direct DNS round-robin, not health-aware failover. The selected,
+  provider-managed L4 design and manual fallback are documented in
+  [`docs/EDGE-FAILOVER.md`](docs/EDGE-FAILOVER.md); it is not provisioned or
+  live-validated by this repository-only change.
 - The native edge uses namespace-local cert-manager TLS Secrets and does not
   mount the retired old-production `acme.json`.
 
@@ -105,8 +108,11 @@ rather than relying on anonymous pulls.
 Cloudflare DNS-only records for every supported application hostname contain
 `169.58.97.73`, `169.58.143.41`, and `169.58.143.42` with short
 TTLs; `k3s-api.belacca.com` remains on `169.58.143.41` and `169.58.143.42`.
-This direct DNS round-robin has no health-aware withdrawal; operators must
-monitor all edges and manually remove an unhealthy address if necessary.
+This direct DNS round-robin has no health-aware withdrawal. Until the
+provider-managed L4 design in [`docs/EDGE-FAILOVER.md`](docs/EDGE-FAILOVER.md)
+is provisioned and its failure evidence is recorded, operators must monitor
+all edges and use the reviewed manual DNS-removal procedure for an unhealthy
+address.
 Traefik terminates TLS on all native edges. cert-manager uses Cloudflare
 DNS-01 and namespace-local Kubernetes TLS Secrets; the API token remains
 out-of-band in the native cluster and is not stored in Git.

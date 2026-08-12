@@ -35,9 +35,11 @@ backup credential, or scheduled backup Job is provisioned here.
 
 - Native production uses three k3s servers and Longhorn replicated storage;
   it still requires a one-writer contract for Pong, GoatCounter, and Dex SQLite.
-- Native edge and API DNS are direct round-robin records, not health-aware
-  failover. A failed address must be removed manually until a load balancer is
-  provisioned.
+- Native edge and API DNS remain direct round-robin records until the
+  selected provider-managed L4 design is provisioned and proven. The contract,
+  port boundary, drills, evidence schema, and manual fallback are in
+  [`EDGE-FAILOVER.md`](EDGE-FAILOVER.md). A failed address must be removed
+  manually until those live gates pass.
 - Pong, GoatCounter, and Dex use single-writer RWO PVCs. Their replicas remain
   one where they own SQLite; adding replicas without a database design risks
   corruption or inconsistent writes.

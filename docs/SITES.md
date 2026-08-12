@@ -13,9 +13,10 @@ Cloudflare DNS-only records contain all three native addresses.
 - **Retired old production:** historical `k3d-pong` /
   `clusters/vmi3474918/` / `169.58.97.73`. Its Podman containers were removed
   after state migration and it is not a live public origin.
-- Direct DNS round-robin is used instead of a health-aware load balancer.
-  Operators must monitor all native edges and manually remove a failed A
-  record if necessary.
+- The selected health-aware design is a provider-managed L4 VIP described in
+  [`EDGE-FAILOVER.md`](EDGE-FAILOVER.md). It is not provisioned or live-tested
+  yet, so direct DNS round-robin remains active and operators must use the
+  reviewed manual A-record removal procedure for a failed edge.
 
 ## Native production public endpoints
 
@@ -68,10 +69,13 @@ k3s-api.belacca.com             A 169.58.143.41
 k3s-api.belacca.com             A 169.58.143.42
 ```
 
-This direct DNS round-robin is not health-aware. Remove an unhealthy address
-manually until a health-aware VIP or load balancer is provisioned. Native
-Traefik terminates TLS and cert-manager uses Cloudflare DNS-01; the API token
-is an out-of-band Kubernetes Secret and no credential belongs in Git.
+This direct DNS round-robin is not health-aware. The selected replacement is
+an L4 provider VIP with TLS pass-through and `/readyz`/`/health` checks, as
+specified in [`EDGE-FAILOVER.md`](EDGE-FAILOVER.md). Remove an unhealthy
+address manually until that VIP is provisioned and one-edge/control-plane
+withdrawal and recovery are measured. Native Traefik terminates TLS and
+cert-manager uses Cloudflare DNS-01; the API token is an out-of-band Kubernetes
+Secret and no credential belongs in Git.
 
 ## Native production monitoring coverage
 

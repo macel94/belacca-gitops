@@ -200,8 +200,10 @@ Kustomizations are Ready.
 - the former k3d application runtime is retired and is not a second owner.
 
 Post-cutover hardening remains: external backup retention and restore rehearsal,
-a health-aware API/ingress endpoint, authenticated browser journeys, a
-one-node failure drill, and a review of the native Traefik UID 0 exception.
+the selected health-aware API/ingress endpoint (design and operator gates are
+in `docs/EDGE-FAILOVER.md`), authenticated browser journeys, a one-node failure
+drill, and a review of the native Traefik UID 0 exception. The failover design
+is not provisioned or live-validated until its evidence artifact is complete.
 
 ## Old production rollback
 
