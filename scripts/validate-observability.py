@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OBS = ROOT / "clusters" / "vmi3474918" / "observability"
 NATIVE_OBS = ROOT / "clusters" / "belacca-production" / "observability"
 NATIVE_PLATFORM_APPLICATIONS = ROOT / "clusters" / "belacca-production" / "native-platform-applications.yaml"
+RUNBOOK = ROOT / "docs" / "NATIVE-OBSERVABILITY-RUNBOOK.md"
+RULE_TEST = ROOT / "tests" / "prometheus" / "native-observability.yml"
 
 
 def fail(message: str) -> None:
@@ -35,6 +37,19 @@ def validate_native() -> None:
         fail("native contract must keep the external SLO source proposed")
     if source.get("ingested_into_prometheus") is not False or source.get("status_repository_scraped") is not False:
         fail("native contract must not claim status-repository Prometheus scraping")
+    boundary = source.get("ingestion_boundary")
+    if not isinstance(boundary, dict) or boundary.get("deployment_status") != "contract-only/not-deployed":
+        fail("native contract must keep the ingestion boundary inactive until provisioned")
+    if boundary.get("metric") != "belacca_slo_observation_events_total" or boundary.get("cadence") != "1h":
+        fail("native SLO boundary must define the hourly counter metric")
+    labels = boundary.get("allowed_labels")
+    if labels != {
+        "service": ["portfolio", "pong", "analytics"],
+        "outcome": ["good", "bad"],
+    }:
+        fail("native SLO boundary labels must be bounded to the approved service/outcome values")
+    if "Exactly one increment" not in boundary.get("required_event", ""):
+        fail("native SLO boundary must define one event per valid hourly observation")
     checks = synthetic.get("checks")
     if not isinstance(checks, list) or {item.get("service") for item in checks} != {
         "portfolio", "pong", "analytics", "dashboard"
@@ -46,8 +61,16 @@ def validate_native() -> None:
                 fail("native dashboard check must remain proposed and external-only/not-deployed")
             if item.get("credentials_in_git") is not False:
                 fail("native dashboard synthetic must keep credentials out of Git")
-    if synthetic.get("privacy", {}).get("store_tokens") is not False:
-        fail("native synthetic contract must prohibit token storage")
+    privacy = synthetic.get("privacy", {})
+    for field in (
+        "store_room_ids",
+        "store_player_names",
+        "store_client_addresses",
+        "store_tokens",
+        "store_response_bodies",
+    ):
+        if privacy.get(field) is not False:
+            fail(f"native synthetic contract must prohibit {field}")
 
     required_fragments = (
         "cluster: belacca-native",
@@ -57,7 +80,11 @@ def validate_native() -> None:
         "source-controller.flux-system.svc.cluster.local:80",
         "sample_limit: 100",
         "sample_limit: 500",
-        "status Git repository are intentionally",
+        "job_name: native-slo-evidence-boundary",
+        "slo-evidence-adapter.observability.svc.cluster.local:8080",
+        "belacca_slo_observation_events_total",
+        "regex: portfolio|pong|analytics",
+        "regex: good|bad",
         "record: belacca:slo_source:external_probe:coverage",
         "expr: vector(0)",
     )
@@ -69,8 +96,21 @@ def validate_native() -> None:
         fail("native recording rules must not calculate availability or recovery drills")
     if not re.search(r"(?m)^\s*-?\s*record: belacca:native:pong:http_requests:rate5m$", rules):
         fail("native Pong diagnostic recording rule is missing")
+    for record in (
+        "belacca:slo:good_events:30d",
+        "belacca:slo:total_events:30d",
+        "belacca:slo:sli:30d",
+        "belacca:slo:error_budget:30d",
+        "belacca:slo:data_coverage:30d",
+    ):
+        if not re.search(rf"(?m)^\s*-?\s*record: {re.escape(record)}$", rules):
+            fail(f"native SLO recording rule is missing: {record}")
     if not re.search(r"(?m)^\s*-?\s*record: belacca:native:flux:reconciliation_failures:rate5m$", rules):
         fail("native Flux diagnostic recording rule is missing")
+    if "increase(belacca_slo_observation_events_total{outcome=~\"good|bad\"}[30d])" not in rules:
+        fail("native total events must use sanitized good/bad evidence")
+    if "data_coverage:30d == 1" not in rules or "total_events:30d > 0" not in rules:
+        fail("native SLI and error budget must fail closed on missing/partial data")
 
     if "prom/prometheus:v3.13.2@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
         fail("native Prometheus image must be immutable and must not use latest")
@@ -113,6 +153,8 @@ def validate_native() -> None:
             fail(f"native NetworkPolicy missing narrow private rule {fragment}")
     if "0.0.0.0/0" in policies or re.search(r"type:\s+(?:NodePort|LoadBalancer)", deployment):
         fail("native observability must not be publicly exposed")
+    if "slo-evidence-adapter.observability.svc.cluster.local" not in config:
+        fail("native config must retain the private external-evidence ingestion boundary")
 
     native_files = list(NATIVE_OBS.glob("*"))
     for path in native_files:
@@ -121,6 +163,8 @@ def validate_native() -> None:
             fail(f"native observability contains a historical path or latest image: {path}")
         if re.search(r"kind:\s+Ingress|type:\s+(?:NodePort|LoadBalancer)", text):
             fail(f"native observability contains public exposure: {path}")
+        if path.name == "config.yaml" and re.search(r"room_id|player_name|client_address|request_id|token", text, re.IGNORECASE):
+            fail(f"native observability config contains a forbidden high-cardinality/private field: {path}")
     for fragment in (
         "name: native-observability",
         "path: ./clusters/belacca-production/observability",
@@ -130,6 +174,26 @@ def validate_native() -> None:
     ):
         if fragment not in flux:
             fail(f"native Flux wiring missing {fragment}")
+    runbook = RUNBOOK.read_text()
+    for fragment in (
+        "belacca-native",
+        "prometheus-native",
+        "native-slo-evidence-boundary",
+        "belacca_slo_observation_events_total",
+        "45 days and 4GiB",
+        "Missing, malformed, or partial",
+        "retired old production",
+    ):
+        if fragment not in runbook:
+            fail(f"native observability runbook is missing {fragment!r}")
+    test = RULE_TEST.read_text()
+    for fragment in (
+        "missing_external_evidence_is_not_success",
+        "exp_samples: []",
+        "belacca:slo:data_coverage:30d",
+    ):
+        if fragment not in test:
+            fail(f"native Prometheus rule test is missing {fragment!r}")
 
 
 def main() -> int:

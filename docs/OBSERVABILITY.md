@@ -32,14 +32,26 @@ The Prometheus image pin is deliberately reused from the historical
 configuration. Revalidate that digest against the official registry before a
 native rollout or future upgrade. The native config scrapes only aggregate
 Pong `/metrics` and Flux controller metrics as diagnostic signals. It does not
-scrape the status Git repository, and its SLO-source coverage recording rule
-is an explicit proposed/zero placeholder rather than an availability result.
+scrape the status Git repository. A private, contract-only ingestion boundary
+for sanitized external observations is present but intentionally not deployed;
+its bounded `good|bad` event metric feeds native recording rules only when an
+operator provisions the reviewed adapter.
 
-`clusters/belacca-production/observability/synthetic-contracts.json` records
-the external SLO source and the portfolio, Pong, and analytics contracts. The
-authenticated dashboard check remains proposed and external-only/not deployed;
-no dashboard is installed by this slice. Durable external evidence is not yet
-operational, so all catalog SLO status remains proposed/not measured.
+The native recording rules expose machine-readable `good_events`,
+`total_events`, `data_coverage`, `sli`, and `error_budget` series over the
+30-day/720-hour policy window. Missing, malformed, partial, or duplicate
+observations never become success: numeric SLI and error-budget series require
+exactly full coverage and a non-zero total. The native rules are diagnostic
+inputs and do not publish a public availability claim. The evidence boundary
+and its privacy contract are in
+`clusters/belacca-production/observability/synthetic-contracts.json`.
+
+The authenticated dashboard check remains proposed and external-only/not
+deployed; no dashboard is installed by this slice. Durable external evidence
+is not yet operational, so all catalog SLO status remains proposed/not measured.
+See [`docs/NATIVE-OBSERVABILITY-RUNBOOK.md`](NATIVE-OBSERVABILITY-RUNBOOK.md)
+for private readiness checks, resource bounds, failure domains, and the exact
+adapter follow-up.
 
 ## Historical retired implementation
 
@@ -81,6 +93,19 @@ production. Those are separate follow-up changes requiring CRD/chart/runtime
 validation. The public site status page remains externally published and
 unknown by default; Prometheus is not treated as its own external status
 authority.
+
+## Native evidence boundary contract
+
+The private native evidence boundary contract is:
+
+```text
+belacca_slo_observation_events_total{service="portfolio|pong|analytics",outcome="good|bad"}
+```
+
+The adapter emits exactly one counter increment per valid hourly observation;
+missing or malformed slots emit nothing. It must expose no room IDs, player
+names, addresses, tokens, request IDs, URLs, response bodies, or raw errors.
+The target is contract-only/not-deployed until separately reviewed.
 
 ## Historical scrape contract
 

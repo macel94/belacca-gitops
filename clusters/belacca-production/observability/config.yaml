@@ -40,8 +40,33 @@ data:
               service: flux
               signal: native-diagnostic
         sample_limit: 500
-      # The external synthetic source and status Git repository are intentionally
-      # not scraped here. Internal metrics cannot stand in for public availability.
+      # This is an ingestion boundary, not a scrape of the status Git
+      # repository. The endpoint is intentionally not deployed by this slice;
+      # an operator must provision a private, Flux-owned adapter that exposes
+      # only the contract in synthetic-contracts.json. Until then this target
+      # is down and all SLO series remain absent or zero-coverage.
+      - job_name: native-slo-evidence-boundary
+        metrics_path: /metrics
+        static_configs:
+          - targets: [slo-evidence-adapter.observability.svc.cluster.local:8080]
+            labels:
+              signal: external-slo-evidence
+        sample_limit: 100
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: belacca_slo_observation_events_total
+            action: keep
+          - source_labels: [service]
+            regex: portfolio|pong|analytics
+            action: keep
+          - source_labels: [outcome]
+            regex: good|bad
+            action: keep
+          # The adapter contract is intentionally a two-label allowlist. This
+          # drops all other labels, including any accidental high-cardinality
+          # or private fields, before they reach the TSDB.
+          - regex: ^(__name__|service|outcome)$
+            action: labelkeep
   prometheus.rules.yml: |
     groups:
       - name: belacca-native-diagnostic-recording
@@ -59,11 +84,51 @@ data:
             expr: pong_websockets_active
           - record: belacca:native:flux:reconciliation_failures:rate5m
             expr: sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
+          - record: belacca:native:target:up
+            expr: |
+              max by (job, service) (
+                up{job=~"native-pong-api-diagnostic|native-flux-controllers-diagnostic|native-slo-evidence-boundary"}
+              )
+      - name: belacca-native-slo-recording
+        interval: 1h
+        rules:
+          # The external adapter emits one counter increment per valid hourly
+          # observation. A missing scrape therefore creates no good event.
+          - record: belacca:slo:expected_slots:30d
+            expr: |
+              label_replace(vector(720), "service", "portfolio", "", "")
+              or label_replace(vector(720), "service", "pong", "", "")
+              or label_replace(vector(720), "service", "analytics", "", "")
+          - record: belacca:slo:good_events:30d
+            expr: |
+              sum by (service) (increase(belacca_slo_observation_events_total{outcome="good"}[30d]))
+              or on (service) (belacca:slo:expected_slots:30d * 0)
+          - record: belacca:slo:total_events:30d
+            expr: |
+              sum by (service) (increase(belacca_slo_observation_events_total{outcome=~"good|bad"}[30d]))
+              or on (service) (belacca:slo:expected_slots:30d * 0)
+          - record: belacca:slo:data_coverage:30d
+            expr: belacca:slo:total_events:30d / belacca:slo:expected_slots:30d
+          - record: belacca:slo:sli:30d
+            expr: |
+              (
+                belacca:slo:good_events:30d / belacca:slo:total_events:30d
+              )
+              and on (service) (belacca:slo:data_coverage:30d == 1)
+              and on (service) (belacca:slo:total_events:30d > 0)
+          - record: belacca:slo:error_budget:30d
+            expr: |
+              (
+                1 - (belacca:slo:total_events:30d - belacca:slo:good_events:30d)
+                / (belacca:slo:total_events:30d * 0.01)
+              )
+              and on (service) (belacca:slo:data_coverage:30d == 1)
+              and on (service) (belacca:slo:total_events:30d > 0)
       - name: belacca-native-slo-source-readiness
         interval: 30s
         rules:
-          # Placeholder only: zero means no external durable SLO source is
-          # operational here. It is not a public availability calculation.
+          # This series is deliberately zero until an adapter is provisioned;
+          # it must never be interpreted as successful service observations.
           - record: belacca:slo_source:external_probe:coverage
             expr: vector(0)
             labels:
