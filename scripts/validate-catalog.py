@@ -21,6 +21,7 @@ REQUIRED_SERVICE_FIELDS = {
     "rpo",
     "dashboard",
     "runbook",
+    "implementation",
 }
 REQUIRED_SLO_FIELDS = {"status", "target", "window", "indicator", "measurement"}
 REQUIRED_DASHBOARD_FIELDS = {"url", "access"}
@@ -46,6 +47,8 @@ def main() -> int:
             fail("apiVersion must be belacca.com/v1alpha1")
         if catalog.get("kind") != "ServiceCatalog":
             fail("kind must be ServiceCatalog")
+        if catalog.get("metadata", {}).get("cluster") != "belacca-native":
+            fail("catalog metadata.cluster must be belacca-native")
         if not isinstance(catalog.get("services"), list) or not catalog["services"]:
             fail("services must be a non-empty list")
 
@@ -63,8 +66,14 @@ def main() -> int:
                 fail(f"duplicate service id: {service_id}")
             ids.add(service_id)
             for field in ("name", "owner", "tier", "rto", "rpo", "runbook", "implementation"):
-                if field in service:
-                    require_string(service[field], f"{prefix}.{field}")
+                require_string(service[field], f"{prefix}.{field}")
+            if "clusters/belacca-production" not in service["implementation"]:
+                fail(f"{prefix}.implementation must identify native production")
+            if re.search(r"native-staging|vmi3474918|k3d-pong", service["implementation"]):
+                fail(f"{prefix}.implementation contains a retired or staging path")
+            runbook_path = service["runbook"].split("#", 1)[0]
+            if not (Path(__file__).resolve().parents[1] / runbook_path).is_file():
+                fail(f"{prefix}.runbook does not identify a checked-in GitOps document: {runbook_path}")
             if service["tier"] not in VALID_TIERS:
                 fail(f"{prefix}.tier must be one of {sorted(VALID_TIERS)}")
             hosts = service["publicHosts"]

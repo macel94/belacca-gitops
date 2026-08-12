@@ -36,53 +36,58 @@ jobs:
           else
             echo 'promtool unavailable; deterministic config/rule checks in validate-observability.py and Kustomize validation are the fallback.'
           fi
-      - name: Render native observability Kustomization
+      - name: Render every native production Kustomization
+        # Keep this list explicit: a missing live path must fail closed instead
+        # of being hidden by a repository-wide find or a retired tree render.
         run: |
-          set -eu
-          kubectl kustomize clusters/belacca-production/observability >/tmp/native-observability.yaml
-          test -s /tmp/native-observability.yaml
-      - name: Render every checked-in Kustomization
-        # kubectl kustomize parses every YAML document in each active manifest
-        # tree while rendering; this avoids adding a second YAML parser just for CI.
-        run: |
-          set -eu
-          while IFS= read -r file; do
-            directory="$(dirname "$file")"
-            directory="${directory#./}"
+          set -euo pipefail
+          native_paths=(
+            clusters/belacca-production
+            clusters/belacca-production/flux-system
+            clusters/belacca-production/secrets
+            clusters/belacca-production/longhorn
+            clusters/belacca-production/edge
+            clusters/belacca-production/cert-manager
+            clusters/belacca-production/tls
+            clusters/belacca-production/routing
+            clusters/belacca-production/dex
+            clusters/belacca-production/analytics
+            clusters/belacca-production/observability
+            clusters/belacca-production/headlamp
+            clusters/belacca-production/flux-web
+          )
+          for directory in "${native_paths[@]}"; do
+            test -f "$directory/kustomization.yaml" || {
+              echo "missing live native Kustomization: $directory/kustomization.yaml" >&2
+              exit 1
+            }
             output="/tmp/kustomize-$(printf '%s' "$directory" | tr '/.' '__').yaml"
             kubectl kustomize "$directory" >"$output"
             test -s "$output"
             echo "rendered $directory -> $output"
-          done < <(find . -name kustomization.yaml -not -path './.git/*' -print | sort)
-      - name: Check rendered output and secret safety
+          done
+      - name: Audit retired historical tree (reference only)
         run: |
-          grep -q 'name: belacca-routing' clusters/vmi3474918/routing-flux.yaml
-          grep -q 'name: pong' clusters/vmi3474918/applications.yaml
-          grep -q 'name: portfolio' clusters/vmi3474918/applications.yaml
-          grep -q 'name: cloudnativepong' clusters/vmi3474918/sources.yaml
-          grep -q 'name: francesco-belacca-site' clusters/vmi3474918/sources.yaml
-          grep -q 'pong.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'apex-to-portfolio' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'platform-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
-          grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
-          grep -q 'platform-webhook' /tmp/kustomize-clusters_belacca-production.yaml
-          grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_belacca-production.yaml
+          set -euo pipefail
+          test -f clusters/vmi3474918/HISTORICAL-REFERENCE.md
+          grep -q 'not.*native production' clusters/vmi3474918/HISTORICAL-REFERENCE.md
+      - name: Check live rendered output and secret safety
+        run: |
+          set -euo pipefail
+          grep -q 'name: platform-webhook' /tmp/kustomize-clusters_belacca-production.yaml
+          grep -q 'name: platform-notification-webhook' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'cluster: belacca-native' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'environment: native-production' /tmp/kustomize-clusters_belacca-production.yaml
-          grep -q 'dnsChallenge:' clusters/vmi3474918/traefik-config.yaml
+          grep -q 'pong.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'apex-to-portfolio' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_belacca-production_observability.yaml
+          grep -q 'name: pong-api-observability-scrape' clusters/belacca-production/observability/network-policy.yaml
+          grep -q 'dnsChallenge:' clusters/belacca-production/edge/helmrelease.yaml
           grep -q 'CLOUDFLARE_DNS_API_TOKEN' README.md SUBDOMAIN-RUNBOOK.md
-          grep -q 'name: portfolio-traffic' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: pong-gateway' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: portfolio' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: observability' /tmp/kustomize-clusters_vmi3474918.yaml
-          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_vmi3474918_observability.yaml
-          grep -q 'unsafeUseServiceAccountToken: true' clusters/vmi3474918/headlamp/helmrelease.yaml
-          grep -q -- '- "-proxy-auth=true"' clusters/vmi3474918/headlamp/helmrelease.yaml
-          grep -q 'name: pong-api-observability-scrape' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          test ! -f clusters/vmi3474918/secret.yaml
-          test ! -f clusters/vmi3474918/secret.yml
+          test ! -f clusters/belacca-production/secret.yaml
+          test ! -f clusters/belacca-production/secret.yml
           python3 - <<'PY'
           import re
           import sys

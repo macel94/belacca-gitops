@@ -32,15 +32,16 @@ WebSocket-compatible path. Pong application-native WebTransport remains opt-in
 until a reviewed UDP-capable public service, TLS configuration, and matching
 network policy exist.
 
-## Repository map
+## Native production repository map
 
-The following application and platform entries describe **old production**.
+The following application and platform entries describe the **live native production**
+plane.
 
-| Repository | Runtime | Public host | Flux path in old production |
+| Repository | Runtime | Public host | Flux path in native production |
 |---|---|---|---|
-| [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, Caddy gateway, Distroless rooms, WebSocket fallback, opt-in WebTransport | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/server` |
+| [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, Caddy gateway, Distroless rooms, WebSocket fallback, opt-in WebTransport | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/native-production` |
 | [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static Caddy portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
-| GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/vmi3474918/analytics` |
+| GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/belacca-production/analytics` |
 
 Native production has published application Flux paths for Pong, portfolio,
 analytics, Dex, Headlamp, Flux Web, private Prometheus diagnostics, and native
@@ -95,10 +96,10 @@ Pong/portfolio/Dex/Headlamp/Flux Web/analytics workloads. Stateful SQLite
 workloads remain single-writer.
 
 The GHCR package for `francesco-belacca-site` is anonymously pullable, like the
-existing old production Pong packages. GoatCounter uses the pinned public
-`arp242/goatcounter` image and stores its data on the old production analytics
-PVC. If a future project uses a private package, configure an imagePullSecret
-rather than relying on anonymous pulls.
+existing Pong packages. GoatCounter uses the pinned public `arp242/goatcounter`
+image and stores its data on the native production analytics PVC. If a future
+project uses a private package, configure an imagePullSecret rather than relying
+on anonymous pulls.
 
 ## Current native production DNS
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -132,59 +133,62 @@ def validate_native() -> None:
             fail(f"native Flux wiring missing {fragment}")
 
 
+def validate_historical() -> None:
+    """Validate the retired tree only when an explicit audit is requested."""
+    synthetic = json.loads((OBS / "synthetic-contracts.json").read_text())
+    dashboard = json.loads((OBS / "dashboard.json").read_text())
+    config = (OBS / "config.yaml").read_text()
+    deployment = (OBS / "deployment.yaml").read_text()
+
+    if synthetic.get("contract_version") != "belacca.synthetic-contracts.v1":
+        fail("historical synthetic contract has an unexpected version")
+    checks = synthetic.get("checks")
+    if not isinstance(checks, list) or {item.get("service") for item in checks} != {
+        "portfolio", "pong", "analytics", "dashboard"
+    }:
+        fail("historical synthetic contract must cover portfolio, pong, analytics, dashboard")
+    if synthetic.get("privacy", {}).get("store_tokens") is not False:
+        fail("historical synthetic contract must prohibit token storage")
+    if dashboard.get("dashboard", {}).get("title") != "Belacca Platform Reliability (staged)":
+        fail("unexpected historical dashboard title")
+    panels = dashboard.get("dashboard", {}).get("panels")
+    if not isinstance(panels, list) or not panels:
+        fail("historical dashboard must define at least one panel")
+    for panel in panels:
+        if not isinstance(panel.get("query"), str) or "{" in panel["query"] and "}" in panel["query"] and "room" in panel["query"]:
+            fail("historical dashboard query contains an unsafe/high-cardinality room selector")
+    for fragment in (
+        "scrape_configs:", "rule_files:", "sample_limit: 100", "sample_limit: 500",
+        "pong-api.pong.svc.cluster.local:8080", "source-controller.flux-system.svc.cluster.local:80",
+    ):
+        if fragment not in config:
+            fail(f"historical observability config missing {fragment!r}")
+    if "latest" in config or "prom/prometheus:v3.13.2@sha256:" not in deployment:
+        fail("historical Prometheus image must be pinned and must not use latest")
+    for fragment in ("--storage.tsdb.retention.time=7d", "--storage.tsdb.retention.size=2GB"):
+        if fragment not in deployment:
+            fail(f"historical deployment missing {fragment}")
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate native or historical observability contracts.")
+    parser.add_argument(
+        "--historical",
+        action="store_true",
+        help="validate the retired vmi3474918 tree for audit/reference only",
+    )
+    args = parser.parse_args()
     try:
-        synthetic = json.loads((OBS / "synthetic-contracts.json").read_text())
-        dashboard = json.loads((OBS / "dashboard.json").read_text())
-        config = (OBS / "config.yaml").read_text()
-        deployment = (OBS / "deployment.yaml").read_text()
-
-        if synthetic.get("contract_version") != "belacca.synthetic-contracts.v1":
-            fail("unexpected synthetic contract version")
-        checks = synthetic.get("checks")
-        if not isinstance(checks, list) or {item.get("service") for item in checks} != {
-            "portfolio", "pong", "analytics", "dashboard"
-        }:
-            fail("synthetic contract must cover portfolio, pong, analytics, dashboard")
-        if synthetic.get("privacy", {}).get("store_tokens") is not False:
-            fail("synthetic contract must prohibit token storage")
-        for item in checks:
-            if item.get("service") == "dashboard" and item.get("credentials_in_git") is not False:
-                fail("dashboard synthetic must keep credentials out of Git")
-
-        if dashboard.get("dashboard", {}).get("title") != "Belacca Platform Reliability (staged)":
-            fail("unexpected dashboard title")
-        panels = dashboard.get("dashboard", {}).get("panels")
-        if not isinstance(panels, list) or not panels:
-            fail("dashboard must define at least one panel")
-        for panel in panels:
-            if not isinstance(panel.get("query"), str) or "{" in panel["query"] and "}" in panel["query"] and "room" in panel["query"]:
-                fail("dashboard query contains an unsafe/high-cardinality room selector")
-
-        required_fragments = (
-            "scrape_configs:",
-            "rule_files:",
-            "sample_limit: 100",
-            "sample_limit: 500",
-            "pong-api.pong.svc.cluster.local:8080",
-            "source-controller.flux-system.svc.cluster.local:80",
-        )
-        for fragment in required_fragments:
-            if fragment not in config:
-                fail(f"observability config missing {fragment!r}")
-        if "latest" in config or "prom/prometheus:v3.13.2@sha256:" not in deployment:
-            fail("Prometheus image must be pinned and must not use latest")
-        for fragment in ("--storage.tsdb.retention.time=7d", "--storage.tsdb.retention.size=2GB"):
-            if fragment not in deployment:
-                fail(f"deployment missing {fragment}")
-
-        validate_native()
-
+        if args.historical:
+            validate_historical()
+        else:
+            validate_native()
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as error:
         print(f"observability validation failed: {error}")
         return 1
 
-    print("validated staged observability config, contracts, and dashboard")
+    scope = "historical/reference" if args.historical else "native production"
+    print(f"validated {scope} observability config and contracts")
     return 0
 
 
