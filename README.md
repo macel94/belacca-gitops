@@ -49,7 +49,11 @@ reconcile successfully. Workloads remain private ClusterIP services behind
 native Traefik; public traffic enters through the two direct host-network edges.
 The external status repository is the source of the public 99%/30d SLO evidence;
 native Prometheus is diagnostic and the notification destination remains out of
-band/unprovisioned.
+band/unprovisioned. The native one-node recovery contract, fail-closed evidence
+ledger, and P95 validator are [`docs/NATIVE-FAILURE-DRILLS.md`](docs/NATIVE-FAILURE-DRILLS.md),
+[`docs/NATIVE-DRILL-EVIDENCE.json`](docs/NATIVE-DRILL-EVIDENCE.json), and
+`scripts/validate_native_drills.py`; live mutation remains owned by the
+infrastructure repository.
 
 ## Why child GitRepositories instead of submodules?
 

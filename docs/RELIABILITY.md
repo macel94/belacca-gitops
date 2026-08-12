@@ -15,9 +15,13 @@ provides private diagnostic signals, but no internal metric is the external
 availability SLI and the status Git repository is not scraped into Prometheus.
 Durable external measurement remains a follow-up capability. A controlled
 recovery drill P95 under six minutes is a separate recovery objective and must
-not be included in availability arithmetic. The failure drills are in
-[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md), and the backup/object-storage
-contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
+not be included in availability arithmetic. The retired-runtime drills are preserved in
+[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md) for audit only. The native
+one-node recovery contract, approval gates, verification checklist, DNS
+fallback, and evidence ledger are in
+[`NATIVE-FAILURE-DRILLS.md`](NATIVE-FAILURE-DRILLS.md) and
+[`NATIVE-DRILL-EVIDENCE.json`](NATIVE-DRILL-EVIDENCE.json). The
+backup/object-storage contract is in [`BACKUP-CONTRACT.md`](BACKUP-CONTRACT.md).
 The latter is a names-and-policy contract only: no object store, encryption key,
 backup credential, or scheduled backup Job is provisioned here.
 
@@ -259,8 +263,10 @@ claim. Its foundation must not be reported as native production reliability cove
 
 ## Native production safe rollback and recovery rules
 
-For a complete native production operator sequence, use
-[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md). For SQLite artifact verification
+For the native production one-node failure/recovery operator sequence, use
+[`NATIVE-FAILURE-DRILLS.md`](NATIVE-FAILURE-DRILLS.md). The former
+[`GAME-DAY-DRILLS.md`](GAME-DAY-DRILLS.md) is retired-runtime audit material
+only. For SQLite artifact verification
 and the isolated restore rehearsal, use
 `cloudnativepong/scripts/backup-restore.sh` and
 `cloudnativepong/scripts/restore-rehearsal.sh` from the application checkout.
