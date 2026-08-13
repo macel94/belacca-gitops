@@ -155,16 +155,11 @@ spec:
           resources:
             requests: {cpu: 50m, memory: 128Mi}
             limits: {cpu: 500m, memory: 512Mi}
+          # Metrics deliberately has no Secret references. It reports
+          # configuration_unknown until the external restore interfaces exist;
+          # restore Jobs keep the required Secret references and fail closed.
           env:
-            - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
-            - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
             - {name: METRICS_PORT, value: "9091"}
-            - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint}}}
-            - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket}}}
-            - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix}}}
-            - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region}}}
-            - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id}}}
-            - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key}}}
           ports: [{name: metrics, containerPort: 9091}]
           securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
           readinessProbe: {httpGet: {path: /metrics, port: metrics}, periodSeconds: 30}
