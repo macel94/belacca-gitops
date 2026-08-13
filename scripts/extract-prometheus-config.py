@@ -11,5 +11,5 @@ rules = text.split("  prometheus.rules.yml: |\n", 1)[1]
 def extract(value: str) -> str:
     return "\n".join(line[4:] if line.startswith("    ") else line for line in value.splitlines()) + "\n"
 
-Path("/tmp/prometheus.yml").write_text(extract(config))
-Path("/tmp/prometheus.rules.yml").write_text(extract(rules))
+Path("/tmp/native-prometheus.yml").write_text(extract(config))
+Path("/tmp/native-prometheus.rules.yml").write_text(extract(rules))

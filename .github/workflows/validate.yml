@@ -34,21 +34,32 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Validate notification contracts
         run: python3 scripts/validate-notifications.py
-      - name: Validate observability contracts
+      - name: Validate observability contracts and Prometheus rules
         run: |
+          set -eu
           python3 scripts/validate-observability.py
           python3 scripts/extract-prometheus-config.py
-          if command -v promtool >/dev/null 2>&1; then
-            promtool check rules /tmp/prometheus.rules.yml
-            promtool check config /tmp/prometheus.yml
-          else
-            echo 'promtool unavailable; deterministic config/rule checks in validate-observability.py and Kustomize validation are the fallback.'
-          fi
+          version='3.13.2'
+          archive="prometheus-${version}.linux-amd64.tar.gz"
+          digest='0e8c4d46101bd025ea8265e377d2caabc57f488fc1be1c367f37db69ea41be6f'
+          curl --fail --silent --show-error --location \
+            "https://github.com/prometheus/prometheus/releases/download/v${version}/${archive}" \
+            --output "/tmp/${archive}"
+          printf '%s  %s\n' "${digest}" "/tmp/${archive}" | sha256sum --check
+          mkdir -p /tmp/prometheus
+          tar -xzf "/tmp/${archive}" -C /tmp/prometheus --strip-components=1
+          /tmp/prometheus/promtool check rules /tmp/native-prometheus.rules.yml
+          /tmp/prometheus/promtool check config /tmp/native-prometheus.yml
+          /tmp/prometheus/promtool test rules tests/prometheus/native-observability.yml
       - name: Render native observability Kustomization
         run: |
           set -eu
           kubectl kustomize clusters/belacca-production/observability >/tmp/native-observability.yaml
           test -s /tmp/native-observability.yaml
+          grep -q 'name: native-observability' clusters/belacca-production/native-platform-applications.yaml
+          grep -q 'name: prometheus-native' /tmp/native-observability.yaml
+          grep -q 'belacca:slo:sli:30d' /tmp/native-observability.yaml
+          grep -q 'slo-evidence-adapter.observability.svc.cluster.local:8080' /tmp/native-observability.yaml
       - name: Render every checked-in Kustomization
         # kubectl kustomize parses every YAML document in each active manifest
         # tree while rendering; this avoids adding a second YAML parser just for CI.
