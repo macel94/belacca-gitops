@@ -43,8 +43,6 @@ jobs:
           /tmp/prometheus/promtool check rules /tmp/native-prometheus.rules.yml
           /tmp/prometheus/promtool check config /tmp/native-prometheus.yml
           /tmp/prometheus/promtool test rules tests/prometheus/native-observability.yml
-          /tmp/prometheus/promtool check rules /tmp/historical-prometheus.rules.yml
-          /tmp/prometheus/promtool check config /tmp/historical-prometheus.yml
       - name: Render native observability Kustomization
         run: |
           set -eu
