@@ -99,6 +99,9 @@ def main() -> int:
                 "name: native-headlamp-default-deny",
                 "name: native-headlamp-auth-ingress",
                 "name: native-headlamp-backend-ingress",
+                "cidr: 10.42.0.1/32",
+                "cidr: 10.42.1.1/32",
+                "cidr: 10.42.2.1/32",
             ),
             "native policy bundle",
         )
@@ -144,15 +147,23 @@ def main() -> int:
         if not re.search(r"DIAGNOSTIC_IMAGE.*approved image pinned by digest", probe):
             fail("live policy probe must require a digest-pinned diagnostic image")
 
-        # These files are native-only and must not retain historical pod-CIDR
-        # exceptions that bypass workload identity.
+        # Cross-node host-network forwarding on native flannel-wireguard is
+        # evaluated from the node CNI gateways. Only the observed /32s are
+        # valid; a Pod CIDR or any other broad exception bypasses identity.
+        allowed_cni_gateways = {
+            "cidr: 10.42.0.1/32",
+            "cidr: 10.42.1.1/32",
+            "cidr: 10.42.2.1/32",
+        }
         for path in NATIVE_NETWORK_POLICIES:
             text = path.read_text(encoding="utf-8")
-            if re.search(r"cidr:\s*10\.42\.", text):
-                fail(f"{path} contains a historical Pod CIDR exception")
+            for match in re.findall(r"cidr:\s*10\.42\.[^\s]+", text):
+                if f"cidr: {match.split(':', 1)[1].strip()}" not in allowed_cni_gateways:
+                    fail(f"{path} contains an unreviewed Pod/CNI CIDR exception: {match}")
         for path, text in ((DEX, dex), (ANALYTICS, analytics)):
-            if re.search(r"cidr:\s*10\.42\.", text):
-                fail(f"{path} contains a historical Pod CIDR exception")
+            for match in re.findall(r"cidr:\s*10\.42\.[^\s]+", text):
+                if f"cidr: {match.split(':', 1)[1].strip()}" not in allowed_cni_gateways:
+                    fail(f"{path} contains an unreviewed Pod/CNI CIDR exception: {match}")
 
         require(
             runbook,

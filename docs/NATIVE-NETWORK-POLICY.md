@@ -93,6 +93,18 @@ when any of them is absent.
    A timeout caused by an unhealthy target, missing room, image pull failure,
    DNS failure, or unknown CNI is **inconclusive**, not evidence of denial.
 
+### Host-network edge source behavior
+
+The host-network Traefik edge has two legitimate source forms at protected
+backends: same-node traffic retains the Traefik workload identity, while
+cross-node flannel-wireguard forwarding is observed by the NetworkPolicy layer
+as one of the three node CNI gateway addresses (`10.42.0.1/32`,
+`10.42.1.1/32`, or `10.42.2.1/32`). The policies admit only those exact gateway
+addresses alongside the public node `/32` fallback; the entire
+`10.42.0.0/16` Pod CIDR is never an allowed source. This narrow exception is
+required for active-active host-network routing and prevents cross-node edge
+requests from becoming false 502s.
+
 ## Required paths
 
 `edge-contract.json` is the machine-readable source of IDs. Its

@@ -39,8 +39,9 @@ spec:
     - Egress
   ingress:
     # Traefik is hostNetwork in native production. Keep the selector for
-    # plugins that preserve the workload identity and list the three declared
-    # node addresses for plugins that evaluate the host-network source IP.
+    # same-node traffic and allow only the exact CNI gateway sources observed
+    # after cross-node WireGuard forwarding; public node addresses remain a
+    # fallback for implementations that preserve the host-network source.
     - from:
         - namespaceSelector:
             matchLabels:
@@ -48,6 +49,12 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 10.42.0.1/32
+        - ipBlock:
+            cidr: 10.42.1.1/32
+        - ipBlock:
+            cidr: 10.42.2.1/32
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:
@@ -385,6 +392,14 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        # Cross-node host-network forwarding is represented by exact CNI
+        # gateway /32s; retain public node /32s for source-preserving paths.
+        - ipBlock:
+            cidr: 10.42.0.1/32
+        - ipBlock:
+            cidr: 10.42.1.1/32
+        - ipBlock:
+            cidr: 10.42.2.1/32
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:

@@ -21,12 +21,19 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        # Cross-node host-network forwarding is evaluated from the exact CNI
+        # gateway on the sending node. Public node /32s cover source-preserving
+        # paths; the broad Pod CIDR is intentionally not allowed.
+        - ipBlock:
+            cidr: 10.42.0.1/32
+        - ipBlock:
+            cidr: 10.42.1.1/32
+        - ipBlock:
+            cidr: 10.42.2.1/32
         - ipBlock:
             cidr: 169.58.143.41/32
         - ipBlock:
             cidr: 169.58.143.42/32
-        # Traefik uses hostNetwork; these are node source addresses, not Pod
-        # CIDRs. Do not add a broad cluster/pod CIDR to this identity edge.
         - ipBlock:
             cidr: 169.58.97.73/32
       ports:
