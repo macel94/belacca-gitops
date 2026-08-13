@@ -307,16 +307,43 @@ def freshness(max_age_seconds: int, service: str, key: str, created_at: str) -> 
     print(json.dumps({"service": service, "key": key, "age_seconds": int(age), "fresh": True}, sort_keys=True))
 
 
+def restore_configuration_ready() -> bool:
+    required_names = (
+        "BACKUP_AUTOMATION_ENABLED",
+        "BACKUP_CONSISTENCY_ACKNOWLEDGED",
+        "S3_RESTORE_ENDPOINT",
+        "S3_RESTORE_BUCKET",
+        "S3_RESTORE_PREFIX",
+        "S3_RESTORE_REGION",
+        "S3_RESTORE_ACCESS_KEY_ID",
+        "S3_RESTORE_SECRET_ACCESS_KEY",
+    )
+    if any(not os.environ.get(name, "").strip() for name in required_names):
+        return False
+    if os.environ["BACKUP_AUTOMATION_ENABLED"].strip() != "true" or os.environ["BACKUP_CONSISTENCY_ACKNOWLEDGED"].strip() != "true":
+        return False
+    endpoint = os.environ["S3_RESTORE_ENDPOINT"].strip()
+    prefix = os.environ["S3_RESTORE_PREFIX"].strip().strip("/")
+    return endpoint.startswith("https://") and bool(prefix) and not any(part in {".", ".."} for part in prefix.split("/"))
+
+
 def metrics_server() -> None:
-    gate()
-    client = S3(restore=True)
     port = int(os.environ.get("METRICS_PORT", "9091"))
     def collect() -> str:
-        lines = ["# HELP belacca_backup_last_success_timestamp_seconds Unix timestamp of the newest verified backup.", "# TYPE belacca_backup_last_success_timestamp_seconds gauge"]
+        configured = restore_configuration_ready()
+        client = S3(restore=True) if configured else None
+        lines = ["# HELP belacca_backup_configuration_ready Whether the externally provisioned restore Secret and runtime gates are ready.", "# TYPE belacca_backup_configuration_ready gauge", f"belacca_backup_configuration_ready {int(configured)}"]
+        lines += ["# HELP belacca_backup_last_success_timestamp_seconds Unix timestamp of the newest verified backup.", "# TYPE belacca_backup_last_success_timestamp_seconds gauge"]
         lines += ["# HELP belacca_backup_integrity_ok Whether the newest artifact and manifest verify.", "# TYPE belacca_backup_integrity_ok gauge"]
         lines += ["# HELP belacca_backup_daily_retention_count Number of daily verified artifacts found.", "# TYPE belacca_backup_daily_retention_count gauge"]
         lines += ["# HELP belacca_backup_monthly_retention_count Number of distinct UTC months with verified artifacts.", "# TYPE belacca_backup_monthly_retention_count gauge"]
         for service in sorted(SERVICES):
+            if not configured or client is None:
+                lines.append(f'belacca_backup_last_success_timestamp_seconds{{service="{service}"}} 0')
+                lines.append(f'belacca_backup_integrity_ok{{service="{service}"}} 0')
+                lines.append(f'belacca_backup_daily_retention_count{{service="{service}"}} 0')
+                lines.append(f'belacca_backup_monthly_retention_count{{service="{service}"}} 0')
+                continue
             latest = None
             ok = 0
             for key in client.list_keys(f"{client.prefix}/{service}"):

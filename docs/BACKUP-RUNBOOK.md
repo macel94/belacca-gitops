@@ -122,8 +122,12 @@ requires, and all credentials.
 
 The Prometheus diagnostic endpoint is private. Expected alerts are:
 
-- `NativeBackupStale` and `NativeBackupUploadOrVerificationMissing` for missed
-  schedules, failed uploads, missing Secrets, or failed restore verification;
+- `NativeBackupConfigurationUnknown` when the external restore Secret or
+  runtime gates are not provisioned. The metrics endpoint remains available,
+  but all backup success series stay at zero and no backup guarantee is claimed;
+- `NativeBackupStale` and `NativeBackupUploadOrVerificationMissing` after the
+  configuration becomes ready, for missed schedules, failed uploads, or failed
+  restore verification;
 - `NativeBackupIntegrityFailed` for a bad artifact/manifest/hash;
 - `NativeBackupDailyRetentionLow` below 35 distinct verified UTC days;
 - `NativeBackupMonthlyRetentionLow` below 12 distinct verified UTC months.

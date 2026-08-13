@@ -140,7 +140,10 @@ spec:
   replicas: 1
   selector: {matchLabels: {app: backup-metrics}}
   template:
-    metadata: {labels: {app: backup-metrics, belacca.com/stage: native-production, belacca.com/project: backup}}
+    metadata:
+      labels: {app: backup-metrics, belacca.com/stage: native-production, belacca.com/project: backup}
+      annotations:
+        belacca.com/runner-contract: configuration-unknown-v1
     spec:
       serviceAccountName: backup-restore-verifier
       automountServiceAccountToken: false

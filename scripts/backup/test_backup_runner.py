@@ -38,6 +38,32 @@ class BackupRunnerTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             backup_runner.safe_prefix("approved/../other")
 
+    def test_metrics_configuration_is_unknown_until_external_restore_inputs_exist(self) -> None:
+        names = (
+            "BACKUP_AUTOMATION_ENABLED", "BACKUP_CONSISTENCY_ACKNOWLEDGED",
+            "S3_RESTORE_ENDPOINT", "S3_RESTORE_BUCKET", "S3_RESTORE_PREFIX",
+            "S3_RESTORE_REGION", "S3_RESTORE_ACCESS_KEY_ID", "S3_RESTORE_SECRET_ACCESS_KEY",
+        )
+        original = {name: backup_runner.os.environ.pop(name, None) for name in names}
+        try:
+            self.assertFalse(backup_runner.restore_configuration_ready())
+            backup_runner.os.environ.update({
+                "BACKUP_AUTOMATION_ENABLED": "true",
+                "BACKUP_CONSISTENCY_ACKNOWLEDGED": "true",
+                "S3_RESTORE_ENDPOINT": "https://objects.example.test",
+                "S3_RESTORE_BUCKET": "backups",
+                "S3_RESTORE_PREFIX": "native",
+                "S3_RESTORE_REGION": "us-east-1",
+                "S3_RESTORE_ACCESS_KEY_ID": "access",
+                "S3_RESTORE_SECRET_ACCESS_KEY": "secret",
+            })
+            self.assertTrue(backup_runner.restore_configuration_ready())
+        finally:
+            for name in names:
+                backup_runner.os.environ.pop(name, None)
+                if original[name] is not None:
+                    backup_runner.os.environ[name] = original[name]
+
 
 if __name__ == "__main__":
     unittest.main()

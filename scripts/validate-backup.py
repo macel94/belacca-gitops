@@ -85,6 +85,8 @@ def main() -> int:
             "NativeBackupIntegrityFailed",
             "NativeBackupDailyRetentionLow",
             "NativeBackupMonthlyRetentionLow",
+            "NativeBackupConfigurationUnknown",
+            "belacca_backup_configuration_ready",
             "NativeBackupUploadOrVerificationMissing",
             "backup-metrics.backup-system.svc.cluster.local:9091",
         ):

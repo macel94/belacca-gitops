@@ -44,13 +44,25 @@ reconciliations continued.
    all three restore-verification CronJobs and the backup metrics Deployment.
    This keeps the four-Pod quota meaningful while allowing the workload to be
    admitted.
-3. **Longhorn GitOps hook incompatibility** — set
-   `preUpgradeChecker.jobEnabled: false`, the Longhorn chart's documented
+3. **Backup external prerequisite boundary** — the restore Secret interfaces
+   are intentionally absent from Git and the live cluster. The metrics server
+   now stays Ready and exposes `belacca_backup_configuration_ready=0` with zero
+   success/retention metrics, while scheduled writers and restore jobs remain
+   fail-closed until the operator provisions and tests the external store and
+   runtime gates. This is configuration-unknown, not backup success.
+4. **Longhorn GitOps hook incompatibility** — set
+   preUpgradeChecker.jobEnabled: false, the Longhorn chart's documented
    setting for Argo CD/GitOps installations. This avoids the generated
    tag-only pre-upgrade Job while retaining Longhorn manager and HelmRelease
    health checks.
-4. **Regression prevention** — extended the backup and observability validators
-   to require resource budgets and the migrated Pong alert group.
+5. **Pong image supply-chain gate** — the first attestation-enabled release
+   exposed fixed base-image findings and the reviewed non-affected OpenPGP
+   transitive-code finding. Pong now refreshes Alpine packages, updates
+   `x/crypto`, records exact VEX scopes, and signs provenance, SBOM, and
+   vulnerability decision attestations before recording deployment tags.
+6. **Regression prevention** — extended the backup and observability validators
+   to require resource budgets, the configuration-unknown metric, and the
+   migrated Pong alert group.
 
 ## Validation and rollout
 

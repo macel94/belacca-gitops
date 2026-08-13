@@ -175,8 +175,16 @@ data:
             annotations:
               summary: "Native {{ $labels.service }} has fewer than 12 verified monthly backups"
               runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupConfigurationUnknown
+            expr: belacca_backup_configuration_ready == 0
+            for: 15m
+            labels: {severity: warning, notification_class: backup}
+            annotations:
+              summary: "Native backup restore configuration is not provisioned"
+              description: "External restore Secret values or the reviewed runtime gates are missing; no backup success is claimed."
+              runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupUploadOrVerificationMissing
-            expr: absent(belacca_backup_last_success_timestamp_seconds)
+            expr: belacca_backup_configuration_ready == 1 and absent(belacca_backup_last_success_timestamp_seconds)
             for: 30m
             labels: {severity: critical, notification_class: backup}
             annotations:
