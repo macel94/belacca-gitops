@@ -19,9 +19,9 @@ def main():
   if text.count('secretRef:') < 2: fail('notification routing must retain diagnostic and page secret references')
   if 'notifications.yaml' not in ROOT_KUSTOMIZE.read_text(encoding='utf-8'): fail('native root does not wire notifications')
   if re.search(r'(?im)^\s*(?:address|token|password|authorization|apiKey):',text): fail('notification manifest contains credential values')
-  d=DOCS.read_text(encoding='utf-8')
+  d=' '.join(DOCS.read_text(encoding='utf-8').split()).lower()
   for marker in ('separate diagnostic and page lanes','independent failure domain','deduplication','recovery','out of band','no endpoint'):
-   if marker.lower() not in d.lower(): fail(f'notification docs missing {marker}')
+   if ' '.join(marker.lower().split()) not in d: fail(f'notification docs missing {marker}')
  except (OSError,ValueError) as exc:
   print(f'notification validation failed: {exc}',file=sys.stderr); return 1
  print('validated native Flux notification routing contract'); return 0
