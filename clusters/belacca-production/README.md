@@ -34,21 +34,26 @@ Native production currently contains:
 - published Pong and portfolio Kustomizations plus their native Traefik routes
   under `routing/`, sourced by `native-sources.yaml`.
 
-The native root and all child Kustomizations are Ready. Native cert-manager
-owns a SOPS/age-encrypted Cloudflare DNS-01 credential, a ClusterIssuer, and
-seven Ready Certificates. Native Traefik routes portfolio, Pong, Dex,
-Headlamp, Flux Web UI, and analytics through private ClusterIP Services;
-direct and public probes succeed on all three native edges (`.73`, `.41`, and
-`.42`). A private native
-Prometheus diagnostic child and Flux notification contract are now committed,
-but external backup retention, authenticated browser completion, notification
-destination provisioning, and live one-node failure measurements remain
-hardening items. The approved native drill contract and pending evidence ledger
-are in [`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md)
-and [`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
-node mutation remains owned by the infrastructure repository.
-The public 99%/30d SLO is measured by the external status repository, not by
-native Prometheus, and is not yet reportable until its complete window exists.
+The native root is Flux-owned; child readiness is reported directly by each
+child Kustomization. The root deliberately does not health-gate on the
+vendor-managed Longhorn HelmRelease because its pre-upgrade hook currently
+emits a tag-only image and is outside the first-party digest policy scope.
+Longhorn remains reconciled from Git and its HelmRelease status is still an
+operator health signal. Native cert-manager owns a SOPS/age-encrypted
+Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready Certificates.
+Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI, and analytics
+through private ClusterIP Services; direct and public probes succeed on all
+three native edges (`.73`, `.41`, and `.42`). A private native Prometheus
+diagnostic child and Flux notification contract are committed, but external
+backup retention, authenticated browser completion, notification destination
+provisioning, and live one-node failure measurements remain hardening items.
+The approved native drill contract and pending evidence ledger are in
+[`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md) and
+[`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
+node mutation remains owned by the infrastructure repository. The public SLO
+is measured by the external status repository from available good/bad
+observations, with coverage visible; the 99%/30d value is an internal objective
+rather than an SLA.
 
 The native Flux bootstrap uses the native context/cluster identity
 `belacca-native`. Flux owns decryption and reconciliation; plaintext Secret

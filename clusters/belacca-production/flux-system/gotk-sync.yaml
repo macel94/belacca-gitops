@@ -23,11 +23,11 @@ spec:
   path: ./clusters/belacca-production
   prune: true
   wait: false
+  # Longhorn is Flux-owned, but its vendor pre-upgrade hook currently emits a
+  # tag-only image that the first-party digest policy deliberately does not
+  # match. Keep storage status visible via its own HelmRelease/Kustomization;
+  # do not let that vendor hook gate policy/bootstrap reconciliation.
   healthChecks:
-    - apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: longhorn
-      namespace: longhorn-system
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       name: traefik
