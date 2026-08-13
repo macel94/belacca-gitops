@@ -12,9 +12,9 @@ def main():
     try:
         contract=CONTRACT.read_text(encoding='utf-8')
         drills=DRILLS.read_text(encoding='utf-8')
-        for marker in ('35 daily verified backups','12 monthly verified backups','TLS is required','pong-backup-object-store','pong-backup-encryption','pong-backup-restore-object-store','CronJobs are committed in a fail-closed state','pong-api-data'):
+        for marker in ('35 daily verified backups','12 monthly verified backups','TLS is required','pong-backup-object-store','pong-backup-encryption','pong-backup-restore-object-store','No CronJob is committed','pong-api-data'):
             if marker not in contract: raise ValueError(f'missing backup marker: {marker}')
-        for marker in ('# Native production game-day drills','belacca-native','Public-edge','Control-plane/server failure','Longhorn','rollback'):
+        for marker in ('# Native production game-day drills','belacca-native','Drill 1 — one public edge unavailable','Control-plane/server failure','Longhorn','rollback'):
             if marker not in drills: raise ValueError(f'missing native drill marker: {marker}')
         if re.search(r'(?im)^\s*(?:address|endpoint|bucket|access-key-id|secret-access-key|kms-key-id):\s*https?://|^\s*(?:access-key-id|secret-access-key|kms-key-id):\s*[^<`\s]+', contract):
             raise ValueError('backup contract contains credential or endpoint values')
