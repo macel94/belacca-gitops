@@ -44,7 +44,7 @@ spec:
         maxUnavailable: 1
         maxSurge: 0
     # Bind the native edge directly to the host network. The DaemonSet is
-    # restricted to .41/.42, while .73 remains the old public k3d edge.
+    # restricted to the reviewed native production edge addresses.
     hostNetwork: true
     service:
       enabled: false

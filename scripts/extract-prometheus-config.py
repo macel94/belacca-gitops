@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-source = Path(__file__).resolve().parents[1] / "clusters/vmi3474918/observability/config.yaml"
+source = Path(__file__).resolve().parents[1] / "clusters/belacca-production/observability/config.yaml"
 text = source.read_text()
 config = text.split("  prometheus.yml: |\n", 1)[1].split("\n  prometheus.rules.yml: |", 1)[0]
 rules = text.split("  prometheus.rules.yml: |\n", 1)[1]
