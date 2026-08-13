@@ -67,9 +67,10 @@ jobs:
           grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'cluster: belacca-native' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'environment: native-production' /tmp/kustomize-clusters_belacca-production.yaml
-          grep -q 'dnsChallenge:' clusters/belacca-production/tls/clusterissuer.yaml
-          grep -q 'CLOUDFLARE_DNS_API_TOKEN' README.md SUBDOMAIN-RUNBOOK.md
-          grep -q 'name: observability' /tmp/kustomize-clusters_belacca-production.yaml
+          grep -q 'dns01:' clusters/belacca-production/tls/clusterissuer.yaml
+          grep -q 'name: cert-manager-cloudflare' clusters/belacca-production/tls/clusterissuer.yaml
+          grep -q 'CLOUDFLARE_DNS_API_TOKEN' clusters/belacca-production/tls/clusterissuer.yaml SUBDOMAIN-RUNBOOK.md
+          grep -q 'name: native-observability' clusters/belacca-production/native-platform-applications.yaml
           grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_belacca-production_observability.yaml
           grep -q 'unsafeUseServiceAccountToken: true' clusters/belacca-production/headlamp/helmrelease.yaml
           grep -q -- '- "-proxy-auth=true"' clusters/belacca-production/headlamp/helmrelease.yaml
