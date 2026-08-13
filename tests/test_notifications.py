@@ -74,6 +74,7 @@ class NotificationContractTests(unittest.TestCase):
         deployment = validator.ALERTMANAGER_DEPLOYMENT.read_text(encoding="utf-8")
         expected = hashlib.sha256(validator.ALERTMANAGER.read_bytes()).hexdigest()
         self.assertIn("type: Recreate", deployment)
+        self.assertIn("rollingUpdate: null", deployment)
         self.assertIn(f"checksum/config: {expected}", deployment)
 
     def test_validator_rejects_stale_alertmanager_config_checksum(self) -> None:

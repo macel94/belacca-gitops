@@ -156,8 +156,8 @@ def validate_alertmanager_contract() -> None:
 
 def validate_restart_contract() -> None:
     deployment = ALERTMANAGER_DEPLOYMENT.read_text(encoding="utf-8")
-    if not re.search(r"(?m)^  strategy:\n    type: Recreate\s*$", deployment):
-        fail("Alertmanager must use Recreate for its ReadWriteOnce data PVC")
+    if not re.search(r"(?m)^  strategy:\n    type: Recreate\n    rollingUpdate: null\s*$", deployment):
+        fail("Alertmanager must use Recreate without a rollingUpdate field for its ReadWriteOnce data PVC")
     expected_checksum = hashlib.sha256(ALERTMANAGER.read_bytes()).hexdigest()
     match = re.search(r"(?m)^        checksum/config: ([0-9a-f]{64})\s*$", deployment)
     if not match:
