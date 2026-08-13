@@ -1,0 +1,45 @@
+rule_files:
+  - /tmp/native-prometheus.rules.yml
+
+# The native scrape boundary is intentionally not deployed. With no evidence,
+# the rules produce zero coverage and no numeric SLI or error-budget result. In
+# particular, missing data must not become 100% by default.
+tests:
+  - interval: 24h
+    name: missing_external_evidence_is_not_success
+    input_series: []
+    alert_rule_test: []
+    promql_expr_test:
+      - expr: belacca:slo:expected_slots:30d
+        eval_time: 1d
+        exp_samples:
+          - labels: '{__name__="belacca:slo:expected_slots:30d",service="portfolio"}'
+            value: 720
+          - labels: '{__name__="belacca:slo:expected_slots:30d",service="pong"}'
+            value: 720
+          - labels: '{__name__="belacca:slo:expected_slots:30d",service="analytics"}'
+            value: 720
+      - expr: belacca:slo:total_events:30d
+        eval_time: 1d
+        exp_samples:
+          - labels: '{__name__="belacca:slo:total_events:30d",service="portfolio"}'
+            value: 0
+          - labels: '{__name__="belacca:slo:total_events:30d",service="pong"}'
+            value: 0
+          - labels: '{__name__="belacca:slo:total_events:30d",service="analytics"}'
+            value: 0
+      - expr: belacca:slo:data_coverage:30d
+        eval_time: 1d
+        exp_samples:
+          - labels: '{__name__="belacca:slo:data_coverage:30d",service="portfolio"}'
+            value: 0
+          - labels: '{__name__="belacca:slo:data_coverage:30d",service="pong"}'
+            value: 0
+          - labels: '{__name__="belacca:slo:data_coverage:30d",service="analytics"}'
+            value: 0
+      - expr: belacca:slo:sli:30d
+        eval_time: 1d
+        exp_samples: []
+      - expr: belacca:slo:error_budget:30d
+        eval_time: 1d
+        exp_samples: []

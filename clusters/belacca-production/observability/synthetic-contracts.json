@@ -9,7 +9,20 @@
     "required_for_slo_measurement": true,
     "ingested_into_prometheus": false,
     "status_repository_scraped": false,
-    "note": "The status Git repository is a publication target, not a Prometheus scrape source. Prometheus native metrics are diagnostics and do not calculate public availability."
+    "ingestion_boundary": {
+      "job_name": "native-slo-evidence-boundary",
+      "private_target": "slo-evidence-adapter.observability.svc.cluster.local:8080/metrics",
+      "deployment_status": "contract-only/not-deployed",
+      "metric": "belacca_slo_observation_events_total",
+      "type": "counter",
+      "cadence": "1h",
+      "allowed_labels": {
+        "service": ["portfolio", "pong", "analytics"],
+        "outcome": ["good", "bad"]
+      },
+      "required_event": "Exactly one increment for the service and outcome for each valid hourly observation; malformed or missing slots produce no increment."
+    },
+    "note": "The status Git repository is a publication target, not a Prometheus scrape source. A future private adapter may translate sanitized evidence into the boundary metric; native metrics are diagnostics and do not substitute for public availability."
   },
   "privacy": {
     "store_room_ids": false,

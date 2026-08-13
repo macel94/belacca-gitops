@@ -39,6 +39,15 @@ spec:
         - protocol: TCP
           port: 8080
     - to:
+        # The evidence adapter is a same-namespace private boundary. The
+        # selector is reserved for a future reviewed adapter deployment.
+        - podSelector:
+            matchLabels:
+              belacca.com/component: slo-evidence-adapter
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: flux-system
