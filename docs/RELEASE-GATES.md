@@ -174,7 +174,7 @@ flux get kustomizations -n flux-system
 ```
 
 Use the actual owning application/GitOps repository and Kustomization name;
-never guess a target or reconcile the retired `clusters/vmi3474918/` tree.
+never guess a target or reconcile any tree other than native production.
 Record the resulting commit and Flux revision in the release evidence. Do not
 delete or overwrite `pong-api-data`, `goatcounter-data`, Dex state, or any
 native production PVC during rollback.

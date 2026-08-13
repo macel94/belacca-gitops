@@ -61,33 +61,26 @@ jobs:
           done < <(find . -name kustomization.yaml -not -path './.git/*' -print | sort)
       - name: Check rendered output and secret safety
         run: |
-          grep -q 'name: belacca-routing' clusters/vmi3474918/routing-flux.yaml
-          grep -q 'name: pong' clusters/vmi3474918/applications.yaml
-          grep -q 'name: portfolio' clusters/vmi3474918/applications.yaml
-          grep -q 'name: cloudnativepong' clusters/vmi3474918/sources.yaml
-          grep -q 'name: francesco-belacca-site' clusters/vmi3474918/sources.yaml
-          grep -q 'pong.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'apex-to-portfolio' /tmp/kustomize-clusters_vmi3474918_routing.yaml
-          grep -q 'platform-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
-          grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_vmi3474918.yaml
+          grep -q 'name: pong' clusters/belacca-production/native-applications.yaml
+          grep -q 'name: portfolio' clusters/belacca-production/native-applications.yaml
+          grep -q 'name: cloudnativepong' clusters/belacca-production/native-sources.yaml
+          grep -q 'name: francesco-belacca-site' clusters/belacca-production/native-sources.yaml
+          grep -q 'pong.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
+          grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
           grep -q 'platform-webhook' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'cluster: belacca-native' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'environment: native-production' /tmp/kustomize-clusters_belacca-production.yaml
-          grep -q 'dnsChallenge:' clusters/vmi3474918/traefik-config.yaml
-          grep -q 'CLOUDFLARE_DNS_API_TOKEN' README.md SUBDOMAIN-RUNBOOK.md
-          grep -q 'name: portfolio-traffic' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: pong-gateway' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: portfolio' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          grep -q 'name: observability' /tmp/kustomize-clusters_vmi3474918.yaml
-          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_vmi3474918_observability.yaml
-          grep -q 'unsafeUseServiceAccountToken: true' clusters/vmi3474918/headlamp/helmrelease.yaml
-          grep -q -- '- "-proxy-auth=true"' clusters/vmi3474918/headlamp/helmrelease.yaml
-          grep -q 'name: pong-api-observability-scrape' /tmp/kustomize-clusters_vmi3474918_policies.yaml
-          test ! -f clusters/vmi3474918/secret.yaml
-          test ! -f clusters/vmi3474918/secret.yml
+          grep -q 'dns01:' clusters/belacca-production/tls/clusterissuer.yaml
+          grep -q 'name: cert-manager-cloudflare' clusters/belacca-production/tls/clusterissuer.yaml
+          grep -q 'CLOUDFLARE_DNS_API_TOKEN' clusters/belacca-production/tls/clusterissuer.yaml SUBDOMAIN-RUNBOOK.md
+          grep -q 'name: native-observability' clusters/belacca-production/native-platform-applications.yaml
+          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_belacca-production_observability.yaml
+          grep -q 'unsafeUseServiceAccountToken: true' clusters/belacca-production/headlamp/helmrelease.yaml
+          grep -q -- '- "-proxy-auth=true"' clusters/belacca-production/headlamp/helmrelease.yaml
+          test ! -f clusters/belacca-production/secret.yaml
+          test ! -f clusters/belacca-production/secret.yml
           python3 - <<'PY'
           import re
           import sys
