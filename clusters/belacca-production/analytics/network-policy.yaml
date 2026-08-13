@@ -23,14 +23,14 @@ spec:
               app.kubernetes.io/name: traefik
         # Traefik uses hostNetwork. Same-node traffic preserves the Traefik
         # identity, while cross-node WireGuard forwarding is evaluated from
-        # the sending node's CNI gateway. These are exact node-gateway /32s;
-        # never replace them with the broad Pod CIDR.
+        # the sending node's flannel interface address. These exact node
+        # /32s are reviewed; never replace them with the broad Pod CIDR.
         - ipBlock:
-            cidr: 10.42.0.1/32
+            cidr: 10.42.0.0/32
         - ipBlock:
-            cidr: 10.42.1.1/32
+            cidr: 10.42.1.0/32
         - ipBlock:
-            cidr: 10.42.2.1/32
+            cidr: 10.42.2.0/32
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:
@@ -73,13 +73,13 @@ spec:
               app.kubernetes.io/name: traefik
         # Public direct collector and the private auth proxy are explicit.
         # Cross-node host-network forwarding is represented by the exact CNI
-        # gateway /32s, not by a broad Pod CIDR.
+        # flannel interface /32s, not by a broad Pod CIDR.
         - ipBlock:
-            cidr: 10.42.0.1/32
+            cidr: 10.42.0.0/32
         - ipBlock:
-            cidr: 10.42.1.1/32
+            cidr: 10.42.1.0/32
         - ipBlock:
-            cidr: 10.42.2.1/32
+            cidr: 10.42.2.0/32
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:

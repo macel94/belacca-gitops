@@ -98,9 +98,9 @@ when any of them is absent.
 The host-network Traefik edge has two legitimate source forms at protected
 backends: same-node traffic retains the Traefik workload identity, while
 cross-node flannel-wireguard forwarding is observed by the NetworkPolicy layer
-as one of the three node CNI gateway addresses (`10.42.0.1/32`,
-`10.42.1.1/32`, or `10.42.2.1/32`). The policies admit only those exact gateway
-addresses alongside the public node `/32` fallback; the entire
+as one of the three node flannel interface addresses (`10.42.0.0/32`,
+`10.42.1.0/32`, or `10.42.2.0/32`). The policies admit only those exact
+interface addresses alongside the public node `/32` fallback; the entire
 `10.42.0.0/16` Pod CIDR is never an allowed source. This narrow exception is
 required for active-active host-network routing and prevents cross-node edge
 requests from becoming false 502s.

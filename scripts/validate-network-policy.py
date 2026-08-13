@@ -99,9 +99,9 @@ def main() -> int:
                 "name: native-headlamp-default-deny",
                 "name: native-headlamp-auth-ingress",
                 "name: native-headlamp-backend-ingress",
-                "cidr: 10.42.0.1/32",
-                "cidr: 10.42.1.1/32",
-                "cidr: 10.42.2.1/32",
+                "cidr: 10.42.0.0/32",
+                "cidr: 10.42.1.0/32",
+                "cidr: 10.42.2.0/32",
             ),
             "native policy bundle",
         )
@@ -148,12 +148,13 @@ def main() -> int:
             fail("live policy probe must require a digest-pinned diagnostic image")
 
         # Cross-node host-network forwarding on native flannel-wireguard is
-        # evaluated from the node CNI gateways. Only the observed /32s are
-        # valid; a Pod CIDR or any other broad exception bypasses identity.
+        # evaluated from the sending node's flannel interface. Only the
+        # observed /32s are valid; a Pod CIDR or other broad exception bypasses
+        # identity.
         allowed_cni_gateways = {
-            "cidr: 10.42.0.1/32",
-            "cidr: 10.42.1.1/32",
-            "cidr: 10.42.2.1/32",
+            "cidr: 10.42.0.0/32",
+            "cidr: 10.42.1.0/32",
+            "cidr: 10.42.2.0/32",
         }
         for path in NATIVE_NETWORK_POLICIES:
             text = path.read_text(encoding="utf-8")
