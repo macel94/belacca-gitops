@@ -19,9 +19,11 @@ analytics, Dex, Headlamp, Flux Web, private Prometheus diagnostics, and native
 Flux notification contracts. The native root and all child Kustomizations
 reconcile successfully. Workloads remain private ClusterIP services behind
 native Traefik; public traffic enters through the two direct host-network edges.
-The external status repository is the source of the public 99%/30d SLO evidence;
-native Prometheus is diagnostic and the notification destination remains out of
-band/unprovisioned. The native one-node recovery contract, fail-closed evidence
+The external status repository publishes the public current-status artifact and
+99%/30d SLO evidence. Native Prometheus remains diagnostic, while in-cluster
+Alertmanager now aggregates Flux and Prometheus alerts and delivers configured
+pages to the operator through Telegram; independent cluster-down monitoring is
+deferred to platform issue #14. The native one-node recovery contract, fail-closed evidence
 ledger, and P95 validator are [`docs/NATIVE-FAILURE-DRILLS.md`](docs/NATIVE-FAILURE-DRILLS.md),
 [`docs/NATIVE-DRILL-EVIDENCE.json`](docs/NATIVE-DRILL-EVIDENCE.json), and
 `scripts/validate_native_drills.py`; live mutation remains owned by the

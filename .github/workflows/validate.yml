@@ -83,7 +83,9 @@ jobs:
           grep -q 'francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
           grep -q 'www.francesco.belacca.com' /tmp/kustomize-clusters_belacca-production_routing.yaml
           grep -q 'platform-webhook' /tmp/kustomize-clusters_belacca-production.yaml
-          grep -q 'platform-notification-webhook' /tmp/kustomize-clusters_belacca-production.yaml
+          grep -q 'type: alertmanager' /tmp/kustomize-clusters_belacca-production.yaml
+          grep -q 'alertmanager-native.observability.svc.cluster.local:9093/api/v2/alerts/' /tmp/kustomize-clusters_belacca-production.yaml
+          grep -q 'name: alertmanager-telegram' clusters/belacca-production/observability/alertmanager-secret-interface.yaml
           grep -q 'cluster: belacca-native' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'environment: native-production' /tmp/kustomize-clusters_belacca-production.yaml
           grep -q 'dns01:' clusters/belacca-production/tls/clusterissuer.yaml

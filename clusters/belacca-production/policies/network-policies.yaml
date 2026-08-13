@@ -276,6 +276,14 @@ spec:
     - Egress
   egress:
     - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alertmanager
+              belacca.com/stage: native-production
+      ports:
+        - protocol: TCP
+          port: 9093
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system

@@ -1,23 +1,32 @@
 {
   "schema": "belacca.com/notification-verification-evidence.v1",
-  "status": "not-performed-in-worktree",
-  "cluster_context_verified": false,
-  "received": false,
+  "status": "completed-in-cluster",
+  "cluster_context_verified": true,
+  "cluster_context": "belacca-native",
+  "cluster_nodes_ready": 3,
+  "receiver": "observability/alertmanager-native",
+  "telegram_destination": "private operator chat",
+  "received": true,
   "diagnostic_event": {
-    "sent": false,
-    "paging": false,
-    "event_payload_committed": false
+    "sent": true,
+    "paging": true,
+    "event_payload_committed": false,
+    "alert_name": "BelaccaSyntheticNotificationTest and FluxKustomizationHealthcheckfailed",
+    "delivery_status": "accepted-by-alertmanager-and-telegram",
+    "delivery_metric_count": 4,
+    "delivery_failure_count": 0,
+    "real_flux_error_test": "native-backup health-check failure reached Alertmanager and Telegram"
   },
   "checks": {
-    "deduplication": "not-run",
-    "grouping": "not-run",
-    "inhibition": "not-run",
-    "recovery": "not-run",
-    "redaction": "not-run",
-    "retention": "not-run",
-    "notification_failure_observed": "contract-only"
+    "deduplication": "configured-not-live-measured",
+    "grouping": "configured-not-live-measured",
+    "inhibition": "configured-not-live-measured",
+    "recovery": "synthetic recovery submitted and included in Alertmanager resolved metrics",
+    "redaction": "verified-no-credential-or-payload-committed",
+    "retention": "configured-on-alertmanager-longhorn-pvc",
+    "notification_failure_observed": "historical-missing-provider-secret-events-before-provider-patch"
   },
   "credentials_or_payloads_committed": false,
-  "limitation": "This worktree has no native cluster access, approved receiver, endpoint, routing key, or token. Live delivery cannot be faked.",
-  "operator_follow_up": "Provision both referenced Secrets out of band, run the harmless diagnostic matrix in docs/NOTIFICATIONS.md, attach redacted receiver evidence to the private incident record, and update this file only with non-secret outcome metadata."
+  "limitation": "External cluster-down monitoring is not configured; see platform issue 14. GitOps changes are prepared locally but must be committed and pushed before Flux permanently owns the new provider and receiver configuration.",
+  "operator_follow_up": "Commit and push the reviewed GitOps change, wait for Flux reconciliation, then repeat the notification matrix and confirm the live provider specs no longer contain stale secretRef fields."
 }

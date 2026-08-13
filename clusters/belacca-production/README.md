@@ -43,10 +43,11 @@ operator health signal. Native cert-manager owns a SOPS/age-encrypted
 Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready Certificates.
 Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI, and analytics
 through private ClusterIP Services; direct and public probes succeed on all
-three native edges (`.73`, `.41`, and `.42`). A private native Prometheus
-diagnostic child and Flux notification contract are committed, but external
-backup retention, authenticated browser completion, notification destination
-provisioning, and live one-node failure measurements remain hardening items.
+three native edges (`.73`, `.41`, and `.42`). A private native Prometheus diagnostic child and the in-cluster Alertmanager
+Flux notification path are live-tested; Alertmanager delivers configured pages
+to the operator through Telegram. External cluster-down monitoring, backup
+retention, authenticated browser completion, and live one-node failure
+measurements remain hardening items.
 The approved native drill contract and pending evidence ledger are in
 [`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md) and
 [`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
@@ -71,10 +72,10 @@ clusters/belacca-production/
 ├── cert-manager/ cert-manager controller and CRDs
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
-├── observability/ private Prometheus diagnostics and SLO-source contract
+├── observability/ private Prometheus diagnostics and Alertmanager receiver
 ├── policy-system/ Kyverno admission controller HelmRelease
 ├── policies/ native image digest, provenance, SBOM, and vulnerability policies
-├── notifications.yaml native Flux notification contract (destination out of band)
+├── notifications.yaml native Flux-to-Alertmanager notification contract
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
 ```

@@ -17,6 +17,10 @@ data:
         cluster: belacca-native
     rule_files:
       - /etc/prometheus/rules/*.yml
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: [alertmanager-native.observability.svc.cluster.local:9093]
     scrape_configs:
       # Native Pong aggregate metrics are diagnostics, not the external 99% SLI.
       - job_name: native-pong-api-diagnostic

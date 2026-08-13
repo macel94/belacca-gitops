@@ -8,7 +8,8 @@ and runbooks.
 
 Each public service has an internal 99%/30d objective with no SLA. External
 status and SLO evidence are published from outside the cluster; native
-Prometheus remains private diagnostic telemetry. A controlled recovery-drill
+Prometheus remains private diagnostic telemetry and Alertmanager delivers
+configured Flux/Prometheus pages through Telegram. A controlled recovery-drill
 P95 under six minutes is a separate objective and requires three comparable
 approved measurements before it can be claimed.
 

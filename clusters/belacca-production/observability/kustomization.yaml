@@ -4,6 +4,9 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - config.yaml
+  - alertmanager-config.yaml
+  - alertmanager-deployment.yaml
+  - alertmanager-secret-interface.yaml
   - pvc.yaml
   - deployment.yaml
   - network-policy.yaml

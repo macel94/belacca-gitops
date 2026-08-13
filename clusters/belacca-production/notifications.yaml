@@ -13,9 +13,8 @@ metadata:
     belacca.com/component: notifications
     belacca.com/notification-class: diagnostic
 spec:
-  type: generic
-  secretRef:
-    name: platform-notification-webhook
+  type: alertmanager
+  address: http://alertmanager-native.observability.svc.cluster.local:9093/api/v2/alerts/
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
@@ -29,12 +28,8 @@ metadata:
     belacca.com/notification-class: page
     belacca.com/page-policy: operator-signoff-required
 spec:
-  # The incident gateway verifies X-Signature and forwards only the page lane
-  # to the approved operator paging service. Its endpoint and token are held
-  # in the out-of-band Secret below.
-  type: generic-hmac
-  secretRef:
-    name: platform-page-notification-webhook
+  type: alertmanager
+  address: http://alertmanager-native.observability.svc.cluster.local:9093/api/v2/alerts/
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
