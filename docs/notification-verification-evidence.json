@@ -21,12 +21,12 @@
     "deduplication": "configured-not-live-measured",
     "grouping": "configured-not-live-measured",
     "inhibition": "configured-not-live-measured",
-    "recovery": "synthetic recovery submitted and included in Alertmanager resolved metrics",
+    "recovery": "historical pre-split synthetic recovery was submitted and included in Alertmanager resolved metrics; post-change diagnostic suppression and page preservation are not live-verified",
     "redaction": "verified-no-credential-or-payload-committed",
     "retention": "configured-on-alertmanager-longhorn-pvc",
     "notification_failure_observed": "historical-missing-provider-secret-events-before-provider-patch"
   },
   "credentials_or_payloads_committed": false,
-  "limitation": "External cluster-down monitoring is not configured; see platform issue 14. GitOps changes are prepared locally but must be committed and pushed before Flux permanently owns the new provider and receiver configuration.",
+  "limitation": "External cluster-down monitoring is not configured; see platform issue 14. This evidence predates the diagnostic/page receiver split; the post-change configuration is not deployed or live Telegram-verified by this repository change.",
   "operator_follow_up": "Commit and push the reviewed GitOps change, wait for Flux reconciliation, then repeat the notification matrix and confirm the live provider specs no longer contain stale secretRef fields."
 }

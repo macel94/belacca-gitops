@@ -21,16 +21,20 @@
     {
       "name": "ticket-dashboard",
       "provider": "platform-webhook",
+      "receiver": "telegram-diagnostic",
       "transport": "in-cluster Alertmanager API",
       "page": false,
+      "send_resolved": false,
       "events": ["covered Flux error", "deployment succeeded/ready", "diagnostic Prometheus alert"],
       "purpose": "grouped diagnostic context delivered to Telegram"
     },
     {
       "name": "page",
       "provider": "platform-page-webhook",
+      "receiver": "telegram-page",
       "transport": "in-cluster Alertmanager API",
       "page": true,
+      "send_resolved": true,
       "events": ["approved high-level reconciliation failure", "SLO burn", "routing failure", "storage failure"],
       "excludes": ["individual low-level component failure without customer-impact gate", "deployment info"],
       "purpose": "grouped actionable Telegram notification"
@@ -38,8 +42,10 @@
     {
       "name": "page-recovery",
       "provider": "platform-page-webhook",
+      "receiver": "telegram-page",
       "transport": "in-cluster Alertmanager API",
       "page": true,
+      "send_resolved": true,
       "events": ["recovery of a page-lane Flux object", "resolved Prometheus alert"],
       "purpose": "recovery notification; receiver grouping prevents duplicate incident creation"
     }
@@ -48,6 +54,11 @@
     "identity_fields": ["cluster", "environment", "routingClass", "namespace", "kind", "name", "reason"],
     "group_window": "30s page, 2m diagnostic",
     "deduplicate_on": ["cluster", "alertname", "service", "namespace", "name"],
+    "telegram_receivers": {
+      "telegram-diagnostic": {"send_resolved": false, "role": "diagnostic and default"},
+      "telegram-page": {"send_resolved": true, "role": "actionable page and page recovery"}
+    },
+    "default_receiver": "telegram-diagnostic",
     "repeat_interval": "2h page, 12h diagnostic",
     "inhibition": [
       "page alerts inhibit matching diagnostic alerts",
@@ -55,12 +66,13 @@
       "deployment diagnostic events never suppress page alerts",
       "approved maintenance suppression remains a future policy input"
     ],
-    "recovery": "Alertmanager sends resolved Prometheus alerts; Flux recovery events use the page-recovery Alert lane",
+    "recovery": "Actionable page Prometheus alerts retain resolved delivery through telegram-page; diagnostic/default Prometheus alerts suppress resolved delivery; Flux recovery events use the page-recovery Alert lane and telegram-page",
     "low_level_gate": "no page from a single HelmRelease, Pod, PVC, or controller error unless an approved SLO, routing, storage, or parent-Kustomization impact gate is also true"
   },
   "verification": {
     "diagnostic_event": "synthetic critical Alertmanager event submitted through the private service API",
-    "required_checks": ["accepted", "Telegram delivery", "receiver metrics", "zero delivery failures", "recovery submission"],
+    "required_checks": ["accepted", "Telegram delivery", "receiver metrics", "zero delivery failures", "diagnostic recovery suppressed", "page recovery/resolved delivery preserved"],
+    "post_change_live_verification": "not-claimed",
     "evidence_file": "docs/notification-verification-evidence.json",
     "live_evidence_status": "completed-in-cluster",
     "never_fake_live_delivery": true

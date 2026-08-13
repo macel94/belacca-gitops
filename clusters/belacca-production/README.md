@@ -44,8 +44,10 @@ Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready Certificates.
 Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI, and analytics
 through private ClusterIP Services; direct and public probes succeed on all
 three native edges (`.73`, `.41`, and `.42`). A private native Prometheus diagnostic child and the in-cluster Alertmanager
-Flux notification path are live-tested; Alertmanager delivers configured pages
-to the operator through Telegram. External cluster-down monitoring, backup
+Flux notification path are live-tested; the checked-in routing contract sends
+firing diagnostics and actionable pages through Telegram, suppresses diagnostic
+recoveries, and retains page recoveries. This branch's routing change is not
+claimed as live-verified. External cluster-down monitoring, backup
 retention, authenticated browser completion, and live one-node failure
 measurements remain hardening items.
 The approved native drill contract and pending evidence ledger are in

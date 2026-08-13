@@ -12,30 +12,43 @@ data:
     global:
       resolve_timeout: 5m
     route:
-      receiver: telegram
+      # The default and diagnostic lane keeps firing visibility but suppresses
+      # resolved Telegram notifications. Page routes opt into the page receiver
+      # below, which explicitly enables resolved delivery.
+      receiver: telegram-diagnostic
       group_by: [cluster, alertname, service, namespace, name]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
       routes:
-        - receiver: telegram
+        - receiver: telegram-diagnostic
           matchers:
             - notificationClass="diagnostic"
           group_wait: 2m
           repeat_interval: 12h
-        - receiver: telegram
+        - receiver: telegram-diagnostic
           matchers:
             - notification_class="diagnostic"
           group_wait: 2m
           repeat_interval: 12h
-        - receiver: telegram
+        - receiver: telegram-page
           matchers:
             - notificationClass="page"
           group_wait: 30s
           repeat_interval: 2h
-        - receiver: telegram
+        - receiver: telegram-page
           matchers:
             - notification_class="page"
+          group_wait: 30s
+          repeat_interval: 2h
+        - receiver: telegram-page
+          matchers:
+            - notificationClass="page-recovery"
+          group_wait: 30s
+          repeat_interval: 2h
+        - receiver: telegram-page
+          matchers:
+            - notification_class="page-recovery"
           group_wait: 30s
           repeat_interval: 2h
     inhibit_rules:
@@ -55,7 +68,25 @@ data:
           - severity="warning"
         equal: [cluster, alertname, service, namespace, name]
     receivers:
-      - name: telegram
+      - name: telegram-diagnostic
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/bot-token
+            chat_id_file: /etc/alertmanager/secrets/chat-id
+            send_resolved: false
+            parse_mode: ''
+            message: |-
+              {{ if eq .Status "firing" }}🚨 Belacca alert{{ else }}✅ Belacca recovery{{ end }}
+              {{ range .Alerts }}
+              {{ .Labels.alertname }}
+              {{- if .Labels.service }} · {{ .Labels.service }}{{ end }}
+              {{- if .Labels.namespace }}/{{ .Labels.namespace }}{{ end }}
+              {{- if .Labels.name }}/{{ .Labels.name }}{{ end }}
+              {{ if .Annotations.summary }}
+              {{ .Annotations.summary }}
+              {{ end }}{{ if .Annotations.description }}
+              {{ .Annotations.description }}
+              {{ end }}{{ end }}
+      - name: telegram-page
         telegram_configs:
           - bot_token_file: /etc/alertmanager/secrets/bot-token
             chat_id_file: /etc/alertmanager/secrets/chat-id
