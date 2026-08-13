@@ -57,7 +57,7 @@ def validate_native() -> None:
         "source-controller.flux-system.svc.cluster.local:80",
         "sample_limit: 100",
         "sample_limit: 500",
-        "status Git repository are intentionally",
+        "not a scrape of the status Git repository",
         "record: belacca:slo_source:external_probe:coverage",
         "expr: vector(0)",
     )
