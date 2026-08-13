@@ -69,3 +69,84 @@ data:
             labels:
               source: external-durable-synthetic
               status: proposed
+      - name: belacca-native-actionable-notification-signals
+        interval: 30s
+        rules:
+          # These rules are intentionally dormant until an approved external
+          # SLO collector provides the labelled series. No low-level Flux or
+          # controller failure can page by itself.
+          - record: belacca:native:slo:error_budget_burn:short
+            expr: vector(0)
+            labels:
+              source: external-durable-synthetic
+              status: proposed
+              notification_class: page
+          - record: belacca:native:slo:error_budget_burn:long
+            expr: vector(0)
+            labels:
+              source: external-durable-synthetic
+              status: proposed
+              notification_class: page
+          # The routing/storage gates are explicit inputs for a future
+          # kube-state-metrics or edge/storage collector. Absent those inputs,
+          # vector(0) fails closed and cannot create a false page.
+          - record: belacca:native:routing:customer_impact
+            expr: vector(0)
+            labels:
+              source: proposed-platform-health-gate
+              status: proposed
+              notification_class: page
+          - record: belacca:native:storage:customer_impact
+            expr: vector(0)
+            labels:
+              source: proposed-platform-health-gate
+              status: proposed
+              notification_class: page
+          - alert: BelaccaNotificationPathNotProvisioned
+            expr: belacca:slo_source:external_probe:coverage == 0
+            for: 15m
+            labels:
+              severity: warning
+              notification_class: diagnostic
+              routing_class: ticket-dashboard
+              page_policy: not-configured
+            annotations:
+              summary: Native notification/SLO path is not provisioned
+              description: External SLO evidence and the page destination are not operational; use Flux status and the notification runbook.
+              runbook: docs/NOTIFICATIONS.md
+          - alert: BelaccaNativeSLOBurn
+            expr: belacca:native:slo:error_budget_burn:short > 14.4 and belacca:native:slo:error_budget_burn:long > 6
+            for: 5m
+            labels:
+              severity: critical
+              notification_class: page
+              routing_class: page
+              page_policy: operator-signoff-required
+            annotations:
+              summary: Native public-service SLO is burning error budget
+              description: Page only when the approved external SLO source asserts both short and long burn thresholds.
+              runbook: docs/RELIABILITY.md
+          - alert: BelaccaNativeRoutingImpact
+            expr: belacca:native:routing:customer_impact > 0
+            for: 10m
+            labels:
+              severity: critical
+              notification_class: page
+              routing_class: page
+              page_policy: operator-signoff-required
+            annotations:
+              summary: Native routing has confirmed customer impact
+              description: Page only after the independent routing health gate confirms impact; individual component errors remain diagnostic.
+              runbook: docs/RELIABILITY.md
+          - alert: BelaccaNativeStorageImpact
+            expr: belacca:native:storage:customer_impact > 0
+            for: 10m
+            labels:
+              severity: critical
+              notification_class: page
+              routing_class: page
+              page_policy: operator-signoff-required
+            annotations:
+              summary: Native storage has confirmed customer impact
+              description: Page only after the independent storage health gate confirms impact; one low-level Longhorn/PVC warning is not enough.
+              runbook: docs/RELIABILITY.md
