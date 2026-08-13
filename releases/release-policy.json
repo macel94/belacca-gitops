@@ -1,0 +1,84 @@
+{
+  "apiVersion": "belacca.com/v1alpha1",
+  "kind": "ReleaseGatePolicy",
+  "metadata": {
+    "name": "native-production-progressive-delivery",
+    "issue": 6
+  },
+  "stages": [
+    {
+      "name": "test",
+      "promotion": "automatic-after-gates",
+      "target": "isolated-test",
+      "requiredChecks": ["portfolio-health", "portfolio-homepage", "pong-user-journey"]
+    },
+    {
+      "name": "canary",
+      "promotion": "automatic-after-gates",
+      "target": "disposable-canary",
+      "requiredChecks": ["portfolio-health", "portfolio-homepage", "pong-user-journey"],
+      "failureAction": "halt-and-create-reviewed-git-rollback-request"
+    },
+    {
+      "name": "full",
+      "promotion": "reviewed-git-change-after-canary",
+      "target": "native-production",
+      "requiredChecks": ["portfolio-health", "portfolio-homepage", "pong-user-journey"],
+      "failureAction": "halt-and-create-reviewed-git-rollback-request"
+    }
+  ],
+  "gates": {
+    "readiness": {
+      "required": true,
+      "source": "Flux Kustomization Ready condition and Kubernetes rollout status",
+      "failureAction": "halt"
+    },
+    "userJourneys": {
+      "required": true,
+      "source": "external HTTPS portfolio checks and cloudnativepong/scripts/synthetic-check.mjs",
+      "failureAction": "halt"
+    },
+    "provenance": {
+      "required": true,
+      "verification": "cosign verify-attestation against the exact image digest",
+      "failureAction": "fail-closed"
+    },
+    "immutability": {
+      "required": true,
+      "rule": "every promoted container reference contains @sha256:<64 lowercase hex characters>; mutable tags are metadata only",
+      "failureAction": "fail-closed"
+    }
+  },
+  "canarySafety": {
+    "namespaceLabel": "belacca.com/release-stage=canary",
+    "productionCredentials": "denied-by-validating-admission-policy",
+    "persistentVolumeClaims": "denied-by-validating-admission-policy",
+    "podPersistentVolumeMounts": "denied-by-validating-admission-policy",
+    "serviceAccountTokenMounts": "denied-by-validating-admission-policy",
+    "network": "default-deny; DNS-only egress; no native-production namespace egress",
+    "nativeProductionIngress": "not configured",
+    "nativeProductionRollback": "never performed from the canary target"
+  },
+  "evidence": {
+    "requiredFields": [
+      "releaseId",
+      "stage",
+      "sourceRevisions",
+      "imageDigests",
+      "imageReferences",
+      "provenance",
+      "fluxRevision",
+      "checks",
+      "outcome",
+      "timestamps"
+    ],
+    "retention": "attach the JSON artifact to the reviewed release Git change",
+    "privacy": ["no room IDs", "no player names", "no tokens", "no response bodies", "no client addresses"]
+  },
+  "dora": {
+    "releaseLeadTime": "productionStartedAt minus sourceCommittedAt",
+    "deploymentFrequency": "successful full-stage releases per UTC day or selected reporting window",
+    "changeFailureRate": "full-stage releases requiring rollback divided by full-stage releases",
+    "recoveryTime": "rollbackCompletedAt minus failureDetectedAt"
+  }
+}

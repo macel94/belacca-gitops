@@ -1,0 +1,95 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: belacca-canary-no-secrets
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["secrets"]
+  validations:
+    - expression: "false"
+      message: "disposable canary cannot create or update Secrets"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: belacca-canary-no-persistent-volumes
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["persistentvolumeclaims"]
+  validations:
+    - expression: "false"
+      message: "disposable canary cannot create or update PersistentVolumeClaims"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: belacca-canary-no-pod-state-or-credentials
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    - expression: "(!has(object.spec.volumes) || !object.spec.volumes.exists(v, has(v.persistentVolumeClaim) || has(v.secret) || (has(v.projected) && v.projected.sources.exists(s, has(s.secret))))) && object.spec.containers.all(c, (!has(c.env) || !c.env.exists(e, has(e.valueFrom) && has(e.valueFrom.secretKeyRef))) && (!has(c.envFrom) || !c.envFrom.exists(e, has(e.secretRef)))) && (!has(object.spec.initContainers) || object.spec.initContainers.all(c, (!has(c.env) || !c.env.exists(e, has(e.valueFrom) && has(e.valueFrom.secretKeyRef))) && (!has(c.envFrom) || !c.envFrom.exists(e, has(e.secretRef))))) && has(object.spec.automountServiceAccountToken) && object.spec.automountServiceAccountToken == false"
+      message: "disposable canary Pods cannot use production credentials, persistent volumes, or service-account tokens"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: belacca-canary-no-secrets
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  policyName: belacca-canary-no-secrets
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        belacca.com/release-stage: canary
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: belacca-canary-no-persistent-volumes
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  policyName: belacca-canary-no-persistent-volumes
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        belacca.com/release-stage: canary
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: belacca-canary-no-pod-state-or-credentials
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  policyName: belacca-canary-no-pod-state-or-credentials
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        belacca.com/release-stage: canary

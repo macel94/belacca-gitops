@@ -1,0 +1,71 @@
+{
+  "releaseId": "example-failed-canary-2026-08-12",
+  "stage": "canary",
+  "sourceRevisions": {
+    "cloudnativepong": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "francesco-belacca-site": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "imageDigests": {
+    "ghcr.io/macel94/cloudnativepong-api": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "ghcr.io/macel94/cloudnativepong-room": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "ghcr.io/macel94/cloudnativepong-static": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "ghcr.io/macel94/cloudnativepong-gateway": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "ghcr.io/macel94/francesco-belacca-site": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "imageReferences": {
+    "ghcr.io/macel94/cloudnativepong-api": "ghcr.io/macel94/cloudnativepong-api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "ghcr.io/macel94/cloudnativepong-room": "ghcr.io/macel94/cloudnativepong-room@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "ghcr.io/macel94/cloudnativepong-static": "ghcr.io/macel94/cloudnativepong-static@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "ghcr.io/macel94/cloudnativepong-gateway": "ghcr.io/macel94/cloudnativepong-gateway@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "ghcr.io/macel94/francesco-belacca-site": "ghcr.io/macel94/francesco-belacca-site@sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "provenance": {
+    "verifier": "cosign",
+    "attestationType": "https://slsa.dev/provenance/v1",
+    "verified": true,
+    "verifiedImages": [
+      "ghcr.io/macel94/cloudnativepong-api",
+      "ghcr.io/macel94/cloudnativepong-gateway",
+      "ghcr.io/macel94/cloudnativepong-room",
+      "ghcr.io/macel94/cloudnativepong-static",
+      "ghcr.io/macel94/francesco-belacca-site"
+    ],
+    "evidenceUri": "https://evidence.invalid/example/attestation-bundle"
+  },
+  "fluxRevision": "main@sha1:2222222222222222222222222222222222222222",
+  "checks": [
+    {
+      "id": "portfolio-health",
+      "target": "https://canary.invalid/health",
+      "passed": false,
+      "durationMs": 31,
+      "evidence": "https://evidence.invalid/example/portfolio-health"
+    },
+    {
+      "id": "portfolio-homepage",
+      "target": "https://canary.invalid/",
+      "passed": true,
+      "durationMs": 28,
+      "evidence": "https://evidence.invalid/example/portfolio-homepage"
+    },
+    {
+      "id": "pong-user-journey",
+      "target": "https://pong-canary.invalid",
+      "passed": true,
+      "durationMs": 1400,
+      "evidence": "https://evidence.invalid/example/pong-journey"
+    }
+  ],
+  "outcome": "rolled-back",
+  "rollback": {
+    "required": true,
+    "gitChange": "https://github.com/example/belacca-gitops/commit/reviewed-rollback",
+    "fluxReconciliation": "https://evidence.invalid/example/flux-reconciliation"
+  },
+  "timestamps": {
+    "sourceCommittedAt": "2026-08-12T12:00:00Z",
+    "productionStartedAt": "2026-08-12T12:10:00Z",
+    "failureDetectedAt": "2026-08-12T12:12:00Z",
+    "rollbackCompletedAt": "2026-08-12T12:16:00Z"
+  }
+}

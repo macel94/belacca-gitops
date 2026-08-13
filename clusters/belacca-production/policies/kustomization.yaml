@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - production-image-digest.yaml
+  - first-party-image-provenance.yaml
+  - first-party-image-sbom.yaml
+  - first-party-image-vulnerability.yaml
