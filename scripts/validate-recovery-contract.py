@@ -12,7 +12,7 @@ def main():
     try:
         contract=CONTRACT.read_text(encoding='utf-8')
         drills=DRILLS.read_text(encoding='utf-8')
-        for marker in ('35 daily verified backups','12 monthly verified backups','TLS is required','pong-backup-object-store','pong-backup-encryption','pong-backup-restore-object-store','No CronJob is committed','pong-api-data'):
+        for marker in ('35 daily verified backups','12 monthly verified backups','TLS is required','pong-backup-object-store','pong-backup-encryption','pong-backup-restore-object-store','CronJobs are committed in a fail-closed state','pong-api-data'):
             if marker not in contract: raise ValueError(f'missing backup marker: {marker}')
         for marker in ('# Native production game-day drills','belacca-native','Drill 1 — one public edge unavailable','one control-plane/server unavailable','Longhorn','rollback'):
             if marker not in drills: raise ValueError(f'missing native drill marker: {marker}')
