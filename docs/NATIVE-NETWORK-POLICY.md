@@ -180,5 +180,5 @@ security game day:
    Pong journey. Record timestamps, policy revision, CNI identity, failed edge
    ID, and the exact recovery commit.
 
-Do not use the retired `k3d-pong` context as a native test target. Do not store
+Do not use native production as a test target. Do not store
 room IDs, player names, tokens, response bodies, or credentials in evidence.
