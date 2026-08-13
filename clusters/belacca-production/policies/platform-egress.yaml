@@ -1,7 +1,8 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: analytics-auth-traffic
+  name: native-analytics-auth-egress
   namespace: analytics
   labels:
     belacca.com/stage: native-production
@@ -12,17 +13,23 @@ spec:
     matchLabels:
       app: oauth2-proxy
   policyTypes:
-    - Ingress
-  ingress:
-    - from:
+    - Egress
+  egress:
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: traefik
-        # Traefik uses hostNetwork; these are node source addresses, not Pod
-        # CIDRs. Do not add a broad cluster/pod CIDR to this identity edge.
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Dex is reached through the path-scoped public issuer. The public DNS
+    # contract is three native node addresses; no broad external CIDR is used.
+    - to:
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:
@@ -31,52 +38,62 @@ spec:
             cidr: 169.58.143.42/32
       ports:
         - protocol: TCP
-          port: 4180
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              app: goatcounter
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: analytics-proxy-upstream
-  namespace: analytics
+  name: native-headlamp-auth-egress
+  namespace: headlamp
   labels:
     belacca.com/stage: native-production
-    belacca.com/project: analytics
-    belacca.com/component: analytics-auth
+    belacca.com/project: platform
+    belacca.com/component: headlamp-auth
 spec:
   podSelector:
     matchLabels:
-      app: goatcounter
+      app: oauth2-proxy
   policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: oauth2-proxy
-      ports:
-        - protocol: TCP
-          port: 8080
-    - from:
+    - Egress
+  egress:
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: traefik
-        # Public direct collector and the private auth proxy are explicit;
-        # no Pod CIDR is accepted as a substitute for a labeled source.
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
         - ipBlock:
             cidr: 169.58.97.73/32
         - ipBlock:
             cidr: 169.58.143.41/32
         - ipBlock:
             cidr: 169.58.143.42/32
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: portfolio
-          podSelector:
-            matchLabels:
-              app: francesco-site
       ports:
         - protocol: TCP
-          port: 8080
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: headlamp
+              app.kubernetes.io/instance: headlamp
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 4466

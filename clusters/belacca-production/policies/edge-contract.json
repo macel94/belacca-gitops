@@ -1,0 +1,46 @@
+{
+  "contract_version": "belacca.native-network-policy.v1",
+  "environment": "native-production",
+  "policy_owner": "native-policies",
+  "enforcement_required": true,
+  "service_cidr": "10.43.0.0/16",
+  "probe": {
+    "script": "scripts/verify-native-network-policy.sh",
+    "context": "belacca-native",
+    "diagnostic_namespace": "network-policy-diagnostics",
+    "ttl_seconds": 300,
+    "requires_live_evidence": true,
+    "success_rule": "fail unless CNI identity is recorded, every required edge succeeds, every forbidden edge times out/refuses, and cleanup succeeds"
+  },
+  "required_edges": [
+    {"id": "traefik-gateway", "from": "kube-system/traefik", "to": "pong/app=cloudnativepong,component=gateway", "protocol": "tcp", "port": 8080},
+    {"id": "gateway-static", "from": "pong/app=cloudnativepong,component=gateway", "to": "pong/app=cloudnativepong,component=static", "protocol": "tcp", "port": 8080},
+    {"id": "gateway-api", "from": "pong/app=cloudnativepong,component=gateway", "to": "pong/app=cloudnativepong,component=api", "protocol": "tcp", "port": 8080},
+    {"id": "api-room", "from": "pong/app=cloudnativepong,component=api", "to": "pong/app=cloudnativepong,role=room", "protocol": "tcp", "port": 8080},
+    {"id": "room-callback", "from": "pong/app=cloudnativepong,role=room", "to": "pong/app=cloudnativepong,component=api", "protocol": "tcp", "port": 8080, "path": "/internal/rooms/<id>/{started,finished}"},
+    {"id": "api-kubernetes-api", "from": "pong/app=cloudnativepong,component=api", "to": "kubernetes.default.svc", "protocol": "tcp", "port": 443},
+    {"id": "pong-dns", "from": "pong/{gateway,static,api,room}", "to": "kube-system/kube-dns", "protocol": "udp+tcp", "port": 53},
+    {"id": "prometheus-pong", "from": "observability/app.kubernetes.io/name=prometheus", "to": "pong/app=cloudnativepong,component=api", "protocol": "tcp", "port": 8080},
+    {"id": "prometheus-flux", "from": "observability/app.kubernetes.io/name=prometheus", "to": "flux-system/app={source-controller,kustomize-controller,helm-controller,notification-controller}", "protocol": "tcp", "port": 8080},
+    {"id": "analytics-dex", "from": "analytics/app=oauth2-proxy", "to": "dex/dashboard.belacca.com", "protocol": "tcp", "port": 443, "path": "/oauth2/*"},
+    {"id": "analytics-upstream", "from": "analytics/app=oauth2-proxy", "to": "analytics/app=goatcounter", "protocol": "tcp", "port": 80},
+    {"id": "headlamp-dex", "from": "headlamp/app=oauth2-proxy", "to": "dex/dashboard.belacca.com", "protocol": "tcp", "port": 443, "path": "/oauth2/*"},
+    {"id": "headlamp-upstream", "from": "headlamp/app=oauth2-proxy", "to": "headlamp/app.kubernetes.io/name=headlamp,app.kubernetes.io/instance=headlamp", "protocol": "tcp", "port": 80},
+    {"id": "longhorn-storage", "from": "longhorn-system/longhorn components", "to": "longhorn-system/longhorn components", "protocol": "tcp", "port": "9500,9502,9503", "verification": "chart-owned k3s policies enabled; live label/port and replica-path check required"}
+  ],
+  "forbidden_edges": [
+    {"id": "diagnostic-to-pong-api", "from": "network-policy-diagnostics", "to": "pong/app=cloudnativepong,component=api", "protocol": "tcp", "port": 8080},
+    {"id": "diagnostic-to-room", "from": "network-policy-diagnostics", "to": "pong/app=cloudnativepong,role=room", "protocol": "tcp", "port": 8080},
+    {"id": "diagnostic-to-dex", "from": "network-policy-diagnostics", "to": "dex/app.kubernetes.io/name=dex", "protocol": "tcp", "port": 5556},
+    {"id": "diagnostic-to-flux", "from": "network-policy-diagnostics", "to": "flux-system/app=kustomize-controller", "protocol": "tcp", "port": 8080},
+    {"id": "diagnostic-to-longhorn", "from": "network-policy-diagnostics", "to": "longhorn-system/longhorn components", "protocol": "tcp", "port": 9500}
+  ],
+  "operator_prerequisites": [
+    "Confirm the native context is the intended cluster and record kubectl version.",
+    "Record CNI/controller identity and NetworkPolicy support before applying policies; YAML rendering is not evidence.",
+    "Confirm service CIDR is 10.43.0.0/16 on every native server before relying on api-kubernetes-api.",
+    "Confirm live kube-dns labels, Traefik hostNetwork source addresses, Flux labels, and Longhorn chart ports.",
+    "Run the required and forbidden probes from short-lived authorized diagnostic Pods, then store redacted evidence outside Git.",
+    "Run the Pong room create/join/WebSocket/cleanup synthetic after policy changes."
+  ]
+}
