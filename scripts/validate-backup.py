@@ -52,6 +52,15 @@ def main() -> int:
             require(verifier, f"name: {service}-restore-verification", "restore Jobs")
             require(verifier, f'"restore-verify", "{service}"', "restore Jobs")
         require(verifier, "namespace: backup-system", "restore Jobs")
+        # ResourceQuota requires every backup-system Pod to declare both
+        # requests and limits. Keep the three scheduled verifiers and the
+        # metrics Deployment within the bounded namespace budget.
+        if verifier.count("requests: {cpu: 25m, memory: 64Mi}") != 3:
+            fail("each restore verifier must declare the bounded resource request")
+        if verifier.count("limits: {cpu: 250m, memory: 256Mi}") != 3:
+            fail("each restore verifier must declare the bounded resource limit")
+        if "requests: {cpu: 50m, memory: 128Mi}" not in verifier or "limits: {cpu: 500m, memory: 512Mi}" not in verifier:
+            fail("backup metrics Deployment must declare the bounded resource budget")
         if re.search(r"restore-verification[\s\S]*?claimName:", verifier):
             fail("restore verification must not mount a production PVC")
 

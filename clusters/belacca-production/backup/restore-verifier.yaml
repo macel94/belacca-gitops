@@ -29,6 +29,9 @@ spec:
             - name: verifier
               image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "pong"]
+              resources:
+                requests: {cpu: 25m, memory: 64Mi}
+                limits: {cpu: 250m, memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -69,6 +72,9 @@ spec:
             - name: verifier
               image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "goatcounter"]
+              resources:
+                requests: {cpu: 25m, memory: 64Mi}
+                limits: {cpu: 250m, memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -109,6 +115,9 @@ spec:
             - name: verifier
               image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "dex"]
+              resources:
+                requests: {cpu: 25m, memory: 64Mi}
+                limits: {cpu: 250m, memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -140,6 +149,9 @@ spec:
         - name: metrics
           image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
           command: ["python3", "/opt/backup/backup_runner.py", "metrics-server"]
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
           env:
             - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
             - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}

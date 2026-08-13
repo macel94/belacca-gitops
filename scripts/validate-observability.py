@@ -73,6 +73,17 @@ def validate_native() -> None:
     if not re.search(r"(?m)^\s*-?\s*record: belacca:native:flux:reconciliation_failures:rate5m$", rules):
         fail("native Flux diagnostic recording rule is missing")
     for fragment in (
+        "name: cloudnativepong-capacity",
+        "alert: PongAdmissionRejections",
+        "alert: PongWebSocketAdmissionHeadroomLow",
+        "alert: PongRoomQuotaHeadroomLow",
+        "alert: PongAPIResourcePressure",
+        "alert: PongSQLiteFailures",
+        "alert: PongHTTPServerErrors",
+    ):
+        if fragment not in rules:
+            fail(f"native Pong capacity alert contract missing {fragment!r}")
+    for fragment in (
         "name: belacca-native-actionable-notification-signals",
         "record: belacca:native:slo:error_budget_burn:short",
         "record: belacca:native:slo:error_budget_burn:long",

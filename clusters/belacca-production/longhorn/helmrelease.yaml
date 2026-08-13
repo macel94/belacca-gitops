@@ -28,6 +28,11 @@ spec:
   values:
     global:
       tolerations: []
+    # Longhorn documents disabling this hook for GitOps installations. The
+    # generated Job uses a tag-only vendor image and is rejected by the native
+    # first-party admission policy; the manager readiness checks remain active.
+    preUpgradeChecker:
+      jobEnabled: false
     # Use Longhorn's complete k3s policy graph; do not duplicate a partial
     # manager/engine/webhook policy in the platform policy bundle.
     networkPolicies:

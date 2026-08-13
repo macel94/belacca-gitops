@@ -87,10 +87,13 @@ version and digest changes remain reviewed GitOps changes. The first-party
 workflow identity policy does not treat a vendor image as a Belacca-built image.
 
 Kyverno's own bootstrap namespace is excluded by the Kyverno chart, and the
-Flux controller bootstrap remains a platform trust boundary. Any future
-platform-image hardening must pin those generated controller images by digest
-before removing that boundary. This is a deliberate compatibility boundary,
-not evidence that vendor artifacts have Belacca GitHub workflow provenance.
+Flux controller bootstrap remains a platform trust boundary. Longhorn's
+reviewed GitOps release also disables its chart pre-upgrade checker because the
+chart generates a tag-only Job image and documents that setting for GitOps
+installations; Longhorn manager readiness and the HelmRelease remain monitored.
+Any future platform-image hardening must pin generated controller and vendor
+hook images by digest before removing those compatibility boundaries. These are
+not claims of Belacca GitHub workflow provenance for vendor artifacts.
 
 ## Exceptions
 

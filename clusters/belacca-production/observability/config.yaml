@@ -96,6 +96,54 @@ data:
             expr: pong_websockets_active
           - record: belacca:native:flux:reconciliation_failures:rate5m
             expr: sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
+      # The native cluster runs standalone Prometheus rather than Prometheus
+      # Operator. Keep Pong capacity alerts in this file-based rule bundle;
+      # the application overlay must not emit a PrometheusRule CRD object.
+      - name: cloudnativepong-capacity
+        interval: 30s
+        rules:
+          - alert: PongAdmissionRejections
+            expr: sum(rate(pong_admission_http_rejected_total[5m])) + sum(rate(pong_admission_create_rejected_total[5m])) + sum(rate(pong_admission_join_rejected_total[5m])) + sum(rate(pong_admission_websocket_rejected_total[5m])) > 0
+            for: 10m
+            labels: {severity: warning, notification_class: capacity}
+            annotations:
+              summary: Pong is shedding excess work
+              description: Admission rejection has persisted; compare it with resource and latency signals before increasing limits.
+          - alert: PongWebSocketAdmissionHeadroomLow
+            expr: pong_websockets_active > 102
+            for: 10m
+            labels: {severity: warning, notification_class: capacity}
+            annotations:
+              summary: Pong WebSocket headroom is below 20 percent
+              description: Active sessions exceed the safe 80 percent threshold of the configured global limit.
+          - alert: PongRoomQuotaHeadroomLow
+            expr: pong_rooms_active > 92
+            for: 10m
+            labels: {severity: warning, notification_class: capacity}
+            annotations:
+              summary: Pong room quota headroom is below 20 percent
+              description: Active rooms exceed the review threshold derived from the pod/service quota.
+          - alert: PongAPIResourcePressure
+            expr: (sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{namespace="pong", pod=~"pong-api-.*", container="api"}[5m])) / on (namespace, pod, container) kube_pod_container_resource_limits{namespace="pong", pod=~"pong-api-.*", container="api", resource="cpu", unit="core"}) > 0.8 or (container_memory_working_set_bytes{namespace="pong", pod=~"pong-api-.*", container="api"} / on (namespace, pod, container) kube_pod_container_resource_limits{namespace="pong", pod=~"pong-api-.*", container="api", resource="memory", unit="byte"}) > 0.8
+            for: 10m
+            labels: {severity: warning, notification_class: capacity}
+            annotations:
+              summary: Pong API resource headroom is below 20 percent
+              description: The single SQLite writer is near its configured CPU or memory limit; do not scale API replicas horizontally.
+          - alert: PongSQLiteFailures
+            expr: increase(pong_sqlite_create_failure_total[5m]) + increase(pong_sqlite_get_failure_total[5m]) + increase(pong_sqlite_list_failure_total[5m]) + increase(pong_sqlite_increment_players_failure_total[5m]) + increase(pong_sqlite_delete_failure_total[5m]) > 0
+            for: 5m
+            labels: {severity: critical, notification_class: capacity}
+            annotations:
+              summary: Pong SQLite operations are failing
+              description: Protect existing rooms and investigate persistence or storage faults.
+          - alert: PongHTTPServerErrors
+            expr: sum(rate(pong_http_responses_5xx_total[5m])) / clamp_min(sum(rate(pong_http_requests_total[5m])), 1) > 0.01
+            for: 10m
+            labels: {severity: critical, notification_class: capacity}
+            annotations:
+              summary: Pong HTTP server error ratio is elevated
+              description: Overload rejects should remain 429, not cascade into 5xx.
       - name: belacca-native-backup-alerts
         interval: 30s
         rules:

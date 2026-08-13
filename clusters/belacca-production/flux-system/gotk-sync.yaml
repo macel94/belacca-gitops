@@ -23,10 +23,10 @@ spec:
   path: ./clusters/belacca-production
   prune: true
   wait: false
-  # Longhorn is Flux-owned, but its vendor pre-upgrade hook currently emits a
-  # tag-only image that the first-party digest policy deliberately does not
-  # match. Keep storage status visible via its own HelmRelease/Kustomization;
-  # do not let that vendor hook gate policy/bootstrap reconciliation.
+  # Longhorn is Flux-owned. Its chart pre-upgrade check is disabled in the
+  # reviewed HelmRelease because the GitOps installation path does not expose a
+  # digest-pinning value for the generated vendor Job; manager readiness and
+  # HelmRelease health remain explicit operational checks.
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
