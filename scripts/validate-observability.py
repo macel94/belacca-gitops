@@ -61,8 +61,9 @@ def validate_native() -> None:
         "record: belacca:slo_source:external_probe:coverage",
         "expr: vector(0)",
     )
+    normalized_config = " ".join(config.replace("# ", "").split())
     for fragment in required_fragments:
-        if fragment not in config:
+        if " ".join(fragment.split()) not in normalized_config:
             fail(f"native observability config missing {fragment!r}")
     rules = config.split("  prometheus.rules.yml: |", 1)[-1]
     if re.search(r"(?im)^\s*expr:.*(?:availability|recovery|drill)", rules):
