@@ -25,14 +25,10 @@ spec:
             cidr: 169.58.143.41/32
         - ipBlock:
             cidr: 169.58.143.42/32
-        - ipBlock:
-            cidr: 10.42.0.0/24
-        - ipBlock:
-            cidr: 10.42.1.0/24
+        # Traefik uses hostNetwork; these are node source addresses, not Pod
+        # CIDRs. Do not add a broad cluster/pod CIDR to this identity edge.
         - ipBlock:
             cidr: 169.58.97.73/32
-        - ipBlock:
-            cidr: 10.42.2.0/24
       ports:
         - protocol: TCP
           port: 5556

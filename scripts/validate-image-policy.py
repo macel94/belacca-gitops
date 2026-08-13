@@ -63,7 +63,7 @@ def validate_policies(contract: dict) -> None:
     files = sorted(
         path for path in POLICIES.glob("*.yaml") if path.name != "kustomization.yaml"
     )
-    require(len(files) == 4, "expected exactly four native image policy manifests")
+    require(len(files) >= 4, "native image policy manifests are missing")
     text = "\n".join(path.read_text() for path in files)
     for needle in (
         "failurePolicy: Fail",

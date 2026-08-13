@@ -1,0 +1,448 @@
+# Native production policy boundary.
+#
+# These policies intentionally use stable workload labels from the pinned Pong
+# native-staging overlay. Dynamic room Pods and Services inherit the room rules
+# because the API creates them with app=cloudnativepong,role=room. A policy
+# object is not evidence of enforcement; docs/NATIVE-NETWORK-POLICY.md contains
+# the fail-closed live probe and the evidence format.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-pong-default-deny
+  namespace: pong
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: pong
+    belacca.com/component: network-policy
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-pong-gateway-ingress
+  namespace: pong
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: pong
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudnativepong
+      component: gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Traefik is hostNetwork in native production. Keep the selector for
+    # plugins that preserve the workload identity and list the three declared
+    # node addresses for plugins that evaluate the host-network source IP.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: api
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: static
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-pong-static-ingress
+  namespace: pong
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: pong
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudnativepong
+      component: static
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-pong-api-traffic
+  namespace: pong
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: pong
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudnativepong
+      component: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: gateway
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              role: room
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+              belacca.com/stage: native-production
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # The lobby needs the in-cluster Kubernetes API to create/list/watch/delete
+    # only namespaced room Pods and Services. The API Service VIP is selected by
+    # the Kubernetes service CIDR because the endpoint is control-plane data,
+    # not a stable Pod label.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+        # Some CNIs evaluate Service traffic after kube-proxy translation;
+        # permit only the three declared native API nodes in that case.
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    - to:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              role: room
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-pong-room-traffic
+  namespace: pong
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: pong
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudnativepong
+      role: room
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: api
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: api
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-observability-egress
+  namespace: observability
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: observability
+    belacca.com/component: prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+      belacca.com/stage: native-production
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: pong
+          podSelector:
+            matchLabels:
+              app: cloudnativepong
+              component: api
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: source-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: kustomize-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: helm-controller
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: notification-controller
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-platform-control-plane-deny
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: kustomize-controller
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+              belacca.com/stage: native-production
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-headlamp-default-deny
+  namespace: headlamp
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: network-policy
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-headlamp-auth-ingress
+  namespace: headlamp
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: headlamp-auth
+spec:
+  podSelector:
+    matchLabels:
+      app: oauth2-proxy
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
+        - protocol: TCP
+          port: 4180
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-headlamp-backend-ingress
+  namespace: headlamp
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: headlamp
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+      app.kubernetes.io/instance: headlamp
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: oauth2-proxy
+      ports:
+        - protocol: TCP
+          port: 4466
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-dex-ingress
+  namespace: dex
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: identity
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: dex
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 5556
