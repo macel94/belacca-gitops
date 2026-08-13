@@ -9,9 +9,7 @@ native k3s servers:
 - `belacca-k3s-02` — `169.58.143.41`
 - `belacca-k3s-03` — `169.58.143.42`
 
-The former `k3d-pong` application cluster on `.73` was retired after the
 controlled state handoff. Its historical GitOps tree remains under
-`clusters/vmi3474918/` for audit/reference and is not a second live owner.
 
 **Native cutover: complete.** Native Flux, Longhorn, Traefik, cert-manager,
 TLS, Pong, portfolio, analytics, Dex, Headlamp, and Flux Web are reconciled
@@ -75,7 +73,6 @@ clusters/belacca-production/
 The native root contains the application GitRepositories and application
 Kustomizations described above, plus cert-manager DNS-01 resources in `tls/`
 and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
-not contain the retired old-production ACME PVC or old local-path PVCs. Public
 DNS is managed out of band at Cloudflare; additional hostnames or services
 require a separate reviewed change.
 
@@ -92,7 +89,6 @@ kubectl get nodes
 kubectl -n flux-system get gitrepositories,kustomizations
 ```
 
-The old `k3d-pong` runtime is retired. Do not recreate it or apply old
 production PVC/ACME recovery commands against native production. Use the
 post-cutover hardening and manual DNS-removal procedures instead.
 
@@ -106,6 +102,3 @@ Native cutover is complete. Remaining operator work is:
    rehearsal;
 3. complete authenticated browser journeys and a one-node failure drill; and
 4. review the native Traefik UID 0 low-port-binding exception.
-
-The retired old-production manifests and rollback history remain available for
-reference, but the old k3d runtime is not a live rollback target.
