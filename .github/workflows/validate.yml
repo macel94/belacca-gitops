@@ -25,7 +25,9 @@ jobs:
       - name: Validate recovery contract and drills
         run: |
           python3 scripts/validate-recovery-contract.py
-          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 scripts/validate_native_drills.py
+          python3 -m unittest -v scripts/test_validate_native_drills.py
+          python3 -m json.tool docs/NATIVE-DRILL-EVIDENCE.json >/tmp/native-drill-evidence.pretty.json
       - name: Validate notification contracts
         run: python3 scripts/validate-notifications.py
       - name: Validate observability contracts
