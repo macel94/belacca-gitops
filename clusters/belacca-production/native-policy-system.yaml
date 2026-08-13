@@ -1,43 +1,43 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: pong
+  name: native-policy-system
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/project: pong
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: admission-policy
 spec:
   interval: 10m
-  # The application repository retains this path for compatibility; the live
-  # deployment is native production, not a staging environment.
-  path: ./k8s/overlays/native-staging
-  prune: false
+  path: ./clusters/belacca-production/policy-system
+  prune: true
   wait: true
   timeout: 10m
   dependsOn:
     - name: flux-system
-    - name: native-image-policy
   sourceRef:
     kind: GitRepository
-    name: cloudnativepong
+    name: flux-system
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: portfolio
+  name: native-image-policy
   namespace: flux-system
   labels:
     belacca.com/owner: native-root
-    belacca.com/project: portfolio
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: admission-policy
 spec:
   interval: 10m
-  path: ./deploy
-  prune: false
+  path: ./clusters/belacca-production/policies
+  prune: true
   wait: true
   timeout: 10m
   dependsOn:
-    - name: flux-system
-    - name: native-image-policy
+    - name: native-policy-system
   sourceRef:
     kind: GitRepository
-    name: francesco-belacca-site
+    name: flux-system

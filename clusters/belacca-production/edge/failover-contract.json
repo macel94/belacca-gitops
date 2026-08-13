@@ -1,0 +1,151 @@
+{
+  "apiVersion": "belacca.com/v1alpha1",
+  "kind": "EdgeFailoverContract",
+  "metadata": {
+    "cluster": "belacca-native",
+    "owner": "platform",
+    "sourceOfTruth": "belacca-gitops",
+    "status": "design-approved-provisioning-required"
+  },
+  "provider": {
+    "name": "Contabo",
+    "selection": "provider-managed-L4-load-balancer",
+    "selectionStatus": "selected-design-not-provisioned",
+    "reason": "The provider VIP/L4 service must be provisioned outside Kubernetes; no provider credential or live infrastructure access is stored in this repository.",
+    "tlsTermination": "backend-pass-through",
+    "singleActiveFrontend": true,
+    "operatorRequired": true
+  },
+  "endpoints": {
+    "api": {
+      "hostname": "k3s-api.belacca.com",
+      "listenerPort": 6443,
+      "protocol": "tcp-tls-pass-through",
+      "dnsModeAfterProvisioning": "single-dns-only-A-to-provider-vip",
+      "kubeconfigServer": "https://k3s-api.belacca.com:6443",
+      "certificateSAN": "k3s-api.belacca.com"
+    },
+    "publicIngress": {
+      "hostnames": [
+        "francesco.belacca.com",
+        "belacca.com",
+        "www.belacca.com",
+        "www.francesco.belacca.com",
+        "pong.belacca.com",
+        "stats.belacca.com",
+        "dashboard.belacca.com",
+        "flux.belacca.com",
+        "dex.belacca.com"
+      ],
+      "listenerPorts": [80, 443],
+      "protocol": "tcp-tls-pass-through",
+      "dnsModeAfterProvisioning": "single-dns-only-A-to-provider-vip",
+      "tlsTerminationOwner": "native-traefik"
+    }
+  },
+  "backends": {
+    "controlPlane": [
+      {
+        "name": "belacca-k3s-01",
+        "address": "169.58.97.73",
+        "apiPort": 6443,
+        "ingressPorts": [80, 443]
+      },
+      {
+        "name": "belacca-k3s-02",
+        "address": "169.58.143.41",
+        "apiPort": 6443,
+        "ingressPorts": [80, 443]
+      },
+      {
+        "name": "belacca-k3s-03",
+        "address": "169.58.143.42",
+        "apiPort": 6443,
+        "ingressPorts": [80, 443]
+      }
+    ],
+    "mode": "active-active",
+    "backendOwnership": "provider-L4-pool-is-the-only-public-VIP-owner; control-plane-nodes-never-own-the-VIP",
+    "fencing": "Remove a failed backend from every provider pool and deny provider-LB-to-backend traffic at the node firewall before repair; never run keepalived or a second VIP owner on the nodes."
+  },
+  "healthChecks": {
+    "api": {
+      "protocol": "https",
+      "port": 6443,
+      "method": "GET",
+      "path": "/readyz",
+      "host": "k3s-api.belacca.com",
+      "sni": "k3s-api.belacca.com",
+      "expectedStatus": 200,
+      "intervalSeconds": 5,
+      "timeoutSeconds": 2,
+      "unhealthyAfterFailures": 3,
+      "healthyAfterSuccesses": 2,
+      "certificateValidation": "operator-managed-k3s-cluster-CA-or-pinned-server-certificate; never accept arbitrary certificates"
+    },
+    "edge": {
+      "protocol": "https",
+      "port": 443,
+      "method": "GET",
+      "path": "/health",
+      "host": "francesco.belacca.com",
+      "sni": "francesco.belacca.com",
+      "expectedStatus": 200,
+      "intervalSeconds": 5,
+      "timeoutSeconds": 2,
+      "unhealthyAfterFailures": 3,
+      "healthyAfterSuccesses": 2,
+      "certificateValidation": "public-CA-chain-and-hostname"
+    },
+    "httpListener": {
+      "protocol": "tcp",
+      "port": 80,
+      "healthSignal": "The 443 HTTPS health check gates the node; port 80 is forwarded only for the existing HTTP-to-HTTPS redirect."
+    }
+  },
+  "networkBoundary": {
+    "publicListenerPorts": [80, 443, 6443],
+    "backendPorts": [80, 443, 6443],
+    "deniedPorts": [2379, 2380, 8472, 9500, 9501, 9502, 9503, 10250, 9090],
+    "deniedPortNames": [
+      "etcd-client",
+      "etcd-peer",
+      "k3s-flannel-overlay",
+      "Longhorn-data-plane",
+      "kubelet",
+      "Prometheus-diagnostics"
+    ],
+    "rule": "The provider VIP forwards only 80/443 to Traefik and 6443 to the Kubernetes API. No etcd, kubelet, overlay, Longhorn, metrics, SSH, or arbitrary node port is a listener or health-check target. Backend firewalls must allow 6443 only from the provider LB health/data-plane addresses and keep all denied ports unavailable from the Internet and provider LB."
+  },
+  "ownershipAndRecovery": {
+    "activeOwner": "provider-managed-L4-VIP",
+    "passiveFallback": "current-direct-DNS-records-and-reviewed-manual-removal-procedure",
+    "splitBrainPrevention": "Do not assign the VIP to a node or publish both the provider VIP and backend A records after cutover.",
+    "withdrawal": "Three consecutive failed checks withdraw a backend; two consecutive successful checks return it after operator review. Existing connections may drain according to provider policy; new connections must not be sent to a withdrawn backend.",
+    "apiRecovery": "Restore k3s readiness and certificate identity first, verify /readyz through the provider VIP, then re-enable the backend. Do not re-add a node solely because its TCP port is open.",
+    "edgeRecovery": "Restore Traefik and the public HTTPS /health journey, verify SNI/certificate and one representative route, then re-enable the backend.",
+    "providerFailure": "If the provider VIP is unavailable, keep the passive DNS records and use the manual removal procedure; do not create a second unreviewed VIP or change kubeconfigs during an incident."
+  },
+  "evidence": {
+    "status": "pending-live-drill",
+    "artifact": "docs/evidence/api-edge-failover.json",
+    "requiredScenarios": [
+      "one-edge-failure",
+      "one-control-plane-failure",
+      "recovery-of-each-failed-backend"
+    ],
+    "requiredMeasurements": [
+      "failure-to-withdraw-seconds",
+      "recovery-to-readd-seconds",
+      "client-convergence-observation-seconds",
+      "kubeconfig-api-availability-during-control-plane-failure"
+    ],
+    "limitation": "No live provider VIP, firewall change, certificate reissue, or failure injection was performed by this change; evidence must be produced by an authorized operator and must not be backfilled from estimates."
+  },
+  "references": [
+    "https://kubernetes.io/docs/reference/using-api/health-checks/",
+    "https://docs.k3s.io/cli/server",
+    "https://docs.k3s.io/cluster-access",
+    "https://www.haproxy.org/download/2.9/doc/configuration.txt"
+  ]
+}

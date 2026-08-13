@@ -42,7 +42,11 @@ direct and public probes succeed on all three native edges (`.73`, `.41`, and
 `.42`). A private native
 Prometheus diagnostic child and Flux notification contract are now committed,
 but external backup retention, authenticated browser completion, notification
-destination provisioning, and one-node failure drills remain hardening items.
+destination provisioning, and live one-node failure measurements remain
+hardening items. The approved native drill contract and pending evidence ledger
+are in [`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md)
+and [`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
+node mutation remains owned by the infrastructure repository.
 The public 99%/30d SLO is measured by the external status repository, not by
 native Prometheus, and is not yet reportable until its complete window exists.
 
@@ -63,6 +67,8 @@ clusters/belacca-production/
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
 ├── observability/ private Prometheus diagnostics and SLO-source contract
+├── policy-system/ Kyverno admission controller HelmRelease
+├── policies/ native image digest, provenance, SBOM, and vulnerability policies
 ├── notifications.yaml native Flux notification contract (destination out of band)
 ├── native-sources.yaml       published application GitRepositories
 └── native-applications.yaml  native app Kustomizations
@@ -98,5 +104,6 @@ Native cutover is complete. Remaining operator work is:
    DNS round-robin;
 2. configure encrypted external backups and complete an isolated restore
    rehearsal;
-3. complete authenticated browser journeys and a one-node failure drill; and
+3. complete authenticated browser journeys and the approved one-node failure
+   drills, then publish three comparable measurements; and
 4. review the native Traefik UID 0 low-port-binding exception.

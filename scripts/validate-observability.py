@@ -71,6 +71,24 @@ def validate_native() -> None:
         fail("native Pong diagnostic recording rule is missing")
     if not re.search(r"(?m)^\s*-?\s*record: belacca:native:flux:reconciliation_failures:rate5m$", rules):
         fail("native Flux diagnostic recording rule is missing")
+    for fragment in (
+        "name: belacca-native-actionable-notification-signals",
+        "record: belacca:native:slo:error_budget_burn:short",
+        "record: belacca:native:slo:error_budget_burn:long",
+        "record: belacca:native:routing:customer_impact",
+        "record: belacca:native:storage:customer_impact",
+        "alert: BelaccaNotificationPathNotProvisioned",
+        "alert: BelaccaNativeSLOBurn",
+        "alert: BelaccaNativeRoutingImpact",
+        "alert: BelaccaNativeStorageImpact",
+        "page_policy: not-configured",
+        "expr: vector(0)",
+        "for: 10m",
+    ):
+        if fragment not in rules:
+            fail(f"native actionable notification contract missing {fragment!r}")
+    if "notification_class: page" not in rules or "routing_class: page" not in rules:
+        fail("native actionable notification rules must identify the page lane")
 
     if "prom/prometheus:v3.13.2@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
         fail("native Prometheus image must be immutable and must not use latest")

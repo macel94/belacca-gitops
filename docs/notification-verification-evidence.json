@@ -1,0 +1,23 @@
+{
+  "schema": "belacca.com/notification-verification-evidence.v1",
+  "status": "not-performed-in-worktree",
+  "cluster_context_verified": false,
+  "received": false,
+  "diagnostic_event": {
+    "sent": false,
+    "paging": false,
+    "event_payload_committed": false
+  },
+  "checks": {
+    "deduplication": "not-run",
+    "grouping": "not-run",
+    "inhibition": "not-run",
+    "recovery": "not-run",
+    "redaction": "not-run",
+    "retention": "not-run",
+    "notification_failure_observed": "contract-only"
+  },
+  "credentials_or_payloads_committed": false,
+  "limitation": "This worktree has no native cluster access, approved receiver, endpoint, routing key, or token. Live delivery cannot be faked.",
+  "operator_follow_up": "Provision both referenced Secrets out of band, run the harmless diagnostic matrix in docs/NOTIFICATIONS.md, attach redacted receiver evidence to the private incident record, and update this file only with non-secret outcome metadata."
+}

@@ -1,0 +1,42 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: kyverno
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: admission-policy
+spec:
+  interval: 10m
+  timeout: 10m
+  chart:
+    spec:
+      chart: kyverno
+      version: "3.8.2"
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+        namespace: kyverno
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # The admission controller is the production promotion boundary. Keep
+    # failure closed: an unavailable verifier must not admit a new workload.
+    admissionController:
+      replicas: 2
+      networkPolicy:
+        enabled: false
+    backgroundController:
+      replicas: 1
+    cleanupController:
+      enabled: false
+    reportsController:
+      enabled: true
+    crds:
+      install: true

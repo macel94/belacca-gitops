@@ -3,6 +3,10 @@ kind: Kustomization
 resources:
   - network-policies.yaml
   - platform-egress.yaml
+  - production-image-digest.yaml
+  - first-party-image-provenance.yaml
+  - first-party-image-sbom.yaml
+  - first-party-image-vulnerability.yaml
 
 configMapGenerator:
   - name: native-network-policy-contract

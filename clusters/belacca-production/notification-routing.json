@@ -1,0 +1,80 @@
+{
+  "schema": "belacca.com/notification-routing.v1",
+  "cluster": "belacca-native",
+  "environment": "native-production",
+  "status": "contract-only-until-operator-provisioning",
+  "destination": {
+    "name": "operator-paging-gateway",
+    "owner": "platform",
+    "failure_domain": "external-managed-incident-service, independent of native k3s, Flux, DNS, and Longhorn",
+    "approved_class": "PagerDuty-compatible operator-owned incident gateway",
+    "transport": "HTTPS generic-hmac",
+    "secret_namespace": "flux-system",
+    "secret_name": "platform-page-notification-webhook",
+    "required_secret_keys": ["address", "token"],
+    "endpoint_committed": false,
+    "credentials_committed": false,
+    "provisioned": false,
+    "approval_record": "operator-owned change record outside Git"
+  },
+  "lanes": [
+    {
+      "name": "ticket-dashboard",
+      "provider": "platform-webhook",
+      "secret_name": "platform-notification-webhook",
+      "transport": "HTTPS generic webhook",
+      "page": false,
+      "events": ["covered Flux error", "deployment succeeded/ready"],
+      "purpose": "diagnostic, ticket context, and dashboard evidence"
+    },
+    {
+      "name": "page",
+      "provider": "platform-page-webhook",
+      "secret_name": "platform-page-notification-webhook",
+      "transport": "HTTPS generic-hmac",
+      "page": true,
+      "events": ["approved high-level reconciliation failure", "SLO burn", "routing failure", "storage failure"],
+      "excludes": ["individual low-level component failure without customer-impact gate", "deployment info"],
+      "purpose": "actionable incident creation only after persistence and impact gates"
+    },
+    {
+      "name": "page-recovery",
+      "provider": "platform-page-webhook",
+      "secret_name": "platform-page-notification-webhook",
+      "transport": "HTTPS generic-hmac",
+      "page": true,
+      "events": ["recovery of a page-lane Flux object"],
+      "purpose": "resolve or update the matching incident; do not open a new incident"
+    }
+  ],
+  "policy": {
+    "identity_fields": ["cluster", "environment", "routingClass", "namespace", "kind", "name", "reason"],
+    "group_window": "10m",
+    "deduplicate_on": "identity_fields",
+    "event_details_not_identity": ["revision", "message", "timestamp"],
+    "inhibition": [
+      "page-recovery suppresses a matching page notification and resolves its incident",
+      "a parent service/page identity suppresses duplicate child component pages while the parent is active",
+      "deployment diagnostic events never suppress or create page incidents",
+      "approved maintenance suppresses page delivery but remains visible in diagnostics"
+    ],
+    "recovery": "same identity and routing class as the firing event; receiver must resolve rather than create",
+    "low_level_gate": "no page from a single HelmRelease, Pod, PVC, or controller error unless an approved SLO, routing, storage, or parent-Kustomization impact gate is also true"
+  },
+  "verification": {
+    "diagnostic_event": "harmless non-paging reconciliation event in an approved window",
+    "required_checks": ["received", "redacted metadata", "stable deduplication", "grouping", "inhibition", "recovery", "retention"],
+    "evidence_file": "docs/notification-verification-evidence.json",
+    "live_evidence_status": "not-performed-in-worktree",
+    "never_fake_live_delivery": true
+  },
+  "failure_observability": {
+    "native_signals": [
+      "Provider Ready condition and Kubernetes warning events",
+      "notification-controller NotificationDispatchFailed warning events",
+      "notification-controller logs with credentials masked"
+    ],
+    "independent_signal_required": "external monitor of the gateway and a periodic diagnostic delivery, because a failed notification path cannot page through itself",
+    "delivery_slo_status": "not-measured"
+  }
+}
