@@ -26,7 +26,7 @@ class FakeRunner:
 
 class NativeGameDaySafetyTests(unittest.TestCase):
     def test_wrong_context_fails_closed_before_any_mutation(self):
-        runner = FakeRunner(context="k3d-pong")
+        runner = FakeRunner(context="unexpected-context")
         result = native_game_day.main(
             [
                 "restart-pong-api-pod",
