@@ -2,9 +2,9 @@
 
 This is a contract for a future operator-managed backup service for **native
 production**. Pong, GoatCounter, and Dex state has already been quiesced,
-integrity-checked, and restored into native Longhorn-backed RWO PVCs. External
-object storage and scheduled backups remain unprovisioned. The former `k3d-pong` runtime and its local volumes are retired historical
-sources, not recovery targets. No bucket, CSI snapshot, CronJob, access
+integrity-checked, and restored into native Longhorn-backed RWO PVCs. External object storage and scheduled backups remain unprovisioned. Native
+production is the only source and recovery plane; restore rehearsals always use
+isolated copied artifacts. No bucket, CSI snapshot, CronJob, access
 credential, encryption key, or external storage endpoint is created by this
 repository. The checked-in helper does not upload backups or contact object
 storage.
@@ -120,9 +120,10 @@ establishes neither off-host retention nor an automated RPO.
 - A failed native production application rollout is rolled back through the
   application image/tag commit and native Flux reconciliation; do not restore
   the live PVC in place.
-- Never run `k3d cluster delete pong`, `k3d cluster delete k3d-pong`,
-  `kubectl delete pvc pong-api-data`, or a live `kubectl cp` into
-  `/data/pong.db` as native production recovery.
+- Never delete a disposable restore target unless it is the exact target
+  created by the current rehearsal, and never run `kubectl delete pvc
+  pong-api-data` or a live `kubectl cp` into `/data/pong.db` as native
+  production recovery.
 - If an artifact fails integrity verification, quarantine it and use a different
   verified artifact. Do not “repair” it in a live production PVC.
 - Do not use a live native `.41`/`.42` workload as a restore target; use an
