@@ -1,5 +1,6 @@
-# Native production notification contract. The destination Secret is
-# intentionally out of band; no endpoint or credential belongs in Git.
+# Native production Flux notification contracts.
+# Destination Secrets are intentionally out of band; no endpoint or credential
+# belongs in Git. See docs/NOTIFICATIONS.md and notification-routing.json.
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
@@ -15,6 +16,25 @@ spec:
   type: generic
   secretRef:
     name: platform-notification-webhook
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: platform-page-webhook
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: page
+    belacca.com/page-policy: operator-signoff-required
+spec:
+  # The incident gateway verifies X-Signature and forwards only the page lane
+  # to the approved operator paging service. Its endpoint and token are held
+  # in the out-of-band Secret below.
+  type: generic-hmac
+  secretRef:
+    name: platform-page-notification-webhook
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -36,6 +56,7 @@ spec:
     environment: native-production
     notificationClass: diagnostic
     pagePolicy: not-configured
+    routingClass: ticket-dashboard
     runbook: docs/NOTIFICATIONS.md
   eventSources:
     - kind: GitRepository
@@ -65,9 +86,6 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: longhorn-system
-    - kind: HelmRelease
-      name: '*'
-      namespace: kyverno
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -92,6 +110,7 @@ spec:
     environment: native-production
     notificationClass: diagnostic
     pagePolicy: not-configured
+    routingClass: ticket-dashboard
     runbook: docs/NOTIFICATIONS.md
   eventSources:
     - kind: GitRepository
@@ -121,6 +140,116 @@ spec:
     - kind: HelmRelease
       name: '*'
       namespace: longhorn-system
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-page-errors
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: page
+    belacca.com/page-policy: operator-signoff-required
+spec:
+  providerRef:
+    name: platform-page-webhook
+  eventSeverity: error
+  eventMetadata:
+    cluster: belacca-native
+    environment: native-production
+    notificationClass: page
+    pagePolicy: operator-signoff-required
+    routingClass: page
+    runbook: docs/NOTIFICATIONS.md
+  eventSources:
+    # The root and public application Kustomizations are intentionally named;
+    # low-level component errors remain in the diagnostic lane.
+    - kind: Kustomization
+      name: flux-system
+      namespace: flux-system
+    - kind: Kustomization
+      name: pong
+      namespace: flux-system
+    - kind: Kustomization
+      name: portfolio
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-analytics
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-dex
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-headlamp
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-flux-web
+      namespace: flux-system
     - kind: HelmRelease
-      name: '*'
-      namespace: kyverno
+      name: traefik
+      namespace: kube-system
+    - kind: HelmRelease
+      name: longhorn
+      namespace: longhorn-system
+    - kind: HelmRelease
+      name: cert-manager
+      namespace: cert-manager
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-page-recovery
+  namespace: flux-system
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: notifications
+    belacca.com/notification-class: page-recovery
+    belacca.com/page-policy: operator-signoff-required
+spec:
+  providerRef:
+    name: platform-page-webhook
+  eventSeverity: info
+  inclusionList:
+    - '.*succeeded.*'
+    - '.*ready.*'
+  eventMetadata:
+    cluster: belacca-native
+    environment: native-production
+    notificationClass: page-recovery
+    pagePolicy: operator-signoff-required
+    routingClass: page
+    runbook: docs/NOTIFICATIONS.md
+  eventSources:
+    - kind: Kustomization
+      name: flux-system
+      namespace: flux-system
+    - kind: Kustomization
+      name: pong
+      namespace: flux-system
+    - kind: Kustomization
+      name: portfolio
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-analytics
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-dex
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-headlamp
+      namespace: flux-system
+    - kind: Kustomization
+      name: native-flux-web
+      namespace: flux-system
+    - kind: HelmRelease
+      name: traefik
+      namespace: kube-system
+    - kind: HelmRelease
+      name: longhorn
+      namespace: longhorn-system
+    - kind: HelmRelease
+      name: cert-manager
+      namespace: cert-manager
