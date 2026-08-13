@@ -22,7 +22,7 @@ REQUIRED_CONTRACT_MARKERS = (
     "bucket",
     "secret-access-key",
     "kms-key-id",
-    "CronJobs are committed in a fail-closed state",
+    "CronJobs are committed in a fail-closed state; they cannot upload or verify",
     "pong-api-data",
 )
 REQUIRED_DRILL_MARKERS = (
