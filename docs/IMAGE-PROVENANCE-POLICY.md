@@ -46,6 +46,9 @@ identity-mismatched attestation blocks admission. The policy is not report-only.
 
 The signed registry SBOM and signed vulnerability decision are separate
 requirements: a registry SBOM alone is evidence, not an admission authorization.
+Kyverno evaluates attestation conditions against the decoded predicate itself;
+these policies therefore use direct fields such as `{{ bomFormat }}` and
+`{{ maxSeverity }}`, not a nonexistent `predicate.*` wrapper.
 A Trivy report with `exit-code: 0` is also not an authorization. Publishers must
 make the vulnerability decision explicit and sign it for the exact image digest.
 

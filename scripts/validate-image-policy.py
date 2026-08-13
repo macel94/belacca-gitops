@@ -79,8 +79,16 @@ def validate_policies(contract: dict) -> None:
         "https://rekor.sigstore.dev",
         "native-production-v1",
         "knownUnfixed",
+        "{{ bomFormat }}",
+        "{{ policy }}",
+        "{{ maxSeverity }}",
+        "{{ knownUnfixed }}",
     ):
         require(needle in text, f"policy set is missing {needle}")
+    require("{{ predicate.bomFormat }}" not in text, "SBOM attestation condition uses unsupported predicate prefix")
+    require("{{ predicate.policy }}" not in text, "vulnerability attestation condition uses unsupported predicate prefix")
+    require("{{ predicate.maxSeverity }}" not in text, "vulnerability severity condition uses unsupported predicate prefix")
+    require("{{ predicate.knownUnfixed }}" not in text, "vulnerability unfixed condition uses unsupported predicate prefix")
     for prefix in FIRST_PARTY:
         require(prefix in text, f"policy set does not match first-party prefix {prefix}")
     digest_policy = (POLICIES / "production-image-digest.yaml").read_text()
