@@ -56,14 +56,13 @@ manifests are under [`clusters/belacca-production/policies/`](../clusters/belacc
 - The publisher owns the SBOM and scan evidence. This GitOps repository owns the
   admission policy and never fabricates registry or live-cluster evidence.
 
-The current application publisher workflows already build registry SBOMs and
-GitHub Artifact Attestations, but they do not yet emit the required signed
-`native-production-v1` vulnerability decision. Consequently, the new gate is
-intentionally fail-closed: a new first-party Pod cannot be promoted until the
-publisher workflows add that attestation. The exact follow-up is to add an
-`actions/attest` custom predicate with the fields above after the Trivy result,
-then verify the resulting digest with `cosign verify-attestation` before
-recording it in the deployment Kustomization.
+The portfolio application publisher now builds the registry SBOM, scans the
+pushed image digest, emits the signed `native-production-v1` vulnerability
+decision, and records the exact image digest in its deployment Kustomization.
+The workflow still fails closed before Git promotion when the decision exceeds
+MEDIUM or contains known-unfixed findings. Operators should verify the resulting
+digest and all three attestations with `cosign verify-attestation` or the
+corresponding GitHub attestation tooling before relying on the rollout.
 
 ## Vendor and disposable images
 

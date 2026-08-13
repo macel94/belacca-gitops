@@ -25,9 +25,9 @@ Deployment rollout does not promote a release when a user-facing check fails.
 
 Every image supplied to `scripts/run-release-gates.py` is recorded as an
 exact `repository@sha256:<64 lowercase hex>` identity in `imageReferences` and
-as a matching entry in `imageDigests`. A tag
-such as `sha-<commit>` is useful provenance metadata but is not a promotion
-reference. The release must also include:
+as a matching entry in `imageDigests`. A tag such as `sha-<commit>` is useful provenance metadata but is not a
+promotion reference; the application workflow records the tag together with the
+exact digest, and native production reconciles the digest-pinned reference. The release must also include:
 
 - source commit SHAs for every application repository;
 - the Flux revision/Kustomization revision that reconciled the target;
