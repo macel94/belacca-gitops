@@ -35,7 +35,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /health and homepage responses from an external probe",
-        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists"
+        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; measured levels use available good/bad observations and switch to the latest rolling 720-slot window after 30 days"
       },
       "rto": "4h",
       "rpo": "N/A (stateless image and GitOps configuration)",
@@ -86,7 +86,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful external homepage, health, room create/join, two-player WebSocket-compatible playing-state, and cleanup journey",
-        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists; native WebTransport is optional"
+        "measurement": "External hourly journey evidence is published in belacca-status/slo.json; measured levels use available good/bad observations and switch to the latest rolling 720-slot window after 30 days; native WebTransport is optional"
       },
       "rto": "4h",
       "rpo": "24h target (scheduled encrypted backup and isolated restore verification are fail-closed until external storage/identity gates and evidence are complete)",
@@ -142,7 +142,7 @@
         "target": "99%",
         "window": "30d",
         "indicator": "Successful HTTPS GET /status and successful same-origin /count requests",
-        "measurement": "External hourly /status plus harmless /count evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists"
+        "measurement": "External hourly /status plus harmless /count evidence is published in belacca-status/slo.json; measured levels use available good/bad observations and switch to the latest rolling 720-slot window after 30 days"
       },
       "rto": "4h",
       "rpo": "24h target (scheduled encrypted backup and isolated restore verification are fail-closed until external storage/identity gates and evidence are complete)",

@@ -38,6 +38,7 @@ uses Cloudflare DNS-01 with an out-of-band token.
 
 The external status publisher checks the portfolio, Pong, analytics `/status`
 and `/count`, `/count.js`, and portfolio aliases. The 99%/30d objective is
-internal, not an SLA. `status.json` is current status evidence; `slo.json` is
-rolling-window reliability evidence and remains non-reportable until a complete
-valid window exists. Native Prometheus is private diagnostic telemetry.
+internal, not an SLA. `status.json` is current status evidence; `slo.json` publishes
+measured levels from available good/bad observations and switches to the latest
+rolling 30-day window after 30 days, with coverage and unknown slots visible.
+Native Prometheus is private diagnostic telemetry.
