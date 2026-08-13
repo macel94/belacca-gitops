@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: native-production-immutable-images
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: platform
+    belacca.com/component: admission-policy
+  annotations:
+    policies.kyverno.io/title: Native production images must be immutable
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+spec:
+  background: false
+  webhookConfiguration:
+    failurePolicy: Fail
+    timeoutSeconds: 30
+  rules:
+    - name: require-image-digest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - pong
+                - portfolio
+                - analytics
+                - cert-manager
+                - dex
+                - flux-system
+                - headlamp
+                - kube-system
+                - longhorn-system
+                - observability
+      validate:
+        failureAction: Enforce
+        message: Native production Pods must use an image reference containing an immutable sha256 digest.
+        pattern:
+          spec:
+            containers:
+              - image: "*@sha256:*"
+            =(initContainers):
+              - image: "*@sha256:*"
+            =(ephemeralContainers):
+              - image: "*@sha256:*"

@@ -18,6 +18,10 @@ jobs:
       - uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
         with:
           version: v1.35.0
+      - name: Validate native image provenance policy
+        run: |
+          python3 scripts/validate-image-policy.py
+          bash scripts/validate-image-policy.test.sh
       - name: Validate service catalog
         run: python3 scripts/validate-catalog.py
       - name: Validate catalog JSON
