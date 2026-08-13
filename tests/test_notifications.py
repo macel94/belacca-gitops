@@ -61,6 +61,14 @@ class NotificationContractTests(unittest.TestCase):
         finally:
             validator.ALERTMANAGER = original
 
+    def test_success_and_recovery_alerts_exclude_dependency_not_ready_events(self) -> None:
+        text = validator.NATIVE.read_text(encoding="utf-8")
+        exclusion = "exclusionList:\n    - '.*Dependencies do not meet ready condition.*'"
+        for alert_name in ("platform-deployments", "platform-page-recovery"):
+            start = text.index(f"  name: {alert_name}\n")
+            end = text.find("\n---", start)
+            self.assertIn(exclusion, text[start:end])
+
     def test_alertmanager_restart_contract_is_safe_for_rwo_storage(self) -> None:
         validator.validate_restart_contract()
         deployment = validator.ALERTMANAGER_DEPLOYMENT.read_text(encoding="utf-8")

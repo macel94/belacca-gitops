@@ -54,6 +54,18 @@ def validate_flux_contract() -> None:
     for address in re.findall(r"(?im)^\s*address:\s*(\S+)", text):
         if not address.startswith("http://alertmanager-native.observability.svc.cluster.local:9093/"):
             fail("notification manifest contains an external endpoint")
+    for alert_name, notification_class in (
+        ("platform-deployments", "diagnostic"),
+        ("platform-page-recovery", "page-recovery"),
+    ):
+        alert = re.search(
+            rf"(?ms)^  name: {re.escape(alert_name)}$.*?(?=^---|\Z)",
+            text,
+        )
+        if not alert or f"notificationClass: {notification_class}" not in alert.group(0):
+            fail(f"notification manifest is missing the {alert_name} Alert")
+        if "exclusionList:\n    - '.*Dependencies do not meet ready condition.*'" not in alert.group(0):
+            fail(f"{alert_name} must exclude dependency-not-ready events")
 
 
 def embedded_alertmanager_config() -> str:
@@ -181,6 +193,7 @@ def validate_docs() -> None:
         "separate diagnostic/default and actionable page",
         "telegram-diagnostic",
         "telegram-page",
+        "dependencies do not meet ready condition",
         "diagnostic health-check recoveries are deliberately suppressed",
         "actionable page",
         "send_resolved",

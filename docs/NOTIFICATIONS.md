@@ -65,10 +65,13 @@ routes. See the [official Alertmanager configuration reference](https://promethe
 for the route inheritance, grouping, and Telegram integration semantics.
 
 The exact alert selection remains represented by the Flux `Alert` resources and
-Prometheus rules in the production tree. This commit changes the checked-in
-contract only; it does not claim deployment or live Telegram verification. The
-existing notification evidence predates this receiver split and must not be
-used as proof of the new behavior.
+Prometheus rules in the production tree. The diagnostic deployment lane and
+page-recovery lane explicitly exclude `Dependencies do not meet ready condition`:
+that failure text contains the word `ready` but is not a recovery. This prevents
+failed dependency retries from being mislabeled as page recoveries. This commit
+changes the checked-in contract only; it does not claim deployment or live
+Telegram verification. The existing notification evidence predates this receiver
+split and must not be used as proof of the new behavior.
 
 ## Restore or tune the policy
 
