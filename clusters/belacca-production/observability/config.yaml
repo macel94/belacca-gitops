@@ -41,7 +41,8 @@ data:
               signal: native-diagnostic
         sample_limit: 500
       # This is an ingestion boundary, not a scrape of the status Git
-      # repository. The endpoint is intentionally not deployed by this slice;
+      # repository. The status Git repository is intentionally not scraped by
+      # native Prometheus. The endpoint is intentionally not deployed by this slice;
       # an operator must provision a private, Flux-owned adapter that exposes
       # only the contract in synthetic-contracts.json. Until then this target
       # is down and all SLO series remain absent or zero-coverage.
