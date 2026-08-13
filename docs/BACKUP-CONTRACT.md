@@ -1,13 +1,17 @@
 # Native production Pong backup and restore contract
 
-This is a contract for a future operator-managed backup service for **native
-production**. Pong, GoatCounter, and Dex state has already been quiesced,
-integrity-checked, and restored into native Longhorn-backed RWO PVCs. External object storage and scheduled backups remain unprovisioned. Native
-production is the only source and recovery plane; restore rehearsals always use
-isolated copied artifacts. No bucket, CSI snapshot, CronJob, access
-credential, encryption key, or external storage endpoint is created by this
-repository. The checked-in helper does not upload backups or contact object
-storage.
+This is the contract for the native-production encrypted backup implementation.
+Pong, GoatCounter, and Dex state has already been quiesced, integrity-checked,
+and restored into native Longhorn-backed RWO PVCs. This repository now provides
+fail-closed scheduled writer and isolated restore-verification Jobs under
+`clusters/belacca-production/backup/`, plus private freshness/integrity/
+retention metrics and alerts. The approved object store, bucket, KMS key,
+credentials, and notification destination remain external prerequisites and
+are not created here. Native production is the only maintained source and
+recovery plane; rehearsals use isolated copied artifacts. The runner cannot start until
+its out-of-band automation and consistency gates are exactly `true`. The
+checked-in application helper does not upload to object storage; only the
+reviewed native backup runner performs an upload after those gates pass.
 
 **Native production is the active restore target.** It uses
 `clusters/belacca-production/`, Longhorn-backed RWO PVCs, and single-writer
@@ -30,7 +34,7 @@ live SQLite file is not a backup procedure. The existing helper uses SQLite's
 online backup API after the operator has obtained a local copy and runs
 `PRAGMA integrity_check` on the source, backup, and temporary restored database.
 
-## Native production object-storage contract (not provisioned)
+## Native production object-storage contract (external prerequisite)
 
 An approved S3-compatible object store is an external prerequisite for native
 production. The operator must provision the bucket, TLS endpoint, access
@@ -76,13 +80,18 @@ These are runtime interfaces, not Secret manifests. The names are stable so a
 future native production operator-run Job or external backup agent can consume
 them without changing application code. Secret values, URLs, bucket names, key
 IDs, and credentials must be supplied by a protected secret manager or private
-operator procedure.
+operator procedure. The canonical Pong names remain
+`pong-backup-object-store`, `pong-backup-encryption`, and
+`pong-backup-restore-object-store` for compatibility with existing operator
+procedures; analytics and Dex use the corresponding `<service>-` names below.
 
 | Namespace | Secret name | Required keys | Purpose |
 |---|---|---|---|
-| `pong` | `pong-backup-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | S3-compatible endpoint and native production write identity; values are external |
-| `pong` | `pong-backup-encryption` | `kms-key-id`, `encryption-context` | Approved KMS/SSE configuration; values are external |
-| `pong` | `pong-backup-restore-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | Separate least-privilege read identity for native production restore verification |
+| `pong`, `analytics`, `dex` | `<service>-backup-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | S3-compatible endpoint and that service's native production write identity; values are external |
+| `pong`, `analytics`, `dex` | `<service>-backup-encryption` | `kms-key-id`, `encryption-context` | Approved KMS/SSE configuration; values are external |
+| `backup-system` | `backup-restore-object-store` | `endpoint`, `bucket`, `prefix`, `region`, `access-key-id`, `secret-access-key` | Separate least-privilege read identity for native production restore verification |
+| `pong`, `analytics`, `dex` | `<service>-backup-runtime` | `automation-enabled`, `consistency-acknowledged`, `source-revision`, `image-digests` | External automation gate and evidence metadata; values are external |
+| `backup-system` | `backup-restore-runtime` | `automation-enabled`, `consistency-acknowledged` | External restore verification gate; values are external |
 
 Do not create empty placeholder Secrets: an empty Secret looks provisioned but
 cannot establish a native production backup guarantee. Before any automated job
@@ -93,7 +102,8 @@ incident tickets.
 
 ## Native production automation gate and acceptance test
 
-No CronJob is committed for native production until all of the following are true:
+CronJobs are committed in a fail-closed state; they cannot upload or verify
+anything until all of the following are true:
 
 1. The object store and lifecycle/immutability policy are provisioned and
    independently reviewed.
@@ -109,9 +119,12 @@ No CronJob is committed for native production until all of the following are tru
 destination.
 
 Until these prerequisites are met, the supported native production procedure is
-manual: copy the quiesced database to protected local storage, run
-`backup-restore.sh backup` and `verify`, and run the isolated rehearsal. This
-establishes neither off-host retention nor an automated RPO.
+manual: copy the quiesced database to protected local storage, run the
+application's `backup-restore.sh backup` and `verify`, and run the isolated
+rehearsal. The checked-in scheduled Jobs remain visibly failed/disabled rather
+than claiming an automated RPO. Use [`BACKUP-RUNBOOK.md`](BACKUP-RUNBOOK.md)
+for exact Secret interfaces, permission tests, evidence fields, and the
+GoatCounter/Dex full-application rehearsal limitation.
 
 ## Native production recovery and emergency rules
 
@@ -120,9 +133,8 @@ establishes neither off-host retention nor an automated RPO.
 - A failed native production application rollout is rolled back through the
   application image/tag commit and native Flux reconciliation; do not restore
   the live PVC in place.
-- Never delete a disposable restore target unless it is the exact target
-  created by the current rehearsal, and never run `kubectl delete pvc
-  pong-api-data` or a live `kubectl cp` into `/data/pong.db` as native
+- Never delete an unrelated disposable target, run `kubectl delete pvc
+  pong-api-data`, or use a live `kubectl cp` into `/data/pong.db` as native
   production recovery.
 - If an artifact fails integrity verification, quarantine it and use a different
   verified artifact. Do not “repair” it in a live production PVC.

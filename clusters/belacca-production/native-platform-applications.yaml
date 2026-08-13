@@ -77,6 +77,28 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: native-backup
+  namespace: flux-system
+  labels:
+    belacca.com/owner: native-root
+    belacca.com/stage: native-production
+    belacca.com/project: backup
+    belacca.com/component: recovery
+spec:
+  interval: 10m
+  path: ./clusters/belacca-production/backup
+  prune: false
+  wait: true
+  timeout: 10m
+  dependsOn:
+    - name: flux-system
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: native-policies
   namespace: flux-system
   labels:

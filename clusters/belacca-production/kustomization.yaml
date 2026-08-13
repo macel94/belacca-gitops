@@ -13,4 +13,5 @@ resources:
   - native-policy-system.yaml
   - native-applications.yaml
   - native-platform-applications.yaml
+  - backup
   - notifications.yaml

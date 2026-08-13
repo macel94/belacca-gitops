@@ -89,7 +89,7 @@
         "measurement": "External hourly journey evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists; native WebTransport is optional"
       },
       "rto": "4h",
-      "rpo": "24h target (manual verified SQLite backup; isolated restore rehearsal available; object-storage automation is not deployed)",
+      "rpo": "24h target (scheduled encrypted backup and isolated restore verification are fail-closed until external storage/identity gates and evidence are complete)",
       "dashboard": {
         "url": "https://dashboard.belacca.com/",
         "access": "OAuth2-protected Headlamp; inspect pong workloads, events, PVC, and Flux state"
@@ -145,7 +145,7 @@
         "measurement": "External hourly /status plus harmless /count evidence is published in belacca-status/slo.json; values remain not reportable until a complete valid 720-slot rolling window exists"
       },
       "rto": "4h",
-      "rpo": "24h target (manual SQLite backup; automation is not yet deployed)",
+      "rpo": "24h target (scheduled encrypted backup and isolated restore verification are fail-closed until external storage/identity gates and evidence are complete)",
       "dashboard": {
         "url": "https://stats.belacca.com/",
         "access": "Dex SSO permits belakkuz@gmail.com; GoatCounter still requires its application session cookie for dashboard features"

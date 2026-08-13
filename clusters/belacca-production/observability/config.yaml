@@ -40,7 +40,17 @@ data:
               service: flux
               signal: native-diagnostic
         sample_limit: 500
-      # This is an ingestion boundary, not a scrape of the status Git
+      - job_name: native-backup-diagnostic
+        metrics_path: /metrics
+        static_configs:
+          - targets: [backup-metrics.backup-system.svc.cluster.local:9091]
+            labels:
+              service: backup
+              signal: native-diagnostic
+        sample_limit: 100
+      # The external synthetic source and status Git repository are intentionally
+      # not scraped here. Internal metrics cannot stand in for public availability.
+      # This is also an ingestion boundary, not a scrape of the status Git
       # repository. The status Git repository is intentionally not scraped by
       # native Prometheus. The endpoint is intentionally not deployed by this slice;
       # an operator must provision a private, Flux-owned adapter that exposes
@@ -63,9 +73,6 @@ data:
           - source_labels: [outcome]
             regex: good|bad
             action: keep
-          # The adapter contract is intentionally a two-label allowlist. This
-          # drops all other labels, including any accidental high-cardinality
-          # or private fields, before they reach the TSDB.
           - regex: ^(__name__|service|outcome)$
             action: labelkeep
   prometheus.rules.yml: |
@@ -85,6 +92,44 @@ data:
             expr: pong_websockets_active
           - record: belacca:native:flux:reconciliation_failures:rate5m
             expr: sum(rate(gotk_reconcile_condition{status="False",type="Ready"}[5m]))
+      - name: belacca-native-backup-alerts
+        interval: 30s
+        rules:
+          - alert: NativeBackupStale
+            expr: time() - belacca_backup_last_success_timestamp_seconds > 93600
+            for: 15m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} backup is stale"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupIntegrityFailed
+            expr: belacca_backup_integrity_ok < 1
+            for: 5m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} backup integrity verification failed"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupDailyRetentionLow
+            expr: belacca_backup_daily_retention_count < 35
+            for: 1h
+            labels: {severity: warning, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} has fewer than 35 verified daily backups"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupMonthlyRetentionLow
+            expr: belacca_backup_monthly_retention_count < 12
+            for: 1h
+            labels: {severity: warning, notification_class: backup}
+            annotations:
+              summary: "Native {{ $labels.service }} has fewer than 12 verified monthly backups"
+              runbook: docs/BACKUP-RUNBOOK.md
+          - alert: NativeBackupUploadOrVerificationMissing
+            expr: absent(belacca_backup_last_success_timestamp_seconds)
+            for: 30m
+            labels: {severity: critical, notification_class: backup}
+            annotations:
+              summary: "Native backup metrics are absent; upload or verification may be failing"
+              runbook: docs/BACKUP-RUNBOOK.md
           - record: belacca:native:target:up
             expr: |
               max by (job, service) (
