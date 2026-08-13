@@ -22,7 +22,7 @@ REQUIRED_CONTRACT_MARKERS = (
     "bucket",
     "secret-access-key",
     "kms-key-id",
-    "native backup automation remains gated until prerequisites are verified",
+    "CronJobs are committed in a fail-closed state",
     "pong-api-data",
 )
 REQUIRED_DRILL_MARKERS = (
