@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import tempfile
@@ -59,6 +60,30 @@ class NotificationContractTests(unittest.TestCase):
                     validator.validate_alertmanager_contract()
         finally:
             validator.ALERTMANAGER = original
+
+    def test_alertmanager_restart_contract_is_safe_for_rwo_storage(self) -> None:
+        validator.validate_restart_contract()
+        deployment = validator.ALERTMANAGER_DEPLOYMENT.read_text(encoding="utf-8")
+        expected = hashlib.sha256(validator.ALERTMANAGER.read_bytes()).hexdigest()
+        self.assertIn("type: Recreate", deployment)
+        self.assertIn(f"checksum/config: {expected}", deployment)
+
+    def test_validator_rejects_stale_alertmanager_config_checksum(self) -> None:
+        original = validator.ALERTMANAGER_DEPLOYMENT
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "alertmanager-deployment.yaml"
+                text = original.read_text(encoding="utf-8")
+                text = text.replace(
+                    "checksum/config: " + hashlib.sha256(validator.ALERTMANAGER.read_bytes()).hexdigest(),
+                    "checksum/config: " + "0" * 64,
+                )
+                path.write_text(text, encoding="utf-8")
+                validator.ALERTMANAGER_DEPLOYMENT = path
+                with self.assertRaisesRegex(ValueError, "checksum"):
+                    validator.validate_restart_contract()
+        finally:
+            validator.ALERTMANAGER_DEPLOYMENT = original
 
     def test_routing_json_preserves_lane_policy(self) -> None:
         routing = json.loads(validator.ROUTING.read_text(encoding="utf-8"))

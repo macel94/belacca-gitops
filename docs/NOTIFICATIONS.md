@@ -52,6 +52,10 @@ The Alertmanager routing defaults remain:
 - critical alerts inhibit matching warnings;
 - Flux camelCase metadata and Prometheus snake_case labels are both routed;
 - Alertmanager state is retained on the dedicated 1Gi Longhorn PVC.
+- The Alertmanager Deployment uses `Recreate` because that PVC is
+  `ReadWriteOnce`; its pod template carries the SHA-256 of
+  `alertmanager-config.yaml`, so a routing change triggers a safe restart and
+  the process cannot continue using a stale in-memory configuration.
 
 This is a receiver-specific `send_resolved` policy, not a `repeat_interval`
 change. Alertmanager route settings are inherited from the root unless a child
@@ -71,7 +75,8 @@ used as proof of the new behavior.
 To restore diagnostic resolved Telegram notifications, change only the
 `send_resolved` value under `telegram-diagnostic` in
 `clusters/belacca-production/observability/alertmanager-config.yaml` to
-`true`, then run the validators and complete the verification matrix below.
+`true`, update the pod-template `checksum/config` to the new SHA-256 of that
+file, then run the validators and complete the verification matrix below.
 To change which alerts are actionable, update the explicit Flux/Prometheus
 classification and matching route together. Do not use `repeat_interval` as a
 substitute for resolved-message suppression, and do not remove the page route,
@@ -108,7 +113,9 @@ class and verify all of the following after reconciliation:
    zero, and Alertmanager readiness/configuration endpoints remain healthy.
 
 Use Alertmanager receiver-specific notification metrics and the private API to
-confirm delivery/non-delivery; do not infer Telegram behavior from a local
-configuration render or claim live verification without current evidence.
+confirm delivery/non-delivery. Confirm the live `/api/v2/status` configuration
+contains the intended receiver split after the `Recreate` rollout; do not infer
+Telegram behavior from a local configuration render or claim live verification
+without current evidence.
 Flux recovery events are delivered as normal Flux events, so their exact
 lifecycle semantics must be confirmed during the live matrix.

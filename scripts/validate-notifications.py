@@ -2,6 +2,7 @@
 """Validate the native Flux and Alertmanager notification routing contract."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -11,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NATIVE = ROOT / "clusters/belacca-production/notifications.yaml"
 ROUTING = ROOT / "clusters/belacca-production/notification-routing.json"
 ALERTMANAGER = ROOT / "clusters/belacca-production/observability/alertmanager-config.yaml"
+ALERTMANAGER_DEPLOYMENT = ROOT / "clusters/belacca-production/observability/alertmanager-deployment.yaml"
 ROOT_KUSTOMIZE = ROOT / "clusters/belacca-production/kustomization.yaml"
 DOCS = ROOT / "docs/NOTIFICATIONS.md"
 
@@ -140,6 +142,18 @@ def validate_alertmanager_contract() -> None:
         fail("Alertmanager inhibition contract changed unexpectedly")
 
 
+def validate_restart_contract() -> None:
+    deployment = ALERTMANAGER_DEPLOYMENT.read_text(encoding="utf-8")
+    if not re.search(r"(?m)^  strategy:\n    type: Recreate\s*$", deployment):
+        fail("Alertmanager must use Recreate for its ReadWriteOnce data PVC")
+    expected_checksum = hashlib.sha256(ALERTMANAGER.read_bytes()).hexdigest()
+    match = re.search(r"(?m)^        checksum/config: ([0-9a-f]{64})\s*$", deployment)
+    if not match:
+        fail("Alertmanager pod template must contain a SHA-256 config checksum")
+    if match.group(1) != expected_checksum:
+        fail("Alertmanager pod template config checksum is stale")
+
+
 def validate_json_consistency() -> None:
     routing = json.loads(ROUTING.read_text(encoding="utf-8"))
     lanes = {lane.get("name"): lane for lane in routing.get("lanes", [])}
@@ -170,6 +184,8 @@ def validate_docs() -> None:
         "diagnostic health-check recoveries are deliberately suppressed",
         "actionable page",
         "send_resolved",
+        "recreate",
+        "checksum/config",
         "restore or tune",
         "verification",
         "out of band",
@@ -183,6 +199,7 @@ def main() -> int:
     try:
         validate_flux_contract()
         validate_alertmanager_contract()
+        validate_restart_contract()
         validate_json_consistency()
         validate_docs()
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:

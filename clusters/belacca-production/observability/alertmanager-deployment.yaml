@@ -10,12 +10,16 @@ metadata:
     app.kubernetes.io/name: alertmanager
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: alertmanager
       belacca.com/stage: native-production
   template:
     metadata:
+      annotations:
+        checksum/config: 5eb90394e36f5d63d41442b53895e3916ab48830ff00a0bb76165fdfb69464f9
       labels:
         app.kubernetes.io/name: alertmanager
         belacca.com/stage: native-production
