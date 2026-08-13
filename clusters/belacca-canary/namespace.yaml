@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+    belacca.com/target: disposable
+    belacca.com/native-production-access: denied
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    belacca.com/safety-contract: releases/release-policy.json
+    belacca.com/lifecycle: disposable
+    belacca.com/cleanup: delete-only-after-reviewed-release-evidence

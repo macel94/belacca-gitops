@@ -1,0 +1,40 @@
+{
+  "apiVersion": "belacca.com/v1alpha1",
+  "kind": "EdgeFailoverEvidence",
+  "environment": "native-production",
+  "status": "pending-live-drill",
+  "contract": "clusters/belacca-production/edge/failover-contract.json",
+  "providerVip": null,
+  "observedAtUtc": null,
+  "operator": null,
+  "scenarios": {
+    "one-edge-failure": {
+      "status": "not-run",
+      "failureInjected": false,
+      "measurements": {
+        "failureToWithdrawSeconds": null,
+        "recoveryToReaddSeconds": null,
+        "clientConvergenceObservationSeconds": null
+      },
+      "portsChecked": [],
+      "notes": "Requires authorized provider-LB and node access; do not infer from DNS or a single curl."
+    },
+    "one-control-plane-failure": {
+      "status": "not-run",
+      "failureInjected": false,
+      "measurements": {
+        "failureToWithdrawSeconds": null,
+        "recoveryToReaddSeconds": null,
+        "clientConvergenceObservationSeconds": null,
+        "kubeconfigApiAvailabilityDuringFailure": null
+      },
+      "portsChecked": [],
+      "notes": "Requires an approved control-plane failure drill and must preserve etcd quorum."
+    }
+  },
+  "limitations": [
+    "No provider VIP has been provisioned in this repository-only change.",
+    "No production firewall, DNS, TLS SAN, kubeconfig, or backend state was changed.",
+    "No failure or recovery measurement is valid until an authorized operator records raw timestamps and redacted probe results."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "version": "native-production-v1",
+  "enforcementPoint": "Kyverno validating admission webhook, installed and reconciled by Flux before native workloads",
+  "productionNamespaces": ["pong", "portfolio", "analytics", "cert-manager", "dex", "flux-system", "headlamp", "kube-system", "longhorn-system", "observability"],
+  "firstPartyImages": {
+    "cloudnativepong": {
+      "repositoryPrefix": "ghcr.io/macel94/cloudnativepong-",
+      "repository": "macel94/cloudnativepong",
+      "workflow": ".github/workflows/publish-images.yml",
+      "subjectPrefix": "https://github.com/macel94/cloudnativepong/"
+    },
+    "portfolio": {
+      "repositoryPrefix": "ghcr.io/macel94/francesco-belacca-site",
+      "repository": "macel94/francesco-belacca-site",
+      "workflow": ".github/workflows/test-and-publish.yml",
+      "subjectPrefix": "https://github.com/macel94/francesco-belacca-site/"
+    }
+  },
+  "attestations": {
+    "provenancePredicate": "https://slsa.dev/provenance/v1",
+    "sbomPredicate": "https://cyclonedx.org/bom",
+    "vulnerabilityPredicate": "https://belacca.com/attestations/vulnerability/v1",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "transparencyLog": "https://rekor.sigstore.dev"
+  },
+  "vulnerabilities": {
+    "maxAllowedSeverity": "MEDIUM",
+    "blockFixed": ["HIGH", "CRITICAL"],
+    "blockKnownUnfixed": true,
+    "requiredAttestationPolicy": "native-production-v1"
+  },
+  "exceptions": {
+    "active": [],
+    "requiredFields": ["owner", "rationale", "scope", "expires"]
+  },
+  "disposableCiImages": {
+    "allowedIn": ["CI-only disposable clusters", "local test overlays"],
+    "forbiddenIn": ["native production namespaces", "native production Flux sources"],
+    "examples": ["cloudnativepong-*:latest", "*:supply-chain", "*:test"]
+  }
+}

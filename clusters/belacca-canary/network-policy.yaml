@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: canary-default-deny
+  namespace: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: canary-dns-egress
+  namespace: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: canary-check-runner-ingress
+  namespace: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  podSelector:
+    matchLabels:
+      belacca.com/release-component: check-runner
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: belacca-canary
+      ports:
+        - protocol: TCP
+          port: 8080

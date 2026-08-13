@@ -18,14 +18,20 @@ jobs:
       - uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
         with:
           version: v1.35.0
+      - name: Validate native image provenance policy
+        run: |
+          python3 scripts/validate-image-policy.py
+          bash scripts/validate-image-policy.test.sh
       - name: Validate service catalog
         run: python3 scripts/validate-catalog.py
       - name: Validate catalog JSON
         run: python3 -m json.tool catalog/services.json >/tmp/services.pretty.json
       - name: Validate recovery contract and drills
         run: python3 scripts/validate-recovery-contract.py
-      - name: Validate encrypted backup implementation
-        run: python3 scripts/validate-backup.py
+      - name: Validate API and public-edge failover contract
+        run: python3 scripts/validate-edge-failover.py
+      - name: Test API and public-edge failover contract
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Validate notification contracts
         run: python3 scripts/validate-notifications.py
       - name: Validate observability contracts

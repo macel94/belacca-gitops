@@ -1,0 +1,214 @@
+{
+  "$schema": "https://francesco.belacca.com/native-drill-evidence.schema.json",
+  "schema_version": "belacca.native-drill-evidence.v1",
+  "environment": "native-production",
+  "issue": "https://github.com/macel94/belacca-gitops/issues/10",
+  "availability_boundary": {
+    "slo": "99% availability over 30d; this is not an SLA",
+    "drill_results_included_in_availability": false,
+    "external_slo_source": "https://github.com/macel94/belacca-status",
+    "statement": "Recovery drills are a separate operational objective and never become availability slots or error-budget events."
+  },
+  "objective": {
+    "metric": "recovery_seconds",
+    "start_event": "fault_injection_confirmed_at",
+    "stop_event": "recovery_verified_at",
+    "target_seconds_exclusive": 360,
+    "statistic": "p95",
+    "minimum_comparable_measurements": 3,
+    "p95_method": "nearest-rank: sort durations and select rank ceil(0.95 * n)"
+  },
+  "required_checks": [
+    "public_health",
+    "pong_api_crud",
+    "pong_two_player_journey",
+    "pong_cleanup",
+    "flux_ready",
+    "storage_health"
+  ],
+  "approved_evidence_hosts": [
+    "github.com",
+    "raw.githubusercontent.com",
+    "francesco.belacca.com"
+  ],
+  "measurements": [
+    {
+      "id": "public-edge-01",
+      "scenario": "public-edge",
+      "target": {
+        "node": "belacca-k3s-02",
+        "address": "169.58.143.41",
+        "pinned_api_endpoint": "https://169.58.143.42:6443",
+        "infrastructure_scenario": "edge-storage-02"
+      },
+      "owner": "platform SRE lead",
+      "mutation_owner": "approved infrastructure operator",
+      "observer": "assigned at approval",
+      "approval": {
+        "status": "pending",
+        "reference": null,
+        "approved_by": null,
+        "window_start": null,
+        "window_end": null
+      },
+      "abort_threshold": {
+        "recovery_timeout_seconds": 360,
+        "conditions": [
+          "second native server NotReady or pinned API/etcd readiness fails",
+          "surviving public edge fails required checks",
+          "Longhorn volume becomes degraded, faulted, or unknown",
+          "unexpected sustained user impact exceeds the approved change budget",
+          "target does not recover before the approved timeout"
+        ]
+      },
+      "rollback": "Infrastructure operator follows the approved belacca-infrastructure native failure procedure, restores service, and uncordons only after verification; platform owner may use the exact-record manual DNS fallback.",
+      "status": "not_executed",
+      "mutation_executed": false,
+      "timings": {
+        "fault_injection_confirmed_at": null,
+        "recovery_verified_at": null,
+        "recovery_seconds": null
+      },
+      "baseline": null,
+      "recovery": null,
+      "verification": {
+        "public_health": null,
+        "pong_api_crud": null,
+        "pong_two_player_journey": null,
+        "pong_cleanup": null,
+        "flux_ready": null,
+        "storage_health": null
+      },
+      "dns_fallback": {
+        "used": false,
+        "record_reference": null,
+        "restored_at": null
+      },
+      "infrastructure_report": null,
+      "evidence_references": [],
+      "postmortem_reference": null,
+      "notes": "Not executed in this repository-only worktree; production approval, credentials, and live evidence are unavailable."
+    },
+    {
+      "id": "control-plane-01",
+      "scenario": "control-plane",
+      "target": {
+        "node": "belacca-k3s-01",
+        "address": "169.58.97.73",
+        "pinned_api_endpoint": "https://169.58.143.41:6443",
+        "infrastructure_scenario": "control-plane-01"
+      },
+      "owner": "platform SRE lead",
+      "mutation_owner": "approved infrastructure operator",
+      "observer": "assigned at approval",
+      "approval": {
+        "status": "pending",
+        "reference": null,
+        "approved_by": null,
+        "window_start": null,
+        "window_end": null
+      },
+      "abort_threshold": {
+        "recovery_timeout_seconds": 360,
+        "conditions": [
+          "surviving pinned API or etcd readiness fails",
+          "a second native server becomes NotReady",
+          "target does not recover before the approved timeout",
+          "Flux, required pods, or user-facing checks do not converge"
+        ]
+      },
+      "rollback": "Infrastructure operator stops the drill and follows the approved belacca-infrastructure recovery procedure; no cluster recreation, GitOps mutation, or live PVC restore is permitted.",
+      "status": "not_executed",
+      "mutation_executed": false,
+      "timings": {
+        "fault_injection_confirmed_at": null,
+        "recovery_verified_at": null,
+        "recovery_seconds": null
+      },
+      "baseline": null,
+      "recovery": null,
+      "verification": {
+        "public_health": null,
+        "pong_api_crud": null,
+        "pong_two_player_journey": null,
+        "pong_cleanup": null,
+        "flux_ready": null,
+        "storage_health": null
+      },
+      "dns_fallback": {
+        "used": false,
+        "record_reference": null,
+        "restored_at": null
+      },
+      "infrastructure_report": null,
+      "evidence_references": [],
+      "postmortem_reference": null,
+      "notes": "Not executed in this repository-only worktree; production approval, credentials, and live evidence are unavailable."
+    },
+    {
+      "id": "longhorn-node-01",
+      "scenario": "longhorn-node-degradation",
+      "target": {
+        "node": "belacca-k3s-03",
+        "address": "169.58.143.42",
+        "pinned_api_endpoint": "https://169.58.143.41:6443",
+        "infrastructure_scenario": "edge-storage-03"
+      },
+      "owner": "platform SRE lead",
+      "mutation_owner": "approved infrastructure operator",
+      "observer": "assigned at approval",
+      "approval": {
+        "status": "pending",
+        "reference": null,
+        "approved_by": null,
+        "window_start": null,
+        "window_end": null
+      },
+      "abort_threshold": {
+        "recovery_timeout_seconds": 360,
+        "conditions": [
+          "any protected Longhorn volume is degraded, faulted, or unknown",
+          "three-replica placement or survivor capacity contract cannot be maintained",
+          "a second native server fails or the pinned API becomes unavailable",
+          "live SQLite PVC is touched or a second writer is observed",
+          "target does not recover before the approved timeout"
+        ]
+      },
+      "rollback": "Infrastructure operator restores the node using the approved belacca-infrastructure procedure and waits for Longhorn convergence; protected PVCs, replica protection, and SQLite files are never deleted or edited.",
+      "status": "not_executed",
+      "mutation_executed": false,
+      "timings": {
+        "fault_injection_confirmed_at": null,
+        "recovery_verified_at": null,
+        "recovery_seconds": null
+      },
+      "baseline": null,
+      "recovery": null,
+      "verification": {
+        "public_health": null,
+        "pong_api_crud": null,
+        "pong_two_player_journey": null,
+        "pong_cleanup": null,
+        "flux_ready": null,
+        "storage_health": null
+      },
+      "dns_fallback": {
+        "used": false,
+        "record_reference": null,
+        "restored_at": null
+      },
+      "infrastructure_report": null,
+      "evidence_references": [],
+      "postmortem_reference": null,
+      "notes": "Not executed in this repository-only worktree; production approval, credentials, and live evidence are unavailable."
+    }
+  ],
+  "summary": {
+    "comparable_measurements": 0,
+    "durations_seconds": [],
+    "p95_seconds": null,
+    "p95_status": "not_available",
+    "acceptance_status": "pending",
+    "limitation": "No production drill was executed from this worktree. Obtain approval, clear infrastructure blockers, execute each scenario one at a time, attach sanitized evidence, and rerun the validator before claiming the recovery objective."
+  }
+}

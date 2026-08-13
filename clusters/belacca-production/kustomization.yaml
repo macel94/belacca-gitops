@@ -4,11 +4,13 @@ resources:
   - flux-system
   - secrets
   - longhorn
+  - policy-system
   - edge
   - cert-manager
   - tls
   - routing
   - native-sources.yaml
+  - native-policy-system.yaml
   - native-applications.yaml
   - native-platform-applications.yaml
   - backup

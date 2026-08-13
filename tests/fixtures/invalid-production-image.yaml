@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invalid-first-party-image
+  namespace: pong
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/macel94/cloudnativepong-api:latest
