@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: disposable-canary
+  namespace: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  hard:
+    pods: "20"
+    services: "10"
+    configmaps: "20"
+    secrets: "0"
+    persistentvolumeclaims: "0"
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: disposable-canary-defaults
+  namespace: belacca-canary
+  labels:
+    belacca.com/release-stage: canary
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        cpu: 500m
+        memory: 512Mi
