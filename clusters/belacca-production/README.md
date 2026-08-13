@@ -42,7 +42,11 @@ direct and public probes succeed on all three native edges (`.73`, `.41`, and
 `.42`). A private native
 Prometheus diagnostic child and Flux notification contract are now committed,
 but external backup retention, authenticated browser completion, notification
-destination provisioning, and one-node failure drills remain hardening items.
+destination provisioning, and live one-node failure measurements remain
+hardening items. The approved native drill contract and pending evidence ledger
+are in [`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md)
+and [`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
+node mutation remains owned by the infrastructure repository.
 The public 99%/30d SLO is measured by the external status repository, not by
 native Prometheus, and is not yet reportable until its complete window exists.
 
@@ -58,7 +62,7 @@ clusters/belacca-production/
 ├── flux-system/  Flux controllers and native root bootstrap
 ├── secrets/      SOPS/age-encrypted interfaces and target namespaces
 ├── longhorn/     native storage foundation; not yet an application migration
-├── edge/         Flux-managed Traefik and API/public-edge failover contract
+├── edge/         Flux-managed Traefik
 ├── cert-manager/ cert-manager controller and CRDs
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
 ├── routing/      native portfolio and Pong Traefik routes
@@ -73,13 +77,6 @@ Kustomizations described above, plus cert-manager DNS-01 resources in `tls/`
 and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
 DNS is managed out of band at Cloudflare; additional hostnames or services
 require a separate reviewed change.
-
-The selected health-aware design for `k3s-api.belacca.com` and public ingress
-is the provider-managed L4 contract in `edge/failover-contract.json`, with the
-operator procedure in [`../../docs/EDGE-FAILOVER.md`](../../docs/EDGE-FAILOVER.md).
-The contract is selected but not provisioned: no VIP, firewall mutation, DNS
-cutover, or live failure evidence is claimed by this repository-only change.
-Until the evidence gates pass, use the documented manual DNS-removal fallback.
 
 ## Safe inspection and render checks
 
@@ -101,10 +98,10 @@ post-cutover hardening and manual DNS-removal procedures instead.
 
 Native cutover is complete. Remaining operator work is:
 
-1. provision and live-validate the selected health-aware API/ingress VIP under
-   [`../../docs/EDGE-FAILOVER.md`](../../docs/EDGE-FAILOVER.md);
+1. select a health-aware API/ingress VIP or load balancer instead of direct
+   DNS round-robin;
 2. configure encrypted external backups and complete an isolated restore
    rehearsal;
-3. complete authenticated browser journeys and the remaining one-node drill;
-   and
+3. complete authenticated browser journeys and the approved one-node failure
+   drills, then publish three comparable measurements; and
 4. review the native Traefik UID 0 low-port-binding exception.
