@@ -151,7 +151,7 @@ For each `pong`, `goatcounter`, and `dex`:
 For Pong, the existing application checkout's
 `cloudnativepong/scripts/restore-rehearsal.sh` remains the supported full
 application rehearsal. It requires an explicitly acknowledged `pong-restore-*`
-cluster and a downloaded verified copy; it refuses `pong` and `k3d-pong`.
+cluster and a downloaded verified copy; it refuses native production and `pong`.
 GoatCounter and Dex full application rehearsals require their owning application
 images/configuration in an isolated target; the checked-in verifier proves the
 artifact restore but cannot claim a production application rehearsal without

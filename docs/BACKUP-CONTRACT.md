@@ -7,8 +7,8 @@ fail-closed scheduled writer and isolated restore-verification Jobs under
 `clusters/belacca-production/backup/`, plus private freshness/integrity/
 retention metrics and alerts. The approved object store, bucket, KMS key,
 credentials, and notification destination remain external prerequisites and
-are not created here. The former `k3d-pong` runtime and local volumes are
-retired historical sources, not recovery targets. The runner cannot start until
+are not created here. Native production is the only maintained source and
+recovery plane; rehearsals use isolated copied artifacts. The runner cannot start until
 its out-of-band automation and consistency gates are exactly `true`. The
 checked-in application helper does not upload to object storage; only the
 reviewed native backup runner performs an upload after those gates pass.
@@ -133,9 +133,9 @@ GoatCounter/Dex full-application rehearsal limitation.
 - A failed native production application rollout is rolled back through the
   application image/tag commit and native Flux reconciliation; do not restore
   the live PVC in place.
-- Never run `k3d cluster delete pong`, `k3d cluster delete k3d-pong`,
-  `kubectl delete pvc pong-api-data`, or a live `kubectl cp` into
-  `/data/pong.db` as native production recovery.
+- Never delete an unrelated disposable target, run `kubectl delete pvc
+  pong-api-data`, or use a live `kubectl cp` into `/data/pong.db` as native
+  production recovery.
 - If an artifact fails integrity verification, quarantine it and use a different
   verified artifact. Do not “repair” it in a live production PVC.
 - Do not use a live native `.41`/`.42` workload as a restore target; use an

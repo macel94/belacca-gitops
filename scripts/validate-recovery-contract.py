@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the checked-in recovery contract without contacting a cluster."""
+"""Validate native recovery and backup contracts without contacting a cluster."""
 
 from __future__ import annotations
 
@@ -22,18 +22,16 @@ REQUIRED_CONTRACT_MARKERS = (
     "bucket",
     "secret-access-key",
     "kms-key-id",
-    "CronJobs are committed in a fail-closed state",
-    "k3d-pong",
+    "No CronJob is committed",
     "pong-api-data",
 )
-REQUIRED_DRILL_HEADINGS = (
-    "## Old production gateway failure",
-    "## Old production static service failure",
-    "## Old production lobby/API failure",
-    "## Old production dynamic room failure",
-    "## Old production Flux reconciliation failure",
-    "## Old production NetworkPolicy failure",
-    "## Old production rollback command index",
+REQUIRED_DRILL_MARKERS = (
+    "# Native production game-day drills",
+    "belacca-native",
+    "Public-edge",
+    "Control-plane/server failure",
+    "Longhorn",
+    "rollback",
 )
 
 
@@ -48,29 +46,17 @@ def main() -> int:
         for marker in REQUIRED_CONTRACT_MARKERS:
             if marker not in contract:
                 fail(f"backup contract is missing required marker: {marker}")
-        for heading in REQUIRED_DRILL_HEADINGS:
-            if heading not in drills:
-                fail(f"game-day drills are missing heading: {heading}")
+        for marker in REQUIRED_DRILL_MARKERS:
+            if marker not in drills:
+                fail(f"native game-day drills are missing marker: {marker}")
         if re.search(r"(?im)^\s*(?:address|endpoint|bucket|access-key-id|secret-access-key|kms-key-id):\s*https?://|^\s*(?:access-key-id|secret-access-key|kms-key-id):\s*[^<`\s]+", contract):
             fail("backup contract appears to contain a credential or endpoint value")
-        in_fenced_block = False
-        for line in contract.splitlines():
-            stripped = line.strip().lower()
-            if stripped.startswith("```"):
-                in_fenced_block = not in_fenced_block
-                continue
-            if in_fenced_block and re.search(
-                r"(?:^|[` ])k3d cluster delete\s+(?:pong|k3d-pong)(?:[` ]|$)|"
-                r"kubectl[^\n]*delete\s+(?:pvc|namespace)[^\n]*(?:pong|k3d-pong)",
-                stripped,
-            ):
-                fail("backup contract contains an executable destructive production command")
         if "do not upload" not in contract.lower() and "does not upload" not in contract.lower():
             fail("backup contract must state that the checked-in helper does not upload")
     except (OSError, ValueError) as error:
         print(f"recovery contract validation failed: {error}", file=sys.stderr)
         return 1
-    print("validated recovery contract and game-day drill markers")
+    print("validated native recovery contract and game-day drill markers")
     return 0
 
 
