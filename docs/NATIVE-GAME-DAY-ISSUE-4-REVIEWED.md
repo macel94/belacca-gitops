@@ -11,7 +11,7 @@
 
 ## Summary
 
-The former game-day document only described retired `k3d-pong`. This change
+The previous game-day document did not cover native production. This change
 ports the six requested drill contracts to native production and adds explicit
 fail-closed checks for the native context and protected PVC names. It also
 provides a machine-readable evidence record with detection, acknowledgement,
