@@ -8,11 +8,20 @@ k3s and does not depend on a separate deployment controller.
 
 ## Contract
 
-A Pod entering native production (`pong`, `portfolio`, or `analytics`) must use
-an image reference containing a complete `@sha256:<64 hex characters>` digest.
-A tag alone, including `latest`, `sha-*`, or a semver tag, is not an immutable
-production reference. Kyverno does not mutate tags (`mutateDigest: false`), so
-an operator cannot accidentally turn a mutable promotion into an approved one.
+A Pod entering a first-party application namespace (`pong`, `portfolio`, or
+`analytics`) must use an image reference containing a complete
+`@sha256:<64 hex characters>` digest. A tag alone, including `latest`, `sha-*`,
+or a semver tag, is not an immutable application reference. Kyverno does not
+mutate tags (`mutateDigest: false`), so an operator cannot accidentally turn a
+mutable promotion into an approved one.
+
+The generic digest rule intentionally does not match vendor/platform namespaces
+such as `longhorn-system`, `kube-system`, `cert-manager`, `dex`, `flux-system`,
+`headlamp`, or `observability`. Those components are governed by their reviewed
+Flux Helm/chart contracts; their generated vendor hooks do not necessarily
+expose a digest-pinning value. First-party application images remain covered by
+this digest rule and by the separate provenance, SBOM, and vulnerability
+attestation policies.
 
 First-party images are limited to these repository prefixes:
 
@@ -41,8 +50,9 @@ A Trivy report with `exit-code: 0` is also not an authorization. Publishers must
 make the vulnerability decision explicit and sign it for the exact image digest.
 
 The machine-readable copy of this contract is
-[`policy/image-policy.json`](../policy/image-policy.json), and the policy
-manifests are under [`clusters/belacca-production/policies/`](../clusters/belacca-production/policies/).
+[`policy/image-policy.json`](../policy/image-policy.json), including the
+explicit `digestEnforcedNamespaces` scope, and the policy manifests are under
+[`clusters/belacca-production/policies/`](../clusters/belacca-production/policies/).
 
 ## Vulnerability treatment
 
@@ -107,7 +117,8 @@ kubectl kustomize clusters/belacca-production >/tmp/native-production.yaml
 ```
 
 The negative test feeds a mutable first-party `:latest` image to the validator
-and requires rejection. This worktree has no production kubeconfig, registry
+and requires rejection. It does not treat reviewed vendor chart images as
+first-party Belacca release artifacts. This worktree has no production kubeconfig, registry
 credentials, or live Kyverno endpoint, so it cannot claim a live admission
 attempt. Before rollout, an operator must reconcile `native-policy-system`,
 confirm Kyverno admission and webhook health, reconcile `native-image-policy`,

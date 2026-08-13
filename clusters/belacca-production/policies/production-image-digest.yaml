@@ -27,13 +27,6 @@ spec:
                 - pong
                 - portfolio
                 - analytics
-                - cert-manager
-                - dex
-                - flux-system
-                - headlamp
-                - kube-system
-                - longhorn-system
-                - observability
       validate:
         failureAction: Enforce
         message: Native production Pods must use an image reference containing an immutable sha256 digest.

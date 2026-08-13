@@ -47,6 +47,7 @@ def load_json(path: Path) -> dict:
 def validate_contract(contract: dict) -> None:
     require(contract.get("version") == "native-production-v1", "contract version is not native-production-v1")
     require(contract.get("enforcementPoint", "").startswith("Kyverno"), "enforcement point must be Kyverno")
+    require(contract.get("digestEnforcedNamespaces") == ["pong", "portfolio", "analytics"], "digest scope must cover only first-party application namespaces")
     vulnerabilities = contract.get("vulnerabilities", {})
     require(vulnerabilities.get("maxAllowedSeverity") == "MEDIUM", "maximum allowed severity must be MEDIUM")
     require(vulnerabilities.get("blockKnownUnfixed") is True, "known-unfixed findings must block")
@@ -82,7 +83,12 @@ def validate_policies(contract: dict) -> None:
         require(needle in text, f"policy set is missing {needle}")
     for prefix in FIRST_PARTY:
         require(prefix in text, f"policy set does not match first-party prefix {prefix}")
-    require("@sha256:" in (POLICIES / "production-image-digest.yaml").read_text(), "digest policy does not require sha256")
+    digest_policy = (POLICIES / "production-image-digest.yaml").read_text()
+    require("@sha256:" in digest_policy, "digest policy does not require sha256")
+    for namespace in contract["digestEnforcedNamespaces"]:
+        require(f"                - {namespace}" in digest_policy, f"digest policy does not cover {namespace}")
+    for namespace in ("cert-manager", "dex", "flux-system", "headlamp", "kube-system", "longhorn-system", "observability"):
+        require(f"                - {namespace}" not in digest_policy, f"digest policy unexpectedly covers vendor namespace {namespace}")
 
 
 def validate_native_dependencies() -> None:

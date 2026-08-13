@@ -2,6 +2,7 @@
   "version": "native-production-v1",
   "enforcementPoint": "Kyverno validating admission webhook, installed and reconciled by Flux before native workloads",
   "productionNamespaces": ["pong", "portfolio", "analytics", "cert-manager", "dex", "flux-system", "headlamp", "kube-system", "longhorn-system", "observability"],
+  "digestEnforcedNamespaces": ["pong", "portfolio", "analytics"],
   "firstPartyImages": {
     "cloudnativepong": {
       "repositoryPrefix": "ghcr.io/macel94/cloudnativepong-",
