@@ -4,7 +4,7 @@
 
 This runbook applies only to native production:
 `clusters/belacca-production/`, cluster identity `belacca-native`. The tree at
-`clusters/vmi3474918/` is retired old production and is not a monitoring target.
+Only `clusters/belacca-production/` is a maintained production monitoring target.
 Flux owns the native child `native-observability`; it is private, diagnostic,
 and intentionally has `prune: false` until the live resource and CNI checks are
 completed.
