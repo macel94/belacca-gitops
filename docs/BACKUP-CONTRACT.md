@@ -5,13 +5,16 @@ Pong, GoatCounter, and Dex state has already been quiesced, integrity-checked,
 and restored into native Longhorn-backed RWO PVCs. This repository now provides
 fail-closed scheduled writer and isolated restore-verification Jobs under
 `clusters/belacca-production/backup/`, plus private freshness/integrity/
-retention metrics and alerts. The approved object store, bucket, KMS key,
-credentials, and notification destination remain external prerequisites and
-are not created here. Native production is the only maintained source and
-recovery plane; rehearsals use isolated copied artifacts. The runner cannot start until
-its out-of-band automation and consistency gates are exactly `true`. The
-checked-in application helper does not upload to object storage; only the
-reviewed native backup runner performs an upload after those gates pass.
+retention metrics and alerts. The approved AWS S3 destination, access identities,
+SSE-KMS configuration, and monthly spend guard were provisioned out of band on
+2026-08-14 and are recorded in sanitized
+[`docs/evidence/aws-native-backup-20260814.json`](evidence/aws-native-backup-20260814.json).
+Runtime Secret values remain external and are not created or committed here.
+Native production is the only maintained source and recovery plane; rehearsals
+use isolated copied artifacts. The runner cannot start until its out-of-band
+automation and consistency gates are exactly `true`. The checked-in application
+helper does not upload to object storage; only the reviewed native backup runner
+performs an upload after those gates pass.
 
 **Native production is the active restore target.** It uses
 `clusters/belacca-production/`, Longhorn-backed RWO PVCs, and single-writer
@@ -34,12 +37,14 @@ live SQLite file is not a backup procedure. The existing helper uses SQLite's
 online backup API after the operator has obtained a local copy and runs
 `PRAGMA integrity_check` on the source, backup, and temporary restored database.
 
-## Native production object-storage contract (external prerequisite)
+## Native production object-storage contract (provisioned out of band; automation gated)
 
-An approved S3-compatible object store is an external prerequisite for native
-production. The operator must provision the bucket, TLS endpoint, access
-policy, and lifecycle policy out of band. GitOps must not create a bucket,
-guess a provider, upload a backup, or put credentials in this repository.
+The approved destination is Amazon S3 Standard in `eu-central-1`. The bucket,
+Object Lock, versioning, lifecycle, access policy, identities, and TLS-only
+endpoint were provisioned out of band. GitOps must not create a bucket, guess a
+provider, upload a backup, or put credentials in this repository. The current
+provider state is proven by sanitized synthetic acceptance evidence; this does
+not yet claim that a live production backup has been completed.
 
 Required provider behavior:
 
@@ -62,13 +67,16 @@ Required provider behavior:
   source Git/Flux revision, deployed image digests, and operator/runbook
   reference. Do not put player names, tokens, or request logs in the artifact.
 
-## Native production encryption contract (not provisioned)
+## Native production encryption contract (provisioned; administration external)
 
 - TLS protects the upload and download path.
-- Objects are encrypted at rest with the provider's approved KMS/SSE mechanism;
-  the key is customer-managed where the selected provider supports it.
-- The key policy separates routine backup writes from restore reads and key
-  administration. Key rotation and revocation are operator responsibilities.
+- Objects are encrypted at rest with SSE-KMS using the AWS-managed S3 key and S3
+  Bucket Keys. A customer-managed key was deliberately not added initially to
+  avoid the fixed monthly CMK cost identified in issue #13.
+- The three writer identities can generate data keys only for their service
+  prefixes; the separate restore identity can decrypt objects for verification.
+  Human/provider administration remains separate. Key policy, rotation, and
+  revocation are provider/operator responsibilities.
 - Restore access must decrypt only into a disposable target. Plaintext database
   files must use protected local storage and be removed after the rehearsal.
 - A successful `integrity_check` is not proof that encryption, retention, or
@@ -94,11 +102,11 @@ procedures; analytics and Dex use the corresponding `<service>-` names below.
 | `backup-system` | `backup-restore-runtime` | `automation-enabled`, `consistency-acknowledged` | External restore verification gate; values are external |
 
 Do not create empty placeholder Secrets: an empty Secret looks provisioned but
-cannot establish a native production backup guarantee. Before any automated job
-is introduced, validate that the external values exist, the endpoint is
-approved, the bucket policy and KMS policy are tested, and the operator can
-retrieve the values without exposing them in shell history, CI logs, Git, or
-incident tickets.
+cannot establish a native production backup guarantee. The live Secret
+interfaces are now populated out of band with the provisioned identities, but
+all runtime gates remain `false`. Before enabling any automated job, validate
+that the approved quiesced source procedure is available and retrieve values
+without exposing them in shell history, CI logs, Git, or incident tickets.
 
 ## Native production automation gate and acceptance test
 
@@ -118,9 +126,9 @@ anything until all of the following are true:
    retention-policy drift has an acknowledged native production operator
 destination.
 
-Until these prerequisites are met, the supported native production procedure is
-manual: copy the quiesced database to protected local storage, run the
-application's `backup-restore.sh backup` and `verify`, and run the isolated
+Until the remaining gates and evidence are met, the supported native production
+procedure is manual: copy the quiesced database to protected local storage, run
+the application's `backup-restore.sh backup` and `verify`, and run the isolated
 rehearsal. The checked-in scheduled Jobs remain visibly failed/disabled rather
 than claiming an automated RPO. Use [`BACKUP-RUNBOOK.md`](BACKUP-RUNBOOK.md)
 for exact Secret interfaces, permission tests, evidence fields, and the

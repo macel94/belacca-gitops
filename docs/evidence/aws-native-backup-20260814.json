@@ -1,0 +1,91 @@
+{
+  "schema_version": "belacca.backup.provisioning-evidence.v1",
+  "sanitized": true,
+  "publication_state": "provisioned_synthetic_acceptance",
+  "observed_at_utc": "2026-08-14T12:11:35Z",
+  "provider": "aws",
+  "region": "eu-central-1",
+  "storage_class": "STANDARD",
+  "bucket_identifier": "operator-managed-secret",
+  "capacity_target_gib": 10,
+  "object_lock": {
+    "enabled": true,
+    "mode": "COMPLIANCE",
+    "default_retention_days": 400
+  },
+  "versioning": "Enabled",
+  "public_access_block": true,
+  "anonymous_access": "blocked",
+  "tls_only": true,
+  "default_encryption": {
+    "algorithm": "SSE-KMS",
+    "key_management": "AWS-managed S3 key",
+    "bucket_key": true,
+    "key_identifier": "operator-managed-secret"
+  },
+  "lifecycle": {
+    "current_version_expiration_days": 401,
+    "noncurrent_version_expiration_days": 401,
+    "abort_incomplete_multipart_upload_days": 7,
+    "daily_retention_target": 35,
+    "monthly_retention_target": 12
+  },
+  "identities": {
+    "writer_identities": 3,
+    "restore_identities": 1,
+    "administrator_path": "separate human/provider-admin path",
+    "writer_permissions": ["ListBucket on service prefix", "PutObject on service prefix", "AbortMultipartUpload on service prefix", "KMS GenerateDataKey"],
+    "restore_permissions": ["ListBucket on backup prefix", "GetObject on backup prefix", "KMS Decrypt"],
+    "routine_delete_permission": false,
+    "routine_bucket_administration_permission": false
+  },
+  "budget_guard": {
+    "name": "operator-managed monthly spend guard",
+    "limit": 8,
+    "currency": "USD",
+    "intended_eur_ceiling": 10,
+    "scope": "account-wide monthly cost",
+    "actual_spend_at_observation": 0,
+    "alerts": ["actual 50%", "actual 80%", "actual 100%", "forecast 80%"],
+    "hard_stop": false,
+    "caveat": "AWS Budgets is alerting and can lag billing; USD 8 leaves exchange-rate headroom under EUR 10, but root credentials can bypass IAM controls."
+  },
+  "synthetic_acceptance": {
+    "production_data_uploaded": false,
+    "production_pvc_written": false,
+    "services_uploaded": ["pong", "goatcounter", "dex"],
+    "services_restore_verified": ["pong", "goatcounter", "dex"],
+    "synthetic_artifacts_per_service": 1,
+    "writer_get_object": "denied",
+    "writer_delete_object": "denied",
+    "writer_unrelated_prefix": "denied",
+    "restore_get_object": "allowed",
+    "restore_put_object": "denied",
+    "restore_delete_object": "denied",
+    "object_encryption_observed": "aws:kms",
+    "object_retention_observed": "COMPLIANCE",
+    "runner_self_test": "passed",
+    "runner_object_lock_content_md5_regression": "passed"
+  },
+  "runtime_state": {
+    "secrets_populated_out_of_band": true,
+    "writer_automation_gate": false,
+    "writer_consistency_gate": false,
+    "restore_automation_gate": false,
+    "restore_consistency_gate": false,
+    "production_rpo_claim": false,
+    "production_rto_claim": false,
+    "retention_targets_met": false,
+    "remaining_required_evidence": [
+      "approved quiesced consistency procedure for each live SQLite source",
+      "verified production upload and download during an approved maintenance window",
+      "at least 35 daily and 12 monthly verified production retention points",
+      "isolated full application restore rehearsal and operator notification test"
+    ]
+  },
+  "notes": [
+    "This is sanitized provider and synthetic acceptance evidence; no bucket name, account number, access key, KMS identifier, database, token, or player data is included.",
+    "The routine Kubernetes jobs remain fail-closed. Provisioning the destination does not by itself establish an automated backup guarantee.",
+    "Object Lock COMPLIANCE retention makes synthetic fixtures administrator-cleanup-ineligible until retention expiry; this is intentional evidence of immutability."
+  ]
+}

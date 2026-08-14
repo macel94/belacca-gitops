@@ -100,6 +100,7 @@ def main() -> int:
             "sqlite3",
             "source_db.backup(destination_db)",
             "x-amz-server-side-encryption",
+            "content-md5",
             "https://",
             '"belacca.backup.v1"',
             '"source_sha256"',

@@ -34,6 +34,19 @@ class BackupRunnerTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 backup_runner.validate_manifest(data, "pong", artifact)
 
+    def test_object_lock_put_checksum_is_base64_md5(self) -> None:
+        self.assertEqual(
+            backup_runner.content_md5(b"permission-test"),
+            "6ndHq1GLfHFm943fUZ7ddg==",
+        )
+
+    def test_verify_can_suppress_nested_machine_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "artifact.sqlite"
+            with sqlite3.connect(artifact) as db:
+                db.execute("CREATE TABLE evidence (value TEXT)")
+            backup_runner.verify("pong", artifact, emit=False)
+
     def test_safe_prefix_rejects_path_traversal(self) -> None:
         with self.assertRaises(SystemExit):
             backup_runner.safe_prefix("approved/../other")

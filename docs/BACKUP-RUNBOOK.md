@@ -1,10 +1,12 @@
 # Native production encrypted backup and restore runbook
 
-This runbook implements issue #5 for **native production** only. It never
-creates a bucket, KMS key, credential, or plaintext Secret. Those are approved
-and provisioned out of band. The checked-in jobs remain fail-closed until the
-external operator has populated the named Secret interfaces and deliberately
-sets both runtime gates to `true`.
+This runbook implements the native-production portion of issue #13. It never
+creates a bucket, KMS key, credential, or plaintext Secret. The approved AWS S3
+destination, identities, SSE-KMS settings, and monthly spend guard were
+provisioned out of band on 2026-08-14; sanitized evidence is recorded in
+[`docs/evidence/aws-native-backup-20260814.json`](evidence/aws-native-backup-20260814.json).
+The checked-in jobs remain fail-closed until the external operator has approved
+quiesced source procedures and deliberately sets both runtime gates to `true`.
 
 ## Scope and safety boundary
 
@@ -27,25 +29,45 @@ private target, validates the manifest, SHA-256, and `PRAGMA integrity_check`,
 then deletes the temporary plaintext file when the Pod exits. It never writes a
 native PVC and never uses `kubectl cp` against production.
 
-## External prerequisites (must be tested, not asserted)
+## Provisioned provider state and remaining gates
 
-Provision out of band:
+Provisioned and tested out of band:
 
-- an approved TLS-only, private S3-compatible bucket with anonymous access
-  denied, versioning enabled, and provider WORM/object-lock protection for the
-  retention window;
-- customer-managed KMS/SSE-KMS encryption, with a key policy that separates
-  backup writes, restore reads/decrypt, and key administration;
-- a **writer identity** restricted to `ListBucket` on its exact prefix and
-  `PutObject`/`AbortMultipartUpload` on that prefix. It must not have
-  `GetObject`, `DeleteObject`, bucket administration, or access to other
-  prefixes;
-- a separate **restore identity** restricted to `ListBucket` on the exact
-  prefix and `GetObject` on that prefix plus KMS decrypt. It must not have
-  `PutObject` or `DeleteObject`;
-- lifecycle rules retaining at least 35 distinct verified UTC daily backups and
-  12 distinct verified UTC monthly backups. Lifecycle must not be the only
-  copy policy and must not delete a currently required WORM-locked object.
+- Amazon S3 Standard in `eu-central-1`, private with anonymous access denied,
+  versioning enabled, and S3 Object Lock `COMPLIANCE` mode with a 400-day
+  default retention period;
+- SSE-KMS with the AWS-managed S3 key and S3 Bucket Keys. A customer-managed
+  CMK is intentionally deferred to avoid the fixed monthly cost described in
+  issue #13;
+- three service-scoped writer identities and one separate restore identity;
+- account-wide AWS Budgets monthly cost guard of USD 8, chosen conservatively
+  below the requested EUR 10 target with exchange-rate headroom, with actual and forecast notifications at
+  50%, 80%, and 100% as applicable. Budgets is an alerting control, not a hard
+  stop, and billing data can lag;
+
+Still required before enabling production automation:
+
+- an approved quiesced/consistent source procedure for Pong, GoatCounter, and
+  Dex, including source revision and image digest evidence;
+- one verified production upload/download and isolated full application restore
+  rehearsal; the synthetic acceptance fixtures contain no production data;
+- at least 35 verified daily and 12 verified monthly production retention
+  points, plus a tested operator notification destination.
+
+The provisioned bucket uses:
+
+- a TLS-only, private S3 endpoint with anonymous access denied, versioning, and
+  provider WORM/Object Lock protection for the retention window;
+- separate writer and restore identities; routine identities have no delete or
+  bucket-administration permission;
+- lifecycle retention configured for current and noncurrent versions after the
+  400-day compliance window plus a seven-day incomplete-multipart cleanup;
+
+The writer identities are restricted to their own service prefixes; the restore
+identity can list/read the backup prefix but cannot write or delete. Lifecycle
+rules retain at least 35 distinct verified UTC daily backups and 12 distinct
+verified UTC monthly backups. Lifecycle must not be the only copy policy and
+must not delete a currently required WORM-locked object.
 
 The Kubernetes Secret names/keys are runtime interfaces only. Populate them in
 `pong`, `analytics`, `dex`, and `backup-system` as appropriate through the
@@ -185,10 +207,11 @@ operator: <approved operator identifier>
 notes: <no player names, tokens, request logs, or credentials>
 ```
 
-This worktree cannot access the approved object store, KMS, native cluster, or
-production credentials, so it must not fabricate permission, retention,
-upload, or full-service restore evidence. The exact operator follow-up is to
-provision/test the external prerequisites above, populate the Secrets out of
-band, run one verified upload/download and all three isolated application
-rehearsals, and commit only redacted evidence if the evidence repository's
-policy permits it.
+The provider and live cluster are now reachable through the approved operator
+path, and the synthetic upload/download and permission matrix are recorded in
+sanitized evidence. The remaining operator follow-up is to approve the
+quiesced-copy procedure, set the runtime gates only during that window, run one
+verified production upload/download and all three isolated application
+rehearsals, build the daily/monthly retention history, and test the notification
+destination. Commit only redacted evidence; never commit credentials, bucket
+identifiers treated as sensitive, plaintext databases, or recovery keys.

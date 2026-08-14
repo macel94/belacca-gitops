@@ -60,6 +60,11 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def content_md5(body: bytes) -> str:
+    """Return the base64 MD5 checksum required by S3 Object Lock PUTs."""
+    return base64.b64encode(hashlib.md5(body, usedforsecurity=False).digest()).decode("ascii")
+
+
 def integrity_connection(connection: sqlite3.Connection, label: str) -> None:
     row = connection.execute("PRAGMA integrity_check").fetchone()
     if not row or row[0] != "ok":
@@ -171,7 +176,11 @@ class S3:
             fail(f"S3 {method} request failed: {exc}")
 
     def put(self, key: str, body: bytes, encrypted: bool = True) -> None:
-        headers = {"content-type": "application/octet-stream"}
+        headers = {
+            "content-type": "application/octet-stream",
+            # S3 requires Content-MD5 for every PUT into an Object Lock bucket.
+            "content-md5": content_md5(body),
+        }
         if encrypted:
             headers.update({
                 "x-amz-server-side-encryption": "aws:kms",
@@ -280,11 +289,11 @@ def restore_verify(service: str) -> None:
         artifact = Path(directory) / f"{service}.sqlite"
         artifact.write_bytes(client.get(key[:-len(".manifest.json")]))
         validate_manifest(manifest, service, artifact)
-        verify(service, artifact)
+        verify(service, artifact, emit=False)
         print(json.dumps({"service": service, "key": key[:-len('.manifest.json')], "artifact_sha256": sha256(artifact), "source_revision": manifest["source_revision"], "image_digests": manifest["image_digests"], "integrity": "ok", "isolated_target": True, "started_at": started_at, "finished_at": timestamp(), "duration_seconds": round(time.monotonic() - started, 3)}, sort_keys=True))
 
 
-def verify(service: str, artifact: Path) -> None:
+def verify(service: str, artifact: Path, *, emit: bool = True) -> None:
     if service not in SERVICES:
         fail(f"unsupported service: {service}")
     integrity(artifact)
@@ -293,7 +302,8 @@ def verify(service: str, artifact: Path) -> None:
         online_backup(artifact, restored)
         with sqlite3.connect(f"file:{restored.resolve()}?mode=ro", uri=True) as db:
             tables = [row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
-    print(json.dumps({"service": service, "sha256": sha256(artifact), "integrity": "ok", "isolated_target": True, "tables": tables}, sort_keys=True))
+    if emit:
+        print(json.dumps({"service": service, "sha256": sha256(artifact), "integrity": "ok", "isolated_target": True, "tables": tables}, sort_keys=True))
 
 
 def freshness(max_age_seconds: int, service: str, key: str, created_at: str) -> None:
