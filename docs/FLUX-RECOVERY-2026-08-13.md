@@ -4,7 +4,9 @@
 
 This record covers the native production cluster (`belacca-native`) and the
 Flux-managed sources observed on 2026-08-13. It is an operational record, not
-an availability or SLO claim.
+an availability or SLO claim. The backup destination was provisioned and tested
+in a later operator change on 2026-08-14; the historical observations below
+remain date-scoped.
 
 ## Observed state
 
@@ -44,12 +46,14 @@ reconciliations continued.
    all three restore-verification CronJobs and the backup metrics Deployment.
    This keeps the four-Pod quota meaningful while allowing the workload to be
    admitted.
-3. **Backup external prerequisite boundary** — the restore Secret interfaces
-   are intentionally absent from Git and the live cluster. The metrics server
-   now stays Ready and exposes `belacca_backup_configuration_ready=0` with zero
-   success/retention metrics, while scheduled writers and restore jobs remain
-   fail-closed until the operator provisions and tests the external store and
-   runtime gates. This is configuration-unknown, not backup success.
+3. **Backup external prerequisite boundary at the time of this record** — the
+   restore Secret interfaces were intentionally absent from Git and the live
+   cluster. The metrics server stayed Ready and exposed
+   `belacca_backup_configuration_ready=0` with zero success/retention metrics,
+   while scheduled writers and restore jobs remained fail-closed. Since then,
+   the reliable immutable AWS backup destination and Secret interfaces have been
+   provisioned and synthetic-tested; the runtime gates remain false, so this
+   record still does not claim production backup success.
 4. **Longhorn GitOps hook incompatibility** — set
    preUpgradeChecker.jobEnabled: false, the Longhorn chart's documented
    setting for Argo CD/GitOps installations. This avoids the generated

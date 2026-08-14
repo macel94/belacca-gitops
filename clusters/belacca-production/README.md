@@ -47,9 +47,12 @@ three native edges (`.73`, `.41`, and `.42`). A private native Prometheus diagno
 Flux notification path are live-tested; the checked-in routing contract sends
 firing diagnostics and actionable pages through Telegram, suppresses diagnostic
 recoveries, and retains page recoveries. This branch's routing change is not
-claimed as live-verified. External cluster-down monitoring, backup
-retention, authenticated browser completion, and live one-node failure
-measurements remain hardening items.
+claimed as live-verified. External cluster-down monitoring, authenticated browser completion, and live
+one-node failure measurements remain hardening items. The reliable immutable AWS
+backup destination is provisioned and synthetic-tested with Object Lock,
+separate writer/restore identities, and a monthly spend guard; production backup
+automation remains fail-closed until live source consistency, retention, restore,
+and notification evidence is complete.
 The approved native drill contract and pending evidence ledger are in
 [`../../docs/NATIVE-FAILURE-DRILLS.md`](../../docs/NATIVE-FAILURE-DRILLS.md) and
 [`../../docs/NATIVE-DRILL-EVIDENCE.json`](../../docs/NATIVE-DRILL-EVIDENCE.json);
@@ -110,8 +113,8 @@ Native cutover is complete. Remaining operator work is:
 
 1. select a health-aware API/ingress VIP or load balancer instead of direct
    DNS round-robin;
-2. configure encrypted external backups and complete an isolated restore
-   rehearsal;
+2. approve the quiesced-source backup gates, complete a live encrypted backup,
+   build retention history, and complete an isolated restore rehearsal;
 3. complete authenticated browser journeys and the approved one-node failure
    drills, then publish three comparable measurements; and
 4. review the native Traefik UID 0 low-port-binding exception.

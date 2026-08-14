@@ -19,5 +19,10 @@ approved measurements before it can be claimed.
 - Public application and operator routes use the native edge and documented
   firewall boundary.
 - State remains single-writer on protected Longhorn-backed RWO PVCs.
+- A reliable immutable AWS S3 backup destination is provisioned out of band
+  with Object Lock, SSE-KMS, scoped writer/restore identities, synthetic
+  acceptance evidence, and a USD 8 monthly budget guard.
 - Restore, capacity, and chaos rehearsals use isolated disposable targets.
+- The production backup guarantee remains gated until live source consistency,
+  retention, restore, and notification evidence are complete.
 - Production rollback is a reviewed Git change followed by Flux reconciliation.

@@ -145,8 +145,10 @@ requires, and all credentials.
 The Prometheus diagnostic endpoint is private. Expected alerts are:
 
 - `NativeBackupConfigurationUnknown` when the external restore Secret or
-  runtime gates are not provisioned. The metrics endpoint remains available,
-  but all backup success series stay at zero and no backup guarantee is claimed;
+  runtime gates are not ready. The current Secret interfaces are populated but
+  the runtime gates remain false, so the metrics endpoint remains available,
+  all backup success series stay at zero, and no production backup guarantee is
+  claimed;
 - `NativeBackupStale` and `NativeBackupUploadOrVerificationMissing` after the
   configuration becomes ready, for missed schedules, failed uploads, or failed
   restore verification;
