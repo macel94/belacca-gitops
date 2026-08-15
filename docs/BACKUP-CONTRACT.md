@@ -102,16 +102,11 @@ procedures; analytics and Dex use the corresponding `<service>-` names below.
 | `backup-system` | `backup-restore-runtime` | `automation-enabled`, `consistency-acknowledged` | External restore verification gate; values are external |
 
 Do not create empty placeholder Secrets: an empty Secret looks provisioned but
-cannot establish a native production backup guarantee. The live Secret
-interfaces are now populated out of band with the provisioned identities, but
-all runtime gates remain `false`. Before enabling any automated job, validate
-that the approved quiesced source procedure is available and retrieve values
-without exposing them in shell history, CI logs, Git, or incident tickets.
+cannot establish a native production backup guarantee. The live Secret interfaces are populated out of band with the provisioned identities and verified immutable provenance. The runtime gates are enabled after the approved source-consistency procedure and successful live upload/isolated restore verification. Retention history, full application rehearsal, and notification evidence remain tracked separately. Retrieve values without exposing them in shell history, CI logs, Git, or incident tickets.
 
 ## Native production automation gate and acceptance test
 
-CronJobs are committed in a fail-closed state; they cannot upload or verify
-anything until all of the following are true:
+CronJobs use externally managed gates; they upload or verify only when all of the following are true:
 
 1. The object store and lifecycle/immutability policy are provisioned and
    independently reviewed.
@@ -126,13 +121,12 @@ anything until all of the following are true:
    retention-policy drift has an acknowledged native production operator
 destination.
 
-Until the remaining gates and evidence are met, the supported native production
-procedure is manual: copy the quiesced database to protected local storage, run
-the application's `backup-restore.sh backup` and `verify`, and run the isolated
-rehearsal. The checked-in scheduled Jobs remain visibly failed/disabled rather
-than claiming an automated RPO. Use [`BACKUP-RUNBOOK.md`](BACKUP-RUNBOOK.md)
-for exact Secret interfaces, permission tests, evidence fields, and the
-GoatCounter/Dex full-application rehearsal limitation.
+The live upload and isolated restore verification are now proven for Pong,
+GoatCounter, and Dex; the remaining evidence is retention history, full
+application rehearsal where required, and notification delivery. Use
+[`BACKUP-RUNBOOK.md`](BACKUP-RUNBOOK.md) for exact Secret interfaces, permission
+tests, evidence fields, and the GoatCounter/Dex full-application rehearsal
+limitation.
 
 ## Native production recovery and emergency rules
 

@@ -6,6 +6,7 @@ resources:
   - source-jobs.yaml
   - restore-verifier.yaml
   - network-policy.yaml
+  - egress-network-policy.yaml
 configMapGenerator:
   - name: backup-runner
     namespace: backup-system

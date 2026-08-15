@@ -1,0 +1,56 @@
+{
+  "schema_version": "belacca.backup.production-evidence.v1",
+  "sanitized": true,
+  "publication_state": "live_upload_and_isolated_restore_verified",
+  "observed_at_utc": "2026-08-15T11:44:32Z",
+  "provider": "aws",
+  "region": "eu-central-1",
+  "bucket_identifier": "operator-managed-secret",
+  "credentials_exposed": false,
+  "production_pvc_written": false,
+  "single_writer_preserved": true,
+  "runtime_gates": {
+    "writer_automation_gate": true,
+    "writer_consistency_gate": true,
+    "restore_automation_gate": true,
+    "restore_consistency_gate": true
+  },
+  "services": {
+    "pong": {
+      "source_revision": "b3d8a79f3e94e18eb93c6d406c4bf39474c51678",
+      "artifact_key": "operator-managed-secret",
+      "artifact_sha256": "8c6cec0102b02212ac9e3cef2e81686a46a03578ece1b2eff56162c81fce9835",
+      "integrity": "ok",
+      "isolated_restore": "ok",
+      "image_digests_recorded": true
+    },
+    "goatcounter": {
+      "source_revision": "3e08898dcbf56e8f5867131df8becc9557901a4a",
+      "artifact_key": "operator-managed-secret",
+      "artifact_sha256": "56cf79e4c922114cc7b0d4f140fb50778f4cb6aad15698c00af4746b12b81ef5",
+      "integrity": "ok",
+      "isolated_restore": "ok",
+      "image_digests_recorded": true
+    },
+    "dex": {
+      "source_revision": "3e08898dcbf56e8f5867131df8becc9557901a4a",
+      "artifact_key": "operator-managed-secret",
+      "artifact_sha256": "508843d92c79da5416fb0336a7d09d63f413590e838d723277ad195d09bf08ee",
+      "integrity": "ok",
+      "isolated_restore": "ok",
+      "image_digests_recorded": true
+    }
+  },
+  "remaining_evidence": [
+    "35 verified daily retention points",
+    "12 verified monthly retention points",
+    "isolated full application rehearsal where required",
+    "operator notification delivery test"
+  ],
+  "notes": [
+    "Artifact keys, bucket identifiers, credentials, KMS identifiers, database contents, and player data are intentionally redacted.",
+    "The upload and restore verifier used ephemeral restore targets and did not write a production PVC.",
+    "Backup network policy was corrected to permit only DNS and TCP/443 for dedicated backup workloads.",
+    "Source backup Pods use filesystem group 1000 for Pong/GoatCounter and 1001 for Dex to match protected SQLite files."
+  ]
+}

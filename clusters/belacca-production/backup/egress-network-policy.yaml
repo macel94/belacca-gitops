@@ -1,0 +1,59 @@
+# Backup jobs use the externally provisioned HTTPS object store. Keep the
+# default-deny boundary and allow only cluster DNS plus TCP/443 for the
+# dedicated writer/verifier workloads.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-writer-egress
+  namespace: pong
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: writer-egress}
+spec:
+  podSelector: {matchLabels: {belacca.com/component: backup-writer}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - ports: [{protocol: TCP, port: 443}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-writer-egress
+  namespace: analytics
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: writer-egress}
+spec:
+  podSelector: {matchLabels: {belacca.com/component: backup-writer}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - ports: [{protocol: TCP, port: 443}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-writer-egress
+  namespace: dex
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: writer-egress}
+spec:
+  podSelector: {matchLabels: {belacca.com/component: backup-writer}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - ports: [{protocol: TCP, port: 443}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-verifier-egress
+  namespace: backup-system
+  labels: {belacca.com/stage: native-production, belacca.com/project: backup, belacca.com/component: verifier-egress}
+spec:
+  podSelector: {matchLabels: {belacca.com/component: restore-verifier}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - ports: [{protocol: TCP, port: 443}]

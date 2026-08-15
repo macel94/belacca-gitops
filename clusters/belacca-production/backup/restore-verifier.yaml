@@ -12,8 +12,8 @@ spec:
   timeZone: Etc/UTC
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 0
@@ -55,8 +55,8 @@ spec:
   timeZone: Etc/UTC
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 0
@@ -98,8 +98,8 @@ spec:
   timeZone: Etc/UTC
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 0
@@ -156,10 +156,9 @@ spec:
             requests: {cpu: 50m, memory: 128Mi}
             limits: {cpu: 500m, memory: 512Mi}
           # Metrics deliberately has no Secret references. It reports
-          # configuration_unknown until the external restore interfaces exist
-          # and both runtime gates are exactly true; the current interfaces are
-          # populated, but the gates remain false. Restore Jobs keep the
-          # required Secret references and fail closed.
+          # configuration_unknown until the externally managed restore
+          # interface and both runtime gates are exactly true. The live
+          # runtime Secrets are managed out of band and are not committed here.
           env:
             - {name: METRICS_PORT, value: "9091"}
           ports: [{name: metrics, containerPort: 9091}]

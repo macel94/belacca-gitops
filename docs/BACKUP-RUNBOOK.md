@@ -5,8 +5,7 @@ creates a bucket, KMS key, credential, or plaintext Secret. The approved AWS S3
 destination, identities, SSE-KMS settings, and monthly spend guard were
 provisioned out of band on 2026-08-14; sanitized evidence is recorded in
 [`docs/evidence/aws-native-backup-20260814.json`](evidence/aws-native-backup-20260814.json).
-The checked-in jobs remain fail-closed until the external operator has approved
-quiesced source procedures and deliberately sets both runtime gates to `true`.
+The checked-in jobs use externally managed runtime Secrets. Automation is enabled only after the approved source-consistency procedure, immutable provenance, and provider acceptance checks are complete.
 
 ## Scope and safety boundary
 
@@ -18,7 +17,7 @@ Protected SQLite sources are:
 | GoatCounter | `analytics/goatcounter` | `goatcounter-data` | `/source/db.sqlite3` | 02:29 |
 | Dex | `dex/dex` | `dex-data` | `/source/dex.db` | 02:41 |
 
-Each writer remains one replica and each backup Pod mounts its PVC read-only.
+Each writer remains one replica and each backup Pod mounts its PVC read-only. Backup Pods use filesystem group `1000` for Pong/GoatCounter and `1001` for Dex, matching the protected database file groups.
 The procedure must still obtain an approved quiesced/consistent source copy:
 stop or fence the single writer according to the service-specific maintenance
 procedure before enabling the gate. A read-only mount alone is not proof that a
@@ -45,12 +44,12 @@ Provisioned and tested out of band:
   50%, 80%, and 100% as applicable. Budgets is an alerting control, not a hard
   stop, and billing data can lag;
 
-Still required before enabling production automation:
+Operational evidence tracked after enabling production automation:
 
-- an approved quiesced/consistent source procedure for Pong, GoatCounter, and
+- the approved quiesced/consistent source procedure for Pong, GoatCounter, and
   Dex, including source revision and image digest evidence;
-- one verified production upload/download and isolated full application restore
-  rehearsal; the synthetic acceptance fixtures contain no production data;
+- verified production upload/download and isolated restore verification; the
+  synthetic acceptance fixtures contain no production data;
 - at least 35 verified daily and 12 verified monthly production retention
   points, plus a tested operator notification destination.
 
@@ -145,10 +144,9 @@ requires, and all credentials.
 The Prometheus diagnostic endpoint is private. Expected alerts are:
 
 - `NativeBackupConfigurationUnknown` when the external restore Secret or
-  runtime gates are not ready. The current Secret interfaces are populated but
-  the runtime gates remain false, so the metrics endpoint remains available,
-  all backup success series stay at zero, and no production backup guarantee is
-  claimed;
+  runtime gates are not ready. The Secret interfaces are externally managed;
+  when both gates are true, the metrics endpoint reports readiness and backup
+  success series become eligible for evaluation;
 - `NativeBackupStale` and `NativeBackupUploadOrVerificationMissing` after the
   configuration becomes ready, for missed schedules, failed uploads, or failed
   restore verification;

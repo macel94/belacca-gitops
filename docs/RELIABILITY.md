@@ -23,6 +23,7 @@ approved measurements before it can be claimed.
   with Object Lock, SSE-KMS, scoped writer/restore identities, synthetic
   acceptance evidence, and a USD 8 monthly budget guard.
 - Restore, capacity, and chaos rehearsals use isolated disposable targets.
-- The production backup guarantee remains gated until live source consistency,
-  retention, restore, and notification evidence are complete.
+- Live production upload and isolated restore verification passed for Pong,
+  GoatCounter, and Dex; the remaining backup evidence is retention history,
+  full application rehearsal where required, and notification delivery.
 - Production rollback is a reviewed Git change followed by Flux reconciliation.

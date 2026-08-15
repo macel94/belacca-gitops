@@ -89,7 +89,7 @@
         "measurement": "External hourly journey evidence is published in belacca-status/slo.json; measured levels use available good/bad observations and switch to the latest rolling 720-slot window after 30 days; native WebTransport is optional"
       },
       "rto": "4h",
-      "rpo": "24h target (reliable immutable AWS backup destination provisioned and synthetic-tested; scheduled production backup and isolated restore verification remain fail-closed until live source, retention, restore, and notification evidence are complete)",
+      "rpo": "24h target (live production upload and isolated restore verification passed; 35-day/12-month retention history, full application rehearsal, and notification evidence remain outstanding)",
       "dashboard": {
         "url": "https://dashboard.belacca.com/",
         "access": "OAuth2-protected Headlamp; inspect pong workloads, events, PVC, and Flux state"
@@ -145,9 +145,9 @@
         "measurement": "External hourly /status plus harmless /count evidence is published in belacca-status/slo.json; measured levels use available good/bad observations and switch to the latest rolling 720-slot window after 30 days"
       },
       "rto": "4h",
-      "rpo": "24h target (reliable immutable AWS backup destination provisioned and synthetic-tested; scheduled production backup and isolated restore verification remain fail-closed until live source, retention, restore, and notification evidence are complete)",
+      "rpo": "24h target (live production upload and isolated restore verification passed; 35-day/12-month retention history, full application rehearsal, and notification evidence remain outstanding)",
       "dashboard": {
-        "url": "https://stats.belacca.com/",
+        "url": "https://stats.belacca.com",
 
         "access": "Dex SSO permits belakkuz@gmail.com; GoatCounter still requires its application session cookie for dashboard features"
       },

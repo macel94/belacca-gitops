@@ -46,6 +46,8 @@ def main() -> int:
             require(source_jobs, f"namespace: {namespace}", "source Jobs")
             require(source_jobs, f"claimName: {pvc}", "source Jobs")
             require(source_jobs, path, "source Jobs")
+            group = {"pong": "1000", "goatcounter": "1000", "dex": "1001"}[service]
+            require(source_jobs, f"fsGroup: {group}", f"{service} source filesystem group")
             identity_name = {"pong": "pong-backup-writer", "goatcounter": "analytics-backup-writer", "dex": "dex-backup-writer"}[service]
             require(identities, f"name: {identity_name}", "writer identities")
         for service in ("pong", "goatcounter", "dex"):
