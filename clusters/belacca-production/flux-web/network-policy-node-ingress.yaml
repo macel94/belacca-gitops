@@ -24,6 +24,15 @@ spec:
         # substitute for an authenticated Flux Web source.
         - ipBlock:
             cidr: 169.58.97.73/32
+        # Cross-node host-network forwarding is evaluated from the sending
+        # node's Flannel interface address. These exact /32s preserve the
+        # authenticated node-source boundary without allowing the Pod CIDR.
+        - ipBlock:
+            cidr: 10.42.0.0/32
+        - ipBlock:
+            cidr: 10.42.1.0/32
+        - ipBlock:
+            cidr: 10.42.2.0/32
       ports:
         - protocol: TCP
           port: 9080
