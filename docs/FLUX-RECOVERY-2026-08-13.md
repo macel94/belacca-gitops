@@ -42,7 +42,7 @@ reconciliations continued.
    `observability/config.yaml`, which is the monitoring implementation the
    cluster actually runs. The server overlay retains its Prometheus Operator
    resource for environments that install that CRD.
-2. **Backup quota mismatch** — added bounded CPU/memory requests and limits to
+2. **Backup quota mismatch** — added bounded CPU requests and memory limits to
    all three restore-verification CronJobs and the backup metrics Deployment.
    This keeps the four-Pod quota meaningful while allowing the workload to be
    admitted.

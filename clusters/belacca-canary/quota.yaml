@@ -14,7 +14,6 @@ spec:
     persistentvolumeclaims: "0"
     requests.cpu: "2"
     requests.memory: 4Gi
-    limits.cpu: "4"
     limits.memory: 8Gi
 ---
 apiVersion: v1
@@ -31,5 +30,4 @@ spec:
         cpu: 50m
         memory: 64Mi
       default:
-        cpu: 500m
         memory: 512Mi

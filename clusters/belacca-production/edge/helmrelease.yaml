@@ -94,7 +94,6 @@ spec:
         cpu: 50m
         memory: 64Mi
       limits:
-        cpu: 500m
         memory: 256Mi
     # Host-network entrypoints 80/443 require the runtime's default
     # NET_BIND_SERVICE capability. This applies only to the native edge

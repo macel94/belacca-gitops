@@ -31,7 +31,7 @@ spec:
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "pong"]
               resources:
                 requests: {cpu: 25m, memory: 64Mi}
-                limits: {cpu: 250m, memory: 256Mi}
+                limits: {memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -74,7 +74,7 @@ spec:
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "goatcounter"]
               resources:
                 requests: {cpu: 25m, memory: 64Mi}
-                limits: {cpu: 250m, memory: 256Mi}
+                limits: {memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -117,7 +117,7 @@ spec:
               command: ["python3", "/opt/backup/backup_runner.py", "restore-verify", "dex"]
               resources:
                 requests: {cpu: 25m, memory: 64Mi}
-                limits: {cpu: 250m, memory: 256Mi}
+                limits: {memory: 256Mi}
               env:
                 - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled}}}
                 - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged}}}
@@ -154,7 +154,7 @@ spec:
           command: ["python3", "/opt/backup/backup_runner.py", "metrics-server"]
           resources:
             requests: {cpu: 50m, memory: 128Mi}
-            limits: {cpu: 500m, memory: 512Mi}
+            limits: {memory: 512Mi}
           # Metrics deliberately has no Secret references. It reports
           # configuration_unknown until the externally managed restore
           # interface and both runtime gates are exactly true. The live

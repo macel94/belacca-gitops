@@ -78,7 +78,7 @@ reviewed adapter and complete 720-slot window exist.
 | Resource | Bound |
 | --- | --- |
 | Prometheus replicas | 1 |
-| CPU request/limit | 100m / 500m |
+| CPU request | 100m |
 | Memory request/limit | 256Mi / 768Mi |
 | Prometheus data PVC | Longhorn RWO, 5Gi requested |
 | TSDB retention | 45 days and 4GiB, whichever is reached first |

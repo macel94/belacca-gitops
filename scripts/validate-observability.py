@@ -109,7 +109,7 @@ def validate_native() -> None:
         "--storage.tsdb.retention.size=4GB",
         "claimName: prometheus-native-data",
         "requests:\n              cpu: 100m",
-        "limits:\n              cpu: 500m",
+        "limits:\n              memory: 768Mi",
         "type: ClusterIP",
     ):
         if fragment not in deployment:
