@@ -32,9 +32,14 @@ spec:
   values:
     replicaCount: 1
     revisionHistoryLimit: 2
-    # Dex uses a single-writer SQLite PVC; never overlap old/new Pods during an upgrade.
+    # Dex uses a single-writer SQLite PVC. Drain the old Pod before creating
+    # the replacement; this avoids a multi-attach while keeping the chart's
+    # existing Deployment strategy fields valid for server-side apply.
     strategy:
-      type: Recreate
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 100%
     configSecret:
       create: true
       name: dex-config
