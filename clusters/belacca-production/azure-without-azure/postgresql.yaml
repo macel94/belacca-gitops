@@ -8,7 +8,6 @@ metadata:
     belacca.com/project: azure-without-azure
     belacca.com/component: database
 spec:
-  clusterIP: None
   selector:
     app: postgresql
   ports:
@@ -46,7 +45,9 @@ spec:
       enableServiceLinks: false
       securityContext:
         runAsNonRoot: true
-        fsGroup: 999
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
         seccompProfile:
           type: RuntimeDefault
       containers:
