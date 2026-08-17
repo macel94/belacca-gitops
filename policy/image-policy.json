@@ -1,8 +1,8 @@
 {
   "version": "native-production-v1",
   "enforcementPoint": "Kyverno validating admission webhook, installed and reconciled by Flux before native workloads",
-  "productionNamespaces": ["pong", "portfolio", "analytics", "azure-without-azure", "cert-manager", "dex", "flux-system", "headlamp", "kube-system", "longhorn-system", "observability"],
-  "digestEnforcedNamespaces": ["pong", "portfolio", "analytics", "azure-without-azure"],
+  "productionNamespaces": ["pong", "portfolio", "analytics", "cert-manager", "dex", "flux-system", "headlamp", "kube-system", "longhorn-system", "observability"],
+  "digestEnforcedNamespaces": ["pong", "portfolio", "analytics"],
   "firstPartyImages": {
     "cloudnativepong": {
       "repositoryPrefix": "ghcr.io/macel94/cloudnativepong-",
@@ -15,12 +15,6 @@
       "repository": "macel94/francesco-belacca-site",
       "workflow": ".github/workflows/test-and-publish.yml",
       "subjectPrefix": "https://github.com/macel94/francesco-belacca-site/"
-    },
-    "azureWithoutAzure": {
-      "repositoryPrefix": "ghcr.io/macel94/azure-without-azure",
-      "repository": "macel94/azure-without-azure",
-      "workflow": ".github/workflows/test-and-publish.yml",
-      "subjectPrefix": "https://github.com/macel94/azure-without-azure/"
     }
   },
   "attestations": {

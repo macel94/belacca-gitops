@@ -64,10 +64,6 @@ spec:
       kind: Certificate
       name: stats-tls
       namespace: analytics
-    - apiVersion: cert-manager.io/v1
-      kind: Certificate
-      name: azure-without-azure-tls
-      namespace: azure-without-azure
   decryption:
     provider: sops
     secretRef:

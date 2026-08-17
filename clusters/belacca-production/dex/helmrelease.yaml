@@ -32,14 +32,6 @@ spec:
   values:
     replicaCount: 1
     revisionHistoryLimit: 2
-    # Dex uses a single-writer SQLite PVC. Drain the old Pod before creating
-    # the replacement; this avoids a multi-attach while keeping the chart's
-    # existing Deployment strategy fields valid for server-side apply.
-    strategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxSurge: 0
-        maxUnavailable: 100%
     configSecret:
       create: true
       name: dex-config
@@ -66,10 +58,6 @@ spec:
           name: Analytics dashboard
           redirectURIs:
             - https://stats.belacca.com/oauth2/callback
-        - id: azure-without-azure
-          name: Azure Without Azure
-          redirectURIs:
-            - https://azure.belacca.com/auth/callback
       connectors:
         - type: google
           id: google
@@ -136,9 +124,4 @@ spec:
       name: dex-client-secrets
       valuesKey: stats-client-secret
       targetPath: config.staticClients[2].secret
-      literal: true
-    - kind: Secret
-      name: dex-client-secrets
-      valuesKey: azure-without-azure-client-secret
-      targetPath: config.staticClients[3].secret
       literal: true

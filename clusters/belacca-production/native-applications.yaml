@@ -41,26 +41,3 @@ spec:
   sourceRef:
     kind: GitRepository
     name: francesco-belacca-site
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: azure-without-azure
-  namespace: flux-system
-  labels:
-    belacca.com/owner: native-root
-    belacca.com/project: azure-without-azure
-    belacca.com/component: application
-spec:
-  interval: 10m
-  path: ./deploy
-  prune: true
-  wait: true
-  timeout: 10m
-  dependsOn:
-    - name: flux-system
-    - name: native-image-policy
-    - name: native-azure-without-azure
-  sourceRef:
-    kind: GitRepository
-    name: azure-without-azure

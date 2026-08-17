@@ -27,18 +27,3 @@ spec:
   ref:
     branch: main
   url: https://github.com/macel94/francesco-belacca-site.git
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: azure-without-azure
-  namespace: flux-system
-  labels:
-    belacca.com/owner: native-root
-    belacca.com/project: azure-without-azure
-    belacca.com/source: application
-spec:
-  interval: 1m
-  ref:
-    branch: main
-  url: https://github.com/macel94/azure-without-azure.git

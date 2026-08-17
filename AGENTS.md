@@ -8,7 +8,6 @@ Own Flux bootstrap, child `GitRepository`/Kustomization resources, native Kubern
 
 - Portfolio source: `macel94/francesco-belacca-site`, Flux path `./deploy`.
 - Pong source: `macel94/cloudnativepong`, Flux path `./k8s/overlays/native-staging`.
-- Azure Without Azure source: `macel94/azure-without-azure`, Flux path `./deploy`. This repository owns its isolated namespace, PostgreSQL, encrypted runtime Secret, Dex client registration, TLS, route, and NetworkPolicies.
 - Native production context: `belacca-native`.
 
 ## Change and deployment workflow
@@ -18,4 +17,4 @@ Own Flux bootstrap, child `GitRepository`/Kustomization resources, native Kubern
 3. Reconcile `flux-system` or the affected child Kustomization only after the remote commit exists: `flux reconcile source git flux-system -n flux-system`, then `flux reconcile kustomization flux-system -n flux-system`.
 4. Verify source revision, applied Kustomization revision, workload image/digest, rollout health, and public behavior.
 
-Do not manually edit a child application's generated image pin here unless a reviewed release/rollback procedure explicitly assigns that ownership. Do not use direct `kubectl` mutation as a permanent deployment. Azure Without Azure reuses the existing Dex OIDC issuer; do not deploy Keycloak or another identity provider for it. PostgreSQL exists only because durable users, subscriptions, sessions, and storage-account records require it; native production uses stable PostgreSQL 18.6 while PostgreSQL 19 remains beta. `spec.verify` is currently omitted from child GitRepositories, so `Signature: none` is expected; do not add signature verification without the signed-commit/key rollout.
+Do not manually edit a child application's generated image pin here unless a reviewed release/rollback procedure explicitly assigns that ownership. Do not use direct `kubectl` mutation as a permanent deployment. `spec.verify` is currently omitted from child GitRepositories, so `Signature: none` is expected; do not add signature verification without the signed-commit/key rollout.
