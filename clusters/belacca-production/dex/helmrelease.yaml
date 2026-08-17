@@ -32,6 +32,9 @@ spec:
   values:
     replicaCount: 1
     revisionHistoryLimit: 2
+    # Dex uses a single-writer SQLite PVC; never overlap old/new Pods during an upgrade.
+    strategy:
+      type: Recreate
     configSecret:
       create: true
       name: dex-config
