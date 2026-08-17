@@ -9,7 +9,7 @@ metadata:
     belacca.com/stage: native-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: azure-without-azure-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: azure-without-azure-azure-without-azure-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
