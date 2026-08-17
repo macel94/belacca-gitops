@@ -8,6 +8,7 @@ metadata:
     belacca.com/project: azure-without-azure
     belacca.com/component: database
 spec:
+  publishNotReadyAddresses: true
   selector:
     app: postgresql
   ports:
@@ -28,8 +29,9 @@ spec:
   serviceName: postgresql
   replicas: 1
   podManagementPolicy: OrderedReady
+  # One replica and one RWO PVC: replace the Pod in order, never overlap writers.
   updateStrategy:
-    type: OnDelete
+    type: RollingUpdate
   selector:
     matchLabels:
       app: postgresql
