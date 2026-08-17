@@ -13,6 +13,7 @@ spec:
   # Prometheus uses a single-writer RWO TSDB PVC. Never overlap old and new
   # Pods during an update or the second process exits on the TSDB lock.
   strategy:
+    rollingUpdate: null
     type: Recreate
   selector:
     matchLabels:
