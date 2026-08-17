@@ -4,3 +4,4 @@ resources:
   - portfolio-ingress.yaml
   - pong-ingress.yaml
   - platform-ingress.yaml
+  - azure-without-azure-ingress.yaml

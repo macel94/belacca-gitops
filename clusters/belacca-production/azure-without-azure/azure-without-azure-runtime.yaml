@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: azure-without-azure-runtime
+    namespace: azure-without-azure
+    labels:
+        belacca.com/stage: native-production
+        belacca.com/project: azure-without-azure
+        belacca.com/component: runtime-secrets
+type: Opaque
+stringData:
+    database-url: ENC[AES256_GCM,data:Hp4FZf7Ze8SrGc4EFbPH6NyoLyTE2BBSxY9HEU4jF5eHnjsCKtf1S85UuPalCwFMVo4+1wxuq9z66Kn2I+miA0rlj6W+2Hy1YpDtS5TrJGwPEt/ER5bcEs11l+VW2pOTUI0aUaLckUz1hPqw/ivUEOVxfRGyXkgm51MDCCMqkG7YQ+2KxrO//BVaR+u9vJuKlzp5Y0MergaDbi8JpQUfUy/xWupVx3RGKA==,iv:APLMYrymsreAnDinb8QUvSbv5im/IA+vvdOADwhDRD4=,tag:pOHOjL+iFC7jDR2TUqrAaA==,type:str]
+    oidc-client-id: ENC[AES256_GCM,data:HJLzmR+M0/6grRieh2fYQLkEsg==,iv:noe2fT1MEqefkfIK5xF/fqd7ndqsERTR/jfYORcs5Ck=,tag:Dai5u/Yq2e8dvYD+ZFL1Gw==,type:str]
+    oidc-client-secret: ENC[AES256_GCM,data:Tpu8ANOebrYTNyfLzFqvGcZVe8u9JZtLSWke16/DBuIAM41+S0cY0tqul2SJWdvFAq9MsjfCl9EpuaC3UNy2Rw==,iv:WD3fldnAonLWIjvLNhHEw7anRQtZiUe7tdeVXcOZsyw=,tag:MNC9FTB6fngj/iDaaizBCQ==,type:str]
+    postgres-password: ENC[AES256_GCM,data:NNA+p5ewDIPBa+cB3CMzSNa0TNwPUcfs84FLvQbn6E0Y4hteMI8yHPuJycvG9kujTQj61b4hoYW6VxWFtI7rBQ==,iv:hhVewuI97cX3MKnr2biPEh07Y79kt6b3Ftqq+5O30Us=,tag:kdYWDyO8QfCnHF6ZkqRyoA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBhdmtLTHloM0NIWFJUMzBZ
+            Y2VMSjJsQk5qSG9mZE93MGpwWU45UjhsREcwCmtmbTB3U2lodSt2dU9WUGoybWVo
+            NXJxaTNYcVdMQTR4eUQrUmRIWGRacVUKLS0tIGJtanBHQllNMjNGcEZ3YXVwSUtY
+            VkRmbGpXRDNYeU0wM21wakNxbEZyZncKHbO/M0uDPr6ZbCW7mIG0DVBsH0XtflCC
+            cGXop2pNVOgDu0nQ2FYPPi1X7TQh16tHsYR8JvAFVCmH/UfNXKm3Zg==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1nhvf35flvr4w90jx2zcx40qpnvxapp9ucct6favsvr66quuy3vnsj4wt3r
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-08-17T19:56:13Z"
+    mac: ENC[AES256_GCM,data:A4o1UVoDaAS6szvQdiDHdw1X7slWP8S2o4xgxLCEKgWJK5T3+4uwjwmgCNRu7Qs0FjJDu+74GPkdmgIkdf/dP1C/VV9wq1+X7EN5Ck5gnd85mPt1hFVWesJT0KLM5JZzKaC9uvJgbTOO6a4pTlfwcPdeZik+iS9NqFXnFVZVy1Y=,iv:iZlEzei+1RiA7S1CFtm4WlRx7GN92pw/wDJbJICJ/NA=,tag:C3kLHeXTrgE1UMGpUeF4bA==,type:str]
+    version: 3.13.3

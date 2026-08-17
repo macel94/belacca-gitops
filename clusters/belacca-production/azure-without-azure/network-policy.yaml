@@ -1,0 +1,113 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: azure-without-azure-default-deny
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: azure-without-azure
+    belacca.com/component: network-policy
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: azure-without-azure-dns-egress
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: azure-without-azure
+    belacca.com/component: network-policy
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: azure-without-azure-app-ingress
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: azure-without-azure
+    belacca.com/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: azure-without-azure
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - ipBlock:
+            cidr: 10.42.0.0/32
+        - ipBlock:
+            cidr: 10.42.1.0/32
+        - ipBlock:
+            cidr: 10.42.2.0/32
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: azure-without-azure-database-ingress
+  labels:
+    belacca.com/stage: native-production
+    belacca.com/project: azure-without-azure
+    belacca.com/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: azure-without-azure
+      ports:
+        - protocol: TCP
+          port: 5432

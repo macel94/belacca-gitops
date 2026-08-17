@@ -27,6 +27,7 @@ spec:
                 - pong
                 - portfolio
                 - analytics
+                - azure-without-azure
       validate:
         failureAction: Enforce
         message: Native production Pods must use an image reference containing an immutable sha256 digest.

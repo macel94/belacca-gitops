@@ -21,6 +21,7 @@ DIGEST = re.compile(r"@sha256:[0-9a-f]{64}(?:$|[\"'])")
 FIRST_PARTY = (
     "ghcr.io/macel94/cloudnativepong-",
     "ghcr.io/macel94/francesco-belacca-site",
+    "ghcr.io/macel94/azure-without-azure",
 )
 IMAGE_LINE = re.compile(r"^\s+image:\s+([^\s#]+)", re.MULTILINE)
 
@@ -47,7 +48,7 @@ def load_json(path: Path) -> dict:
 def validate_contract(contract: dict) -> None:
     require(contract.get("version") == "native-production-v1", "contract version is not native-production-v1")
     require(contract.get("enforcementPoint", "").startswith("Kyverno"), "enforcement point must be Kyverno")
-    require(contract.get("digestEnforcedNamespaces") == ["pong", "portfolio", "analytics"], "digest scope must cover only first-party application namespaces")
+    require(contract.get("digestEnforcedNamespaces") == ["pong", "portfolio", "analytics", "azure-without-azure"], "digest scope must cover only first-party application namespaces")
     vulnerabilities = contract.get("vulnerabilities", {})
     require(vulnerabilities.get("maxAllowedSeverity") == "MEDIUM", "maximum allowed severity must be MEDIUM")
     require(vulnerabilities.get("blockKnownUnfixed") is True, "known-unfixed findings must block")

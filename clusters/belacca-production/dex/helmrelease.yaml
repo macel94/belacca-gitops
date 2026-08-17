@@ -58,6 +58,10 @@ spec:
           name: Analytics dashboard
           redirectURIs:
             - https://stats.belacca.com/oauth2/callback
+        - id: azure-without-azure
+          name: Azure Without Azure
+          redirectURIs:
+            - https://azure.belacca.com/auth/callback
       connectors:
         - type: google
           id: google
@@ -124,4 +128,9 @@ spec:
       name: dex-client-secrets
       valuesKey: stats-client-secret
       targetPath: config.staticClients[2].secret
+      literal: true
+    - kind: Secret
+      name: dex-client-secrets
+      valuesKey: azure-without-azure-client-secret
+      targetPath: config.staticClients[3].secret
       literal: true
