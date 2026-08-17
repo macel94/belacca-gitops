@@ -104,6 +104,8 @@ def validate_native() -> None:
 
     if "prom/prometheus:v3.13.2@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
         fail("native Prometheus image must be immutable and must not use latest")
+    if "kustomize.toolkit.fluxcd.io/force: enabled" not in deployment:
+        fail("native Prometheus Deployment must use targeted Flux force replacement for the strategy transition")
     if "strategy:\n    rollingUpdate: null\n    type: Recreate" not in deployment:
         fail("native Prometheus must recreate and clear rollingUpdate to avoid overlapping writers on its RWO TSDB PVC")
     for fragment in (

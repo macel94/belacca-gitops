@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: prometheus-native
   namespace: observability
+  annotations:
+    # Recreate this single-writer Deployment when changing away from the
+    # historical RollingUpdate strategy; do not enable force globally.
+    kustomize.toolkit.fluxcd.io/force: enabled
   labels:
     belacca.com/stage: native-production
     belacca.com/project: observability
