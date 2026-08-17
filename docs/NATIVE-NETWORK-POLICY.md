@@ -166,8 +166,8 @@ git revert <policy-commit>
 git push origin <reviewed-rollback-branch>
 kubectl config use-context belacca-native
 flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization flux-system -n flux-system --with-source
-flux reconcile kustomization native-policies -n flux-system --with-source
+flux reconcile kustomization flux-system -n flux-system
+flux reconcile kustomization native-policies -n flux-system
 ```
 
 The operator must use the actual reviewed branch/commit and normal protected

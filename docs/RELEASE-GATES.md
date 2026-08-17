@@ -169,7 +169,7 @@ Rollback is a reviewed Git change, not a `kubectl rollout undo` shortcut:
 git revert <candidate-promotion-commit>
 git push origin <reviewed-rollback-branch>
 flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization <affected-kustomization> -n flux-system --with-source
+flux reconcile kustomization <affected-kustomization> -n flux-system
 flux get kustomizations -n flux-system
 ```
 

@@ -30,7 +30,8 @@ proxy gate.
 kubectl config use-context belacca-native
 kubectl kustomize clusters/belacca-production >/tmp/native-production-platform-render.yaml
 kubectl apply --dry-run=server -f /tmp/native-production-platform-render.yaml
-flux reconcile kustomization flux-system -n flux-system --with-source
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization flux-system -n flux-system
 ```
 
 Never print Secret data, OAuth tokens, cookie values, Dex signing state, or

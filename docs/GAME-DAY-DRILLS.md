@@ -249,7 +249,7 @@ the operator uses only these scoped reconciles:
 
 ```bash
 flux reconcile source git cloudnativepong -n flux-system
-flux reconcile kustomization pong -n flux-system --with-source
+flux reconcile kustomization pong -n flux-system
 ```
 
 Do not use `--with-source` on the native root for this drill and do not alter

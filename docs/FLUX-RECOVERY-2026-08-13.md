@@ -84,7 +84,7 @@ After Flux observes the pushed revisions:
 
 ```sh
 flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization flux-system -n flux-system --with-source
+flux reconcile kustomization flux-system -n flux-system
 flux get kustomizations -A
 flux get helmreleases -A
 kubectl -n backup-system get deploy,pod

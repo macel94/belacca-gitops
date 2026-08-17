@@ -1,5 +1,9 @@
 # belacca.com GitOps platform
 
+The cross-repository commit, generated deployment, Flux reconciliation, and
+parent submodule workflow is documented in the canonical
+[`belacca-platform/docs/gitops-delivery.md`](https://github.com/macel94/belacca-platform/blob/main/docs/gitops-delivery.md).
+
 This repository is the cluster-level source of truth for the **native production**
 platform: the three-server k3s cluster at `clusters/belacca-production/`,
 publicly served through `169.58.143.41`, `169.58.143.42`, and `169.58.97.73`.
@@ -38,6 +42,37 @@ and releasable on its own, permits different credentials later if a project
 becomes private, and lets changes in each source trigger its own Kustomization.
 It also avoids requiring every developer and deployment tool to initialize a
 nested checkout.
+
+## How application changes reach native production
+
+Each application is published from its own repository. A source push runs CI,
+publishes immutable GHCR images, and then may create a generated deployment
+commit that records the exact image tag and digest in the application's own
+Kustomization. Flux watches the child repository's `main` branch, so its source
+artifact and child Kustomization revision normally point at that generated
+commit. The running Deployment still reports the image built from the earlier
+source commit. Those revisions are intentionally different; verify both:
+
+```text
+Flux GitRepository/Kustomization = generated deployment commit
+Deployment image tag             = sha-<source commit>
+Deployment image digest          = CI-published immutable digest
+```
+
+For the portfolio, the child path is `./deploy` and the Flux resources are
+`flux-system/francesco-belacca-site` and `flux-system/portfolio`. For Pong, the
+native path is `./k8s/overlays/native-staging` and the Flux resources are
+`flux-system/cloudnativepong` and `flux-system/pong`. After a child publish,
+reconcile the source and child Kustomization, verify rollout/image/digest and
+public behavior, and only then update the parent workspace submodule pointer if
+that workspace should track the generated child commit. Do not manually edit
+workflow-generated application image pins here for normal releases.
+
+The current child GitRepositories omit `spec.verify`; therefore a UI value such
+as `Signature: none` is expected and means Git commit signature verification is
+not configured. It is separate from the GHCR image attestations enforced by
+native admission. Enable Flux commit verification only as a reviewed signed
+commit/public-key rollout.
 
 ## Current native production DNS
 

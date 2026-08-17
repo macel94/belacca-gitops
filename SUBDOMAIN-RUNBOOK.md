@@ -31,7 +31,8 @@ maintained production plane: native Flux under `clusters/belacca-production/`.
 kubectl config use-context belacca-native
 kubectl kustomize clusters/belacca-production >/tmp/native-production-render.yaml
 git diff --check
-flux reconcile kustomization flux-system -n flux-system --with-source
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization flux-system -n flux-system
 ```
 
 Verify the route with external DNS and HTTPS checks, preserving redirect paths.
