@@ -104,6 +104,8 @@ def validate_native() -> None:
 
     if "prom/prometheus:v3.13.2@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
         fail("native Prometheus image must be immutable and must not use latest")
+    if "strategy:\n    type: Recreate" not in deployment:
+        fail("native Prometheus must recreate to avoid overlapping writers on its RWO TSDB PVC")
     for fragment in (
         "--storage.tsdb.retention.time=45d",
         "--storage.tsdb.retention.size=4GB",

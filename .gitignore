@@ -1,5 +1,7 @@
 *.swp
 .DS_Store
+__pycache__/
+*.pyc
 
 # Local backup artifacts and evidence (never commit plaintext state)
 *.sqlite
