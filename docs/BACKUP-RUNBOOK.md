@@ -17,11 +17,14 @@ Protected SQLite sources are:
 | GoatCounter | `analytics/goatcounter` | `goatcounter-data` | `/source/db.sqlite3` | 02:29 |
 | Dex | `dex/dex` | `dex-data` | `/source/dex.db` | 02:41 |
 
-Each writer remains one replica and each backup Pod mounts its PVC read-only. Backup Pods use filesystem group `1000` for Pong/GoatCounter and `1001` for Dex, matching the protected database file groups.
+Each writer remains one replica and each backup Pod mounts its PVC read-only. Backup Pods use filesystem group `1000` for Pong/GoatCounter and `1001` for Dex, matching the protected database file groups. Because these are Longhorn `ReadWriteOnce` volumes, every source backup Job requires pod affinity to the node hosting its corresponding single-writer workload; this prevents a backup from waiting indefinitely for a cross-node attach.
 The procedure must still obtain an approved quiesced/consistent source copy:
 stop or fence the single writer according to the service-specific maintenance
 procedure before enabling the gate. A read-only mount alone is not proof that a
-live SQLite file was safe to copy.
+live SQLite file was safe to copy. The runner uses a 120-second bounded SQLite
+lock/storage wait and retries a failed copy once using a fresh destination; it
+then fails the Job with a diagnostic instead of waiting for the 30-minute Job
+deadline.
 
 Restore verification has no production PVC mount. It downloads to an ephemeral,
 private target, validates the manifest, SHA-256, and `PRAGMA integrity_check`,
@@ -85,6 +88,14 @@ private secret manager. Do not commit or print values:
 The supplied job manifests reference these Secrets but intentionally do not
 create them. An absent Secret or a gate other than exactly `true` produces a
 failed Job and a visible alert condition rather than a false success.
+
+Finished backup and restore-verification Jobs set
+`failedJobsHistoryLimit: 0` and a 15-minute `ttlSecondsAfterFinished` safety
+net. The CronJob controller may prune a failed Job sooner, while the TTL
+controller independently cascades deletion to any finished Job and its Pod;
+together these prevent stale failed Pods from accumulating. The cleanup does
+not make a failed run successful and does not remove the immutable backup
+artifact or its alert signal.
 
 ## Permission and encryption acceptance test
 

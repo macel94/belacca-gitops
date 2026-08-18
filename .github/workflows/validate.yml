@@ -22,6 +22,10 @@ jobs:
         run: |
           python3 scripts/validate-image-policy.py
           bash scripts/validate-image-policy.test.sh
+      - name: Validate encrypted backup and restore contracts
+        run: |
+          python3 scripts/validate-backup.py
+          python3 -m unittest discover -s scripts/backup -p 'test_*.py' -v
       - name: Validate service catalog
         run: python3 scripts/validate-catalog.py
       - name: Validate catalog JSON

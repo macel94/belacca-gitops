@@ -31,6 +31,10 @@ REQUIRED_METADATA = {
     "schema", "service", "created_at", "source_sha256", "sqlite_integrity",
     "source_revision", "image_digests", "runbook",
 }
+BACKUP_PAGE_SIZE = 64
+BACKUP_RETRY_SLEEP_SECONDS = 0.1
+BACKUP_LOCK_TIMEOUT_SECONDS = 120
+BACKUP_MAX_ATTEMPTS = 2
 
 
 def fail(message: str) -> NoReturn:
@@ -82,16 +86,52 @@ def integrity(path: Path) -> None:
 
 
 def online_backup(source: Path, destination: Path) -> None:
-    """Make a new SQLite file through the online backup API."""
+    """Make a bounded SQLite online backup and fail closed on a stuck source."""
     if not source.is_file():
         fail(f"SQLite source does not exist: {source}")
-    try:
-        with sqlite3.connect(f"file:{source.resolve()}?mode=ro", uri=True) as source_db, sqlite3.connect(destination) as destination_db:
-            integrity_connection(source_db, f"source {source}")
-            source_db.backup(destination_db)
-            integrity_connection(destination_db, f"backup {destination}")
-    except sqlite3.Error as exc:
-        fail(f"SQLite online backup failed: {exc}")
+    last_error = "SQLite online backup failed without a diagnostic"
+    for attempt in range(1, BACKUP_MAX_ATTEMPTS + 1):
+        deadline = time.monotonic() + BACKUP_LOCK_TIMEOUT_SECONDS
+
+        def progress(_status: int, _remaining: int, _total: int) -> None:
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    f"SQLite online backup exceeded {BACKUP_LOCK_TIMEOUT_SECONDS}s "
+                    "waiting for the source database or storage"
+                )
+
+        # A failed SQLite backup may leave a partial destination. Never reuse
+        # that file on a retry.
+        destination.unlink(missing_ok=True)
+        try:
+            with sqlite3.connect(
+                f"file:{source.resolve()}?mode=ro",
+                uri=True,
+                timeout=BACKUP_LOCK_TIMEOUT_SECONDS,
+            ) as source_db, sqlite3.connect(destination) as destination_db:
+                integrity_connection(source_db, f"source {source}")
+                source_db.backup(
+                    destination_db,
+                    pages=BACKUP_PAGE_SIZE,
+                    progress=progress,
+                    sleep=BACKUP_RETRY_SLEEP_SECONDS,
+                )
+                integrity_connection(destination_db, f"backup {destination}")
+            return
+        except TimeoutError as exc:
+            last_error = str(exc)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc).lower():
+                fail(f"SQLite online backup failed: {exc}")
+            last_error = (
+                "SQLite online backup could not acquire the source lock within "
+                f"{BACKUP_LOCK_TIMEOUT_SECONDS}s: {exc}"
+            )
+        except sqlite3.Error as exc:
+            fail(f"SQLite online backup failed: {exc}")
+        if attempt < BACKUP_MAX_ATTEMPTS:
+            time.sleep(1)
+    fail(f"{last_error} after {BACKUP_MAX_ATTEMPTS} attempts")
 
 
 def safe_prefix(value: str) -> str:

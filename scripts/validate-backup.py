@@ -50,6 +50,15 @@ def main() -> int:
             require(source_jobs, f"fsGroup: {group}", f"{service} source filesystem group")
             identity_name = {"pong": "pong-backup-writer", "goatcounter": "analytics-backup-writer", "dex": "dex-backup-writer"}[service]
             require(identities, f"name: {identity_name}", "writer identities")
+        for marker in (
+            "app: cloudnativepong",
+            "app: goatcounter",
+            "app.kubernetes.io/name: dex",
+            "topologyKey: kubernetes.io/hostname",
+        ):
+            require(source_jobs, marker, "source Job same-node PVC affinity")
+        if source_jobs.count("podAffinity:") != 3 or source_jobs.count("requiredDuringSchedulingIgnoredDuringExecution:") != 3:
+            fail("each source Job must require affinity with its single-writer workload")
         for service in ("pong", "goatcounter", "dex"):
             require(verifier, f"name: {service}-restore-verification", "restore Jobs")
             require(verifier, f'"restore-verify", "{service}"', "restore Jobs")
@@ -69,6 +78,10 @@ def main() -> int:
         for text, label in ((source_jobs, "source Jobs"), (verifier, "restore Jobs")):
             if text.count("concurrencyPolicy: Forbid") < 3 and label == "source Jobs":
                 fail("each source Job must forbid overlap")
+            if text.count("failedJobsHistoryLimit: 0") != 3:
+                fail(f"each {label} CronJob must disable failed Job history retention")
+            if text.count("ttlSecondsAfterFinished: 900") != 3:
+                fail(f"each {label} Job must expire 15 minutes after completion")
             require(text, "startingDeadlineSeconds: 3600", label)
             require(text, "activeDeadlineSeconds: 1800", label)
             require(text, "automountServiceAccountToken: false", label)
@@ -100,7 +113,11 @@ def main() -> int:
         runner = RUNNER.read_text()
         for marker in (
             "sqlite3",
-            "source_db.backup(destination_db)",
+            "source_db.backup(",
+            "BACKUP_PAGE_SIZE = 64",
+            "BACKUP_LOCK_TIMEOUT_SECONDS = 120",
+            "BACKUP_MAX_ATTEMPTS = 2",
+            "progress=progress",
             "x-amz-server-side-encryption",
             "content-md5",
             "https://",

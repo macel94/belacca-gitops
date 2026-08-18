@@ -13,11 +13,14 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: pong}}
         spec:
@@ -56,11 +59,14 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: goatcounter}}
         spec:
@@ -99,11 +105,14 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: restore-verifier, belacca.com/service: dex}}
         spec:

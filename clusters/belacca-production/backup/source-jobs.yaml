@@ -13,17 +13,28 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: pong}}
         spec:
           serviceAccountName: pong-backup-writer
           automountServiceAccountToken: false
           securityContext: {fsGroup: 1000, runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app: cloudnativepong
+                      component: api
+                  topologyKey: kubernetes.io/hostname
           restartPolicy: Never
           containers:
             - name: runner
@@ -58,17 +69,27 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: goatcounter}}
         spec:
           serviceAccountName: analytics-backup-writer
           automountServiceAccountToken: false
           securityContext: {fsGroup: 1000, runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app: goatcounter
+                  topologyKey: kubernetes.io/hostname
           restartPolicy: Never
           containers:
             - name: runner
@@ -103,17 +124,28 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  # Failed runs remain observable briefly through TTL cleanup, but must not
+  # accumulate as stale error Pods in the namespace.
+  failedJobsHistoryLimit: 0
   jobTemplate:
     spec:
       backoffLimit: 0
       activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 900
       template:
         metadata: {labels: {belacca.com/component: backup-writer, belacca.com/service: dex}}
         spec:
           serviceAccountName: dex-backup-writer
           automountServiceAccountToken: false
           securityContext: {fsGroup: 1001, runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: dex
+                      app.kubernetes.io/instance: dex
+                  topologyKey: kubernetes.io/hostname
           restartPolicy: Never
           containers:
             - name: runner

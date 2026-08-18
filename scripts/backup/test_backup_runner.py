@@ -2,6 +2,8 @@
 """Deterministic local tests for the dependency-free backup runner."""
 from __future__ import annotations
 
+import contextlib
+import io
 import sqlite3
 import tempfile
 import unittest
@@ -23,6 +25,27 @@ class BackupRunnerTests(unittest.TestCase):
             backup_runner.integrity(destination)
             with sqlite3.connect(destination) as db:
                 self.assertEqual(db.execute("SELECT value FROM evidence").fetchone(), ("stable",))
+
+    def test_online_backup_fails_fast_when_source_is_locked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.sqlite"
+            destination = root / "destination.sqlite"
+            with sqlite3.connect(source) as db:
+                db.execute("CREATE TABLE evidence (value TEXT)")
+            lock = sqlite3.connect(source, timeout=0)
+            lock.execute("BEGIN EXCLUSIVE")
+            original_timeout = backup_runner.BACKUP_LOCK_TIMEOUT_SECONDS
+            backup_runner.BACKUP_LOCK_TIMEOUT_SECONDS = 1
+            try:
+                with contextlib.redirect_stderr(io.StringIO()) as stderr:
+                    with self.assertRaises(SystemExit):
+                        backup_runner.online_backup(source, destination)
+                self.assertIn("within 1s", stderr.getvalue())
+            finally:
+                backup_runner.BACKUP_LOCK_TIMEOUT_SECONDS = original_timeout
+                lock.rollback()
+                lock.close()
 
     def test_manifest_rejects_hash_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
