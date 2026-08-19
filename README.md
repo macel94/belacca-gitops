@@ -1,5 +1,11 @@
 # belacca.com GitOps platform
 
+## Mutandae native-production delivery record
+
+The Mutandae deployment history, private-source/public-image arrangement,
+Cosign/Kyverno compatibility findings, and final verification are documented
+in [`docs/MUTANDAE-NATIVE-DELIVERY.md`](docs/MUTANDAE-NATIVE-DELIVERY.md).
+
 The cross-repository commit, generated deployment, Flux reconciliation, and
 parent submodule workflow is documented in the canonical
 [`belacca-platform/docs/gitops-delivery.md`](https://github.com/macel94/belacca-platform/blob/main/docs/gitops-delivery.md).
