@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mutandae-tls
+  namespace: mutandae
+  labels:
+    belacca.com/component: tls
+    belacca.com/project: mutandae
+    belacca.com/stage: native-production
+spec:
+  secretName: mutandae-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  privateKey:
+    rotationPolicy: Always
+  dnsNames:
+    - mutandae.com
+    - preview.mutandae.com

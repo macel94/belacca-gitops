@@ -8,8 +8,6 @@ metadata:
     belacca.com/project: pong
 spec:
   interval: 10m
-  # The application repository retains this path for compatibility; the live
-  # deployment is native production, not a staging environment.
   path: ./k8s/overlays/native-staging
   prune: false
   wait: true
@@ -41,3 +39,24 @@ spec:
   sourceRef:
     kind: GitRepository
     name: francesco-belacca-site
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: mutandae
+  namespace: flux-system
+  labels:
+    belacca.com/owner: native-root
+    belacca.com/project: mutandae
+spec:
+  interval: 10m
+  path: ./deploy/k3s
+  prune: false
+  wait: true
+  timeout: 10m
+  dependsOn:
+    - name: flux-system
+    - name: native-image-policy
+  sourceRef:
+    kind: GitRepository
+    name: mutandae

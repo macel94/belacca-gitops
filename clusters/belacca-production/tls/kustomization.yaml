@@ -5,3 +5,4 @@ resources:
   - clusterissuer.yaml
   - certificates.yaml
   - platform-certificates.yaml
+  - mutandae-certificate.yaml

@@ -21,10 +21,8 @@ spec:
       match:
         any:
           - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - pong
+              kinds: [Pod]
+              namespaces: [pong]
       verifyImages:
         - imageReferences:
             - ghcr.io/macel94/cloudnativepong-api*
@@ -54,10 +52,8 @@ spec:
       match:
         any:
           - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - portfolio
+              kinds: [Pod]
+              namespaces: [portfolio]
       verifyImages:
         - imageReferences:
             - ghcr.io/macel94/francesco-belacca-site*
@@ -73,6 +69,34 @@ spec:
                     - keyless:
                         issuer: https://token.actions.githubusercontent.com
                         subject: https://github.com/macel94/francesco-belacca-site/.github/workflows/test-and-publish.yml@refs/heads/main
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ buildDefinition.buildType }}"
+                      operator: Equals
+                      value: https://actions.github.io/buildtypes/workflow/v1
+    - name: verify-mutandae-provenance
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [mutandae]
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/macel94/mutandae*
+          type: SigstoreBundle
+          required: true
+          failureAction: Enforce
+          mutateDigest: false
+          verifyDigest: true
+          attestations:
+            - predicateType: https://slsa.dev/provenance/v1
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/macel94/mutandae/.github/workflows/ci.yml@refs/heads/main
                         rekor:
                           url: https://rekor.sigstore.dev
               conditions:
