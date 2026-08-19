@@ -91,7 +91,7 @@ spec:
           mutateDigest: false
           verifyDigest: true
           attestations:
-            - predicateType: https://cyclonedx.org/bom
+            - type: https://cyclonedx.org/bom
               attestors:
                 - entries:
                     - keyless:

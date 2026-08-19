@@ -91,7 +91,7 @@ spec:
           mutateDigest: false
           verifyDigest: true
           attestations:
-            - predicateType: https://slsa.dev/provenance/v1
+            - type: https://slsa.dev/provenance/v1
               attestors:
                 - entries:
                     - keyless:
