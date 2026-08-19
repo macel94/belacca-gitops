@@ -85,7 +85,7 @@ spec:
       verifyImages:
         - imageReferences:
             - ghcr.io/macel94/mutandae*
-          type: SigstoreBundle
+          type: Cosign
           required: true
           failureAction: Enforce
           mutateDigest: false
