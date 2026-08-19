@@ -24,14 +24,12 @@ repository's [`docs/native-production-delivery.md`](https://github.com/macel94/m
   - `policies/first-party-image-sbom.yaml`;
   - `policies/first-party-image-vulnerability.yaml`;
   - `policies/production-image-digest.yaml`.
-- Final GitOps commit: `7eaaa96`.
-
-The live application source revision is the generated source deployment commit
-`7347e2a`, and the final runtime image is:
-
-```text
-ghcr.io/macel94/mutandae:sha-4ed7eb016df617ca485ec3ed0e4d7e58578b1061@sha256:da80aaa6a6b277b583d28e8b15fa579b05f6f6ca4b5b3a43ca8734d9ea077b9d
-```
+- The live GitOps policy history culminated in `7eaaa96`; this documentation
+  record is the follow-up commit containing the durable runbook.
+- The current source deployment revision and runtime image tag/digest are the
+  values in the Mutandae repository's generated
+  `deploy/k3s/kustomization.yaml`. That file is authoritative because each
+  successful publish may replace the generated pin.
 
 The Flux revision and image source tag intentionally differ: Flux consumes the
 generated deployment commit, while the image tag identifies the human source
