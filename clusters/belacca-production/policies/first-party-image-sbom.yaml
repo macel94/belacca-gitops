@@ -86,12 +86,13 @@ spec:
         - imageReferences:
             - ghcr.io/macel94/mutandae*
           type: Cosign
+          cosignOCI11: true
           required: true
           failureAction: Enforce
           mutateDigest: false
           verifyDigest: true
           attestations:
-            - type: https://cyclonedx.org/bom
+            - type: cyclonedx
               attestors:
                 - entries:
                     - keyless:
