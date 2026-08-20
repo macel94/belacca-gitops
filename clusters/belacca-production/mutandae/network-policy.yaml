@@ -87,6 +87,14 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # The optional real Azure integration calls login.microsoftonline.com,
+    # graph.microsoft.com, and a user-supplied *.vault.azure.net endpoint.
+    # Standard NetworkPolicy has no DNS-name selector, so keep this limited to
+    # TCP/443; the Go adapter hard-codes Graph/identity hosts and validates the
+    # Key Vault host/scheme before opening a session.
+    - ports:
+        - protocol: TCP
+          port: 443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

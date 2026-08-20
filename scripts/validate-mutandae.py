@@ -44,6 +44,8 @@ def main() -> int:
 
     require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-default-deny")
     require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-redis-traffic")
+    require(CLUSTER / "mutandae" / "network-policy.yaml", "# The optional real Azure integration calls")
+    require(CLUSTER / "mutandae" / "network-policy.yaml", "port: 443")
     require(CLUSTER / "mutandae" / "network-policy.yaml", "cidr: 169.58.97.73/32")
     require(CLUSTER / "mutandae" / "network-policy.yaml", "cidr: 169.58.143.41/32")
     require(CLUSTER / "mutandae" / "network-policy.yaml", "cidr: 169.58.143.42/32")
