@@ -30,7 +30,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: mutandae
+                name: mutandae-preview
                 port:
                   name: http
 ---
@@ -71,7 +71,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: mutandae
+                name: mutandae-preview
                 port:
                   name: http
 ---

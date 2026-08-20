@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mutandae-redis
+  namespace: mutandae
+  labels:
+    app.kubernetes.io/name: mutandae-redis
+    belacca.com/project: mutandae
+    belacca.com/component: persistence
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mutandae-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mutandae-redis
+  namespace: mutandae
+  labels:
+    app.kubernetes.io/name: mutandae-redis
+    belacca.com/project: mutandae
+    belacca.com/component: persistence
+spec:
+  serviceName: mutandae-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mutandae-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mutandae-redis
+        belacca.com/project: mutandae
+        belacca.com/component: persistence
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: redis:7.4.2-alpine@sha256:02419de7eddf55aa5bcf49efb74e88fa8d931b4d77c07eff8a6b2144472b6952
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - >-
+              printf 'appendonly yes\nsave 900 1\nsave 300 10\nrequirepass %s\n'
+              "$REDIS_PASSWORD" > /tmp/redis.conf && exec redis-server /tmp/redis.conf
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-redis-auth
+                  key: REDIS_PASSWORD
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "REDISCLI_AUTH=\"$REDIS_PASSWORD\" redis-cli ping"]
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "REDISCLI_AUTH=\"$REDIS_PASSWORD\" redis-cli ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          belacca.com/project: mutandae
+          belacca.com/component: persistence
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 5Gi

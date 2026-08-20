@@ -9,7 +9,6 @@ resources:
   - cert-manager
   - tls
   - routing
-  - mutandae
   - native-sources.yaml
   - native-policy-system.yaml
   - native-applications.yaml

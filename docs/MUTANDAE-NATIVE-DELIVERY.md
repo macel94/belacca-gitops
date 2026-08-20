@@ -16,7 +16,8 @@ repository's [`docs/native-production-delivery.md`](https://github.com/macel94/m
 - Flux Kustomization: `flux-system/mutandae`.
 - Application path: `./deploy/k3s`.
 - Runtime namespace: `mutandae`.
-- GitOps namespace owner: `clusters/belacca-production/mutandae/namespace.yaml`.
+- GitOps namespace owner: `clusters/belacca-production/secrets/namespaces.yaml`.
+- Persistence overlay: `clusters/belacca-production/mutandae/` (Redis StatefulSet, Longhorn PVC, NetworkPolicies).
 - Routes: `clusters/belacca-production/routing/mutandae-ingress.yaml`.
 - Certificate: `clusters/belacca-production/tls/mutandae-certificate.yaml`.
 - Admission policies:
@@ -164,9 +165,18 @@ mutandae.com
 preview.mutandae.com
 ```
 
-Both hostnames route to the same `mutandae` Service. Separate preview
-application semantics were not requested, so preview currently serves the same
-application rather than redirecting to the canonical hostname.
+The hostnames now route to separate Services:
+
+- `mutandae.com` -> `mutandae` (live, `MUTANDAE_ENVIRONMENT=live`);
+- `preview.mutandae.com` -> `mutandae-preview` (preview,
+  `MUTANDAE_ENVIRONMENT=preview`).
+
+Both application Deployments use the same generated immutable image and the
+same dedicated Redis instance, but the application prefixes all snapshot and
+pub/sub keys with `mutandae:live` or `mutandae:preview`. Preview lifecycle
+changes therefore do not mutate live state. Redis is a temporary demo store,
+not a durable event log or HA database; PostgreSQL remains a future repository
+backend and is intentionally not provisioned here.
 
 ## Verification record
 
@@ -176,8 +186,10 @@ The final rollout was verified with:
 flux get sources git -A | grep -E 'mutandae|flux-system'
 flux get kustomizations -A | grep -E 'mutandae|native-image-policy|flux-system'
 
-kubectl -n mutandae get deployment,pods,service,ingress,certificate -o wide
+kubectl -n mutandae get statefulset,pvc,deployment,pods,service,ingress,certificate -o wide
 kubectl -n mutandae get deployment mutandae -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+kubectl -n mutandae get deployment mutandae-preview -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+kubectl -n mutandae get statefulset mutandae-redis -o jsonpath='{.status.readyReplicas}{"/"}{.spec.replicas}{"\n"}'
 ```
 
 Final results:
@@ -186,7 +198,10 @@ Final results:
 flux-system/mutandae GitRepository:  Ready
 flux-system/mutandae Kustomization:  Ready=True, Healthy=True
 mutandae Deployment:                 Available=True
-mutandae Pod:                        1/1 Running
+mutandae-preview Deployment:         Available=True
+mutandae Redis StatefulSet:           Ready 1/1
+mutandae Redis PVC:                  Bound
+mutandae Pods:                       live + preview + redis Running
 mutandae Certificate:                Ready=True
 ```
 

@@ -57,6 +57,7 @@ spec:
   dependsOn:
     - name: flux-system
     - name: native-image-policy
+    - name: native-mutandae-persistence
   sourceRef:
     kind: GitRepository
     name: mutandae
