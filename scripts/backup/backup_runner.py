@@ -17,6 +17,7 @@ import os
 import sqlite3
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -35,6 +36,7 @@ BACKUP_PAGE_SIZE = 64
 BACKUP_RETRY_SLEEP_SECONDS = 0.1
 BACKUP_LOCK_TIMEOUT_SECONDS = 120
 BACKUP_MAX_ATTEMPTS = 2
+METRICS_REFRESH_SECONDS = 300
 
 
 def fail(message: str) -> NoReturn:
@@ -377,25 +379,24 @@ def restore_configuration_ready() -> bool:
     return endpoint.startswith("https://") and bool(prefix) and not any(part in {".", ".."} for part in prefix.split("/"))
 
 
-def metrics_server() -> None:
-    port = int(os.environ.get("METRICS_PORT", "9091"))
-    def collect() -> str:
-        configured = restore_configuration_ready()
-        client = S3(restore=True) if configured else None
-        lines = ["# HELP belacca_backup_configuration_ready Whether the externally provisioned restore Secret and runtime gates are ready.", "# TYPE belacca_backup_configuration_ready gauge", f"belacca_backup_configuration_ready {int(configured)}"]
-        lines += ["# HELP belacca_backup_last_success_timestamp_seconds Unix timestamp of the newest verified backup.", "# TYPE belacca_backup_last_success_timestamp_seconds gauge"]
-        lines += ["# HELP belacca_backup_integrity_ok Whether the newest artifact and manifest verify.", "# TYPE belacca_backup_integrity_ok gauge"]
-        lines += ["# HELP belacca_backup_daily_retention_count Number of daily verified artifacts found.", "# TYPE belacca_backup_daily_retention_count gauge"]
-        lines += ["# HELP belacca_backup_monthly_retention_count Number of distinct UTC months with verified artifacts.", "# TYPE belacca_backup_monthly_retention_count gauge"]
-        for service in sorted(SERVICES):
-            if not configured or client is None:
-                lines.append(f'belacca_backup_last_success_timestamp_seconds{{service="{service}"}} 0')
-                lines.append(f'belacca_backup_integrity_ok{{service="{service}"}} 0')
-                lines.append(f'belacca_backup_daily_retention_count{{service="{service}"}} 0')
-                lines.append(f'belacca_backup_monthly_retention_count{{service="{service}"}} 0')
-                continue
-            latest = None
-            ok = 0
+def empty_metrics() -> dict[str, dict[str, float | int]]:
+    return {
+        service: {
+            "last_success": 0.0,
+            "integrity_ok": 0,
+            "daily_retention": 0,
+            "monthly_retention": 0,
+        }
+        for service in SERVICES
+    }
+
+
+def collect_metrics(client: S3) -> dict[str, dict[str, float | int]]:
+    """Collect remote backup state for the background metrics refresher."""
+    values = empty_metrics()
+    for service in sorted(SERVICES):
+        try:
+            records = []
             for key in client.list_keys(f"{client.prefix}/{service}"):
                 if not key.endswith(".manifest.json"):
                     continue
@@ -404,41 +405,97 @@ def metrics_server() -> None:
                     if data.get("service") != service:
                         continue
                     created = datetime.fromisoformat(str(data["created_at"]).replace("Z", "+00:00"))
-                    if latest is None or created > latest[0]: latest = (created, key, data)
-                except (KeyError, ValueError, json.JSONDecodeError, ET.ParseError):
+                    records.append((created, key, data))
+                except (KeyError, ValueError, json.JSONDecodeError, ET.ParseError, SystemExit):
                     continue
-            if latest:
+
+            if records:
+                created, manifest_key, manifest = max(records, key=lambda item: item[0])
                 try:
-                    artifact = client.get(latest[1][:-len(".manifest.json")])
-                    ok = int(hashlib.sha256(artifact).hexdigest() == latest[2].get("source_sha256") and latest[2].get("sqlite_integrity") == "ok")
-                except SystemExit:
-                    ok = 0
-                lines.append(f'belacca_backup_last_success_timestamp_seconds{{service="{service}"}} {latest[0].timestamp()}')
-                lines.append(f'belacca_backup_integrity_ok{{service="{service}"}} {ok}')
-            else:
-                lines.append(f'belacca_backup_last_success_timestamp_seconds{{service="{service}"}} 0')
-                lines.append(f'belacca_backup_integrity_ok{{service="{service}"}} 0')
-            manifests = [k for k in client.list_keys(f"{client.prefix}/{service}") if k.endswith(".manifest.json")]
-            days = set()
-            months = set()
-            for key in manifests:
+                    artifact = client.get(manifest_key[:-len(".manifest.json")])
+                    values[service]["last_success"] = created.timestamp()
+                    values[service]["integrity_ok"] = int(
+                        hashlib.sha256(artifact).hexdigest() == manifest.get("source_sha256")
+                        and manifest.get("sqlite_integrity") == "ok"
+                    )
+                except (Exception, SystemExit):
+                    pass
+
+                days = set()
+                months = set()
+                for item_created, item_key, item in records:
+                    try:
+                        artifact = client.get(item_key[:-len(".manifest.json")])
+                        if (
+                            item.get("sqlite_integrity") == "ok"
+                            and hashlib.sha256(artifact).hexdigest() == item.get("source_sha256")
+                        ):
+                            created_at = str(item.get("created_at", item_created.isoformat()))
+                            days.add(created_at[:10])
+                            months.add(created_at[:7])
+                    except (Exception, SystemExit):
+                        continue
+                values[service]["daily_retention"] = len(days)
+                values[service]["monthly_retention"] = len(months)
+        except (Exception, SystemExit):
+            # The HTTP endpoint must remain local and bounded even when the
+            # object store is slow or unavailable.
+            continue
+    return values
+
+
+def metrics_payload(configured: bool, values: dict[str, dict[str, float | int]]) -> str:
+    lines = [
+        "# HELP belacca_backup_configuration_ready Whether the externally provisioned restore Secret and runtime gates are ready.",
+        "# TYPE belacca_backup_configuration_ready gauge",
+        f"belacca_backup_configuration_ready {int(configured)}",
+        "# HELP belacca_backup_last_success_timestamp_seconds Unix timestamp of the newest verified backup.",
+        "# TYPE belacca_backup_last_success_timestamp_seconds gauge",
+        "# HELP belacca_backup_integrity_ok Whether the newest artifact and manifest verify.",
+        "# TYPE belacca_backup_integrity_ok gauge",
+        "# HELP belacca_backup_daily_retention_count Number of daily verified artifacts found.",
+        "# TYPE belacca_backup_daily_retention_count gauge",
+        "# HELP belacca_backup_monthly_retention_count Number of distinct UTC months with verified artifacts.",
+        "# TYPE belacca_backup_monthly_retention_count gauge",
+    ]
+    for service in sorted(SERVICES):
+        item = values[service] if configured else empty_metrics()[service]
+        lines.append(f'belacca_backup_last_success_timestamp_seconds{{service="{service}"}} {item["last_success"]}')
+        lines.append(f'belacca_backup_integrity_ok{{service="{service}"}} {item["integrity_ok"]}')
+        lines.append(f'belacca_backup_daily_retention_count{{service="{service}"}} {item["daily_retention"]}')
+        lines.append(f'belacca_backup_monthly_retention_count{{service="{service}"}} {item["monthly_retention"]}')
+    return "\n".join(lines) + "\n"
+
+
+def metrics_server() -> None:
+    port = int(os.environ.get("METRICS_PORT", "9091"))
+    refresh_seconds = max(1, int(os.environ.get("METRICS_REFRESH_SECONDS", str(METRICS_REFRESH_SECONDS))))
+    state = {"configured": restore_configuration_ready(), "values": empty_metrics()}
+    state_lock = threading.Lock()
+
+    def refresh() -> None:
+        while True:
+            configured = restore_configuration_ready()
+            values = empty_metrics()
+            if configured:
                 try:
-                    item = json.loads(client.get(key))
-                    artifact = client.get(key[:-len(".manifest.json")])
-                    if item.get("sqlite_integrity") == "ok" and hashlib.sha256(artifact).hexdigest() == item.get("source_sha256"):
-                        created = str(item["created_at"])
-                        days.add(created[:10])
-                        months.add(created[:7])
-                except (KeyError, ValueError, json.JSONDecodeError):
-                    continue
-            daily = len(days)
-            lines.append(f'belacca_backup_daily_retention_count{{service="{service}"}} {daily}')
-            lines.append(f'belacca_backup_monthly_retention_count{{service="{service}"}} {len(months)}')
-        return "\n".join(lines) + "\n"
+                    values = collect_metrics(S3(restore=True))
+                except (Exception, SystemExit):
+                    pass
+            with state_lock:
+                state["configured"] = configured
+                state["values"] = values
+            time.sleep(refresh_seconds)
+
+    threading.Thread(target=refresh, name="backup-metrics-refresh", daemon=True).start()
+
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
             if self.path != "/metrics": self.send_error(404); return
-            payload = collect().encode()
+            with state_lock:
+                configured = bool(state["configured"])
+                values = state["values"]
+            payload = metrics_payload(configured, values).encode()
             self.send_response(200); self.send_header("Content-Type", "text/plain; version=0.0.4"); self.send_header("Content-Length", str(len(payload))); self.end_headers(); self.wfile.write(payload)
         def log_message(self, *_: object) -> None: return
     http.server.ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()

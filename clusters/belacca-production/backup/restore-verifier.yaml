@@ -152,7 +152,7 @@ spec:
     metadata:
       labels: {app: backup-metrics, belacca.com/stage: native-production, belacca.com/project: backup}
       annotations:
-        belacca.com/runner-contract: configuration-aware-v2
+        belacca.com/runner-contract: configuration-aware-v3
     spec:
       serviceAccountName: backup-restore-verifier
       automountServiceAccountToken: false

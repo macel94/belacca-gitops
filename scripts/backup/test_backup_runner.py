@@ -74,6 +74,13 @@ class BackupRunnerTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             backup_runner.safe_prefix("approved/../other")
 
+    def test_metrics_payload_is_rendered_without_remote_store_access(self) -> None:
+        values = backup_runner.empty_metrics()
+        values["pong"]["last_success"] = 123.0
+        payload = backup_runner.metrics_payload(True, values)
+        self.assertIn("belacca_backup_configuration_ready 1", payload)
+        self.assertIn('belacca_backup_last_success_timestamp_seconds{service="pong"} 123.0', payload)
+
     def test_metrics_configuration_is_unknown_until_external_restore_inputs_exist(self) -> None:
         names = (
             "BACKUP_AUTOMATION_ENABLED", "BACKUP_CONSISTENCY_ACKNOWLEDGED",

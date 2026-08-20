@@ -79,7 +79,7 @@ def main() -> int:
             "name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key, optional: true}}",
         ):
             require(verifier, marker, "backup metrics Secret interface")
-        require(verifier, "belacca.com/runner-contract: configuration-aware-v2", "backup metrics contract")
+        require(verifier, "belacca.com/runner-contract: configuration-aware-v3", "backup metrics contract")
         for service_label in ("exported_service",):
             if observability.count(f"{{{{ $labels.{service_label} }}}}") < 4:
                 fail("backup alerts must identify the exported service label")
