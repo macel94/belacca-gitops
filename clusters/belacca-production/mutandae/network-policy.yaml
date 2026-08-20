@@ -33,6 +33,20 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: traefik
+        # Traefik runs hostNetwork in native production. These exact native
+        # node/flannel source ranges are also used by the working Pong policy.
+        - ipBlock:
+            cidr: 10.42.0.0/32
+        - ipBlock:
+            cidr: 10.42.1.0/32
+        - ipBlock:
+            cidr: 10.42.2.0/32
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
