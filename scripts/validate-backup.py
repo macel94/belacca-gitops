@@ -72,6 +72,17 @@ def main() -> int:
             fail("each restore verifier must declare the bounded memory limit")
         if "requests: {cpu: 50m, memory: 128Mi}" not in verifier or "limits: {memory: 512Mi}" not in verifier:
             fail("backup metrics Deployment must declare the bounded CPU request and memory limit")
+        for marker in (
+            "name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled, optional: true}}",
+            "name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged, optional: true}}",
+            "name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint, optional: true}}",
+            "name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key, optional: true}}",
+        ):
+            require(verifier, marker, "backup metrics Secret interface")
+        require(verifier, "belacca.com/runner-contract: configuration-aware-v2", "backup metrics contract")
+        for service_label in ("exported_service",):
+            if observability.count(f"{{{{ $labels.{service_label} }}}}") < 4:
+                fail("backup alerts must identify the exported service label")
         if re.search(r"restore-verification[\s\S]*?claimName:", verifier):
             fail("restore verification must not mount a production PVC")
 
@@ -106,6 +117,14 @@ def main() -> int:
             "backup-metrics.backup-system.svc.cluster.local:9091",
         ):
             require(observability, marker, "observability contract")
+        for alert, expression in (
+            ("NativeBackupStale", "(time() - belacca_backup_last_success_timestamp_seconds > 93600) and on() (belacca_backup_configuration_ready == 1)"),
+            ("NativeBackupIntegrityFailed", "(belacca_backup_integrity_ok < 1) and on() (belacca_backup_configuration_ready == 1)"),
+            ("NativeBackupDailyRetentionLow", "(belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)"),
+            ("NativeBackupMonthlyRetentionLow", "(belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)"),
+        ):
+            require(observability, f"alert: {alert}", "observability contract")
+            require(observability, f"expr: {expression}", f"{alert} readiness gate")
         require(policy, "backup-metrics", "backup NetworkPolicy")
         require(flux, "name: native-backup", "Flux wiring")
         require(flux, "path: ./clusters/belacca-production/backup", "Flux wiring")

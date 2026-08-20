@@ -148,32 +148,32 @@ data:
         interval: 30s
         rules:
           - alert: NativeBackupStale
-            expr: time() - belacca_backup_last_success_timestamp_seconds > 93600
+            expr: (time() - belacca_backup_last_success_timestamp_seconds > 93600) and on() (belacca_backup_configuration_ready == 1)
             for: 15m
             labels: {severity: critical, notification_class: backup}
             annotations:
-              summary: "Native {{ $labels.service }} backup is stale"
+              summary: "Native {{ $labels.exported_service }} backup is stale"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupIntegrityFailed
-            expr: belacca_backup_integrity_ok < 1
+            expr: (belacca_backup_integrity_ok < 1) and on() (belacca_backup_configuration_ready == 1)
             for: 5m
             labels: {severity: critical, notification_class: backup}
             annotations:
-              summary: "Native {{ $labels.service }} backup integrity verification failed"
+              summary: "Native {{ $labels.exported_service }} backup integrity verification failed"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupDailyRetentionLow
-            expr: belacca_backup_daily_retention_count < 35
+            expr: (belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)
             for: 1h
             labels: {severity: warning, notification_class: backup}
             annotations:
-              summary: "Native {{ $labels.service }} has fewer than 35 verified daily backups"
+              summary: "Native {{ $labels.exported_service }} has fewer than 35 verified daily backups"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupMonthlyRetentionLow
-            expr: belacca_backup_monthly_retention_count < 12
+            expr: (belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)
             for: 1h
             labels: {severity: warning, notification_class: backup}
             annotations:
-              summary: "Native {{ $labels.service }} has fewer than 12 verified monthly backups"
+              summary: "Native {{ $labels.exported_service }} has fewer than 12 verified monthly backups"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupConfigurationUnknown
             expr: belacca_backup_configuration_ready == 0

@@ -152,7 +152,7 @@ spec:
     metadata:
       labels: {app: backup-metrics, belacca.com/stage: native-production, belacca.com/project: backup}
       annotations:
-        belacca.com/runner-contract: configuration-unknown-v1
+        belacca.com/runner-contract: configuration-aware-v2
     spec:
       serviceAccountName: backup-restore-verifier
       automountServiceAccountToken: false
@@ -164,12 +164,20 @@ spec:
           resources:
             requests: {cpu: 50m, memory: 128Mi}
             limits: {memory: 512Mi}
-          # Metrics deliberately has no Secret references. It reports
-          # configuration_unknown until the externally managed restore
-          # interface and both runtime gates are exactly true. The live
-          # runtime Secrets are managed out of band and are not committed here.
+          # Metrics reads the externally managed restore interface but never
+          # writes to object storage. It reports configuration_unknown until
+          # that interface and both runtime gates are exactly true. Secret
+          # values are managed out of band and are not committed here.
           env:
+            - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled, optional: true}}}
+            - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged, optional: true}}}
             - {name: METRICS_PORT, value: "9091"}
+            - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint, optional: true}}}
+            - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket, optional: true}}}
+            - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix, optional: true}}}
+            - {name: S3_RESTORE_REGION, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: region, optional: true}}}
+            - {name: S3_RESTORE_ACCESS_KEY_ID, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: access-key-id, optional: true}}}
+            - {name: S3_RESTORE_SECRET_ACCESS_KEY, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: secret-access-key, optional: true}}}
           ports: [{name: metrics, containerPort: 9091}]
           securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
           readinessProbe: {httpGet: {path: /metrics, port: metrics}, periodSeconds: 30}

@@ -139,7 +139,9 @@ jobs:
               top_level_section = None
               has_sops = False
               sops_encrypted_regex = None
+              sops_unencrypted_suffix = None
               data_values = []
+              content_values = []
               encrypted_values = []
               credentials = []
 
@@ -156,6 +158,8 @@ jobs:
                   value = (match.group('value') or '').strip()
 
                   if indent == 0:
+                      if key != 'sops' and value:
+                          content_values.append((line_number, key, value))
                       top_level_section = key if key in {
                           'data', 'stringData', 'sops'
                       } else None
@@ -167,7 +171,11 @@ jobs:
 
                   if top_level_section == 'sops' and key == 'encrypted_regex':
                       sops_encrypted_regex = value.strip("'\\\"")
+                  if top_level_section == 'sops' and key == 'unencrypted_suffix':
+                      sops_unencrypted_suffix = value.strip("'\\\"")
 
+                  if top_level_section != 'sops' and value:
+                      content_values.append((line_number, key, value))
                   if top_level_section in {'data', 'stringData'} and value:
                       data_values.append((line_number, key, value))
                   if 'ENC[' in value:
@@ -179,42 +187,71 @@ jobs:
                           (line_number, key, value, top_level_section)
                       )
 
+              kind_is_secret = kind == 'Secret'
+              if has_sops and sops_unencrypted_suffix and encrypted_scalar.fullmatch(kind or ''):
+                  # SOPS can encrypt the Kubernetes envelope itself when using
+                  # unencrypted_suffix; the plaintext kind is unavailable to a
+                  # keyless CI check, but the encrypted scalar is still safely
+                  # accounted for below.
+                  kind_is_secret = True
+
               if has_sops:
-                  if kind != 'Secret':
+                  if not kind_is_secret:
                       errors.append(
                           f'{path}:{document}: SOPS document is not a Secret'
                       )
-                  if sops_encrypted_regex != encrypted_regex:
+                  if sops_encrypted_regex is not None:
+                      if sops_encrypted_regex != encrypted_regex or sops_unencrypted_suffix is not None:
+                          errors.append(
+                              f'{path}:{document}: SOPS encrypted_regex must target data/stringData'
+                          )
+                  elif not sops_unencrypted_suffix:
                       errors.append(
-                          f'{path}:{document}: SOPS encrypted_regex must target data/stringData'
+                          f'{path}:{document}: SOPS must declare encrypted_regex or unencrypted_suffix'
+                      )
+                  elif any(
+                      not key.endswith(sops_unencrypted_suffix)
+                      and not encrypted_scalar.fullmatch(value)
+                      for _, key, value in content_values
+                  ):
+                      errors.append(
+                          f'{path}:{document}: SOPS value outside unencrypted suffix is not ENC-encrypted'
                       )
                   if not data_values:
                       errors.append(
+                          f'{path}:{document}: SOPS Secret has no data'
+                      )
+                  elif sops_encrypted_regex is not None:
+                      for line_number, key, value in data_values:
+                          if not encrypted_scalar.fullmatch(value):
+                              errors.append(
+                                  f'{path}:{line_number}: SOPS Secret data value for {key} is not ENC-encrypted'
+                              )
+                  elif not any(
+                      encrypted_scalar.fullmatch(value)
+                      for _, _, value in data_values
+                  ):
+                      errors.append(
                           f'{path}:{document}: SOPS Secret has no encrypted data'
                       )
+
+              encrypted_sections = {'data', 'stringData', 'sops'}
+              if sops_unencrypted_suffix:
+                  encrypted_sections.add(None)
 
               for line_number, key, value, section in encrypted_values:
                   if not encrypted_scalar.fullmatch(value):
                       errors.append(
                           f'{path}:{line_number}: malformed ENC value for {key}'
                       )
-                  elif not has_sops or kind != 'Secret' or section not in {
-                      'data', 'stringData', 'sops'
-                  }:
+                  elif not has_sops or not kind_is_secret or section not in encrypted_sections:
                       errors.append(
                           f'{path}:{line_number}: ENC value is outside a SOPS Secret'
                       )
 
-              if has_sops:
-                  for line_number, key, value in data_values:
-                      if not encrypted_scalar.fullmatch(value):
-                          errors.append(
-                              f'{path}:{line_number}: SOPS Secret data value for {key} is not ENC-encrypted'
-                          )
-
               for line_number, key, value, section in credentials:
                   if encrypted_scalar.fullmatch(value):
-                      if not has_sops or kind != 'Secret' or section not in {
+                      if not has_sops or not kind_is_secret or section not in {
                           'data', 'stringData'
                       }:
                           errors.append(
