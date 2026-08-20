@@ -17,7 +17,7 @@ repository's [`docs/native-production-delivery.md`](https://github.com/macel94/m
 - Application path: `./deploy/k3s`.
 - Runtime namespace: `mutandae`.
 - GitOps namespace owner: `clusters/belacca-production/secrets/namespaces.yaml`.
-- Persistence overlay: `clusters/belacca-production/mutandae/` (Redis StatefulSet, Longhorn PVC, NetworkPolicies).
+- Persistence overlay: root-owned `clusters/belacca-production/mutandae/` (Redis StatefulSet, Longhorn PVC, encrypted Secret, NetworkPolicies).
 - Routes: `clusters/belacca-production/routing/mutandae-ingress.yaml`.
 - Certificate: `clusters/belacca-production/tls/mutandae-certificate.yaml`.
 - Admission policies:

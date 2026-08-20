@@ -49,8 +49,9 @@ def main() -> int:
     require(ingress, "host: preview.mutandae.com")
     require(ingress, "host: mutandae.com")
 
-    require(CLUSTER / "native-platform-applications.yaml", "name: native-mutandae-persistence")
-    require(CLUSTER / "native-applications.yaml", "name: native-mutandae-persistence")
+    require(CLUSTER / "kustomization.yaml", "  - mutandae")
+    if "native-mutandae-persistence" in (CLUSTER / "native-platform-applications.yaml").read_text():
+        raise SystemExit("persistence overlay must remain owned by the native root Kustomization")
     require(CLUSTER / "mutandae" / "kustomization.yaml", "redis-secret.yaml")
     print("validated Mutandae Redis persistence, environment isolation, routing, and Flux contracts")
     return 0
