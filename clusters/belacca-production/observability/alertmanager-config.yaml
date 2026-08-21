@@ -25,12 +25,36 @@ data:
           matchers:
             - notificationClass="diagnostic"
           group_wait: 2m
-          repeat_interval: 12h
+          repeat_interval: 24h
         - receiver: telegram-diagnostic
           matchers:
             - notification_class="diagnostic"
           group_wait: 2m
-          repeat_interval: 12h
+          repeat_interval: 24h
+        # The backup and capacity lanes carry recurring diagnostic context (for
+        # example chronically-low retention counts and capacity headroom) that
+        # is not actionable by itself. Give them their own long repeat so they
+        # do not fall through to the aggressive 4h root default and spam.
+        - receiver: telegram-diagnostic
+          matchers:
+            - notificationClass="backup"
+          group_wait: 2m
+          repeat_interval: 24h
+        - receiver: telegram-diagnostic
+          matchers:
+            - notification_class="backup"
+          group_wait: 2m
+          repeat_interval: 24h
+        - receiver: telegram-diagnostic
+          matchers:
+            - notificationClass="capacity"
+          group_wait: 2m
+          repeat_interval: 24h
+        - receiver: telegram-diagnostic
+          matchers:
+            - notification_class="capacity"
+          group_wait: 2m
+          repeat_interval: 24h
         - receiver: telegram-page
           matchers:
             - notificationClass="page"

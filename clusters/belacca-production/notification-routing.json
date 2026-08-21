@@ -59,7 +59,7 @@
       "telegram-page": {"send_resolved": true, "role": "actionable page and page recovery"}
     },
     "default_receiver": "telegram-diagnostic",
-    "repeat_interval": "2h page, 12h diagnostic",
+    "repeat_interval": "2h page, 24h diagnostic; backup and capacity consolidated at 24h",
     "inhibition": [
       "page alerts inhibit matching diagnostic alerts",
       "critical alerts inhibit matching warnings",

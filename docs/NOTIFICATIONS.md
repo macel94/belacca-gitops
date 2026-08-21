@@ -47,7 +47,7 @@ The Alertmanager routing defaults remain:
 
 - initial grouping delay: 30 seconds for page signals, 2 minutes for diagnostic signals;
 - group interval: 5 minutes;
-- repeat interval: 2 hours for page signals, 12 hours for diagnostic signals;
+- repeat interval: 2 hours for page signals, 24 hours for diagnostic signals and for the consolidated backup/capacity lanes;
 - grouping labels: `cluster`, `alertname`, `service`, `namespace`, and `name`;
 - critical alerts inhibit matching warnings;
 - Flux camelCase metadata and Prometheus snake_case labels are both routed;

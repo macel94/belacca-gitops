@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 5eb90394e36f5d63d41442b53895e3916ab48830ff00a0bb76165fdfb69464f9
+        checksum/config: d7f1387e73a48f8ef10d8f5a9f2e5b135d060ee83cc4a4e6a72b5de2db0803d0
       labels:
         app.kubernetes.io/name: alertmanager
         belacca.com/stage: native-production
