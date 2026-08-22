@@ -85,6 +85,15 @@ classification and matching route together. Do not use `repeat_interval` as a
 substitute for resolved-message suppression, and do not remove the page route,
 inhibition rules, firing notifications, or readiness checks as a noise fix.
 
+## Alert dispatch disposition
+
+The `BelaccaNotificationPathNotProvisioned` native diagnostic rule is a deliberate
+fail-closed signal: it fires because the metric series is pinned to zero until an
+external SLO/page evidence adapter is provisioned. The in-cluster
+Alertmanager->Telegram path remains operational when it fires. A sanitized
+dispatch record is retained at
+[`docs/evidence/native-notification-path-dispatch-20260822.json`](evidence/native-notification-path-dispatch-20260822.json).
+
 ## External monitoring is intentionally deferred
 
 The in-cluster path cannot notify when the entire cluster, Kubernetes API,
