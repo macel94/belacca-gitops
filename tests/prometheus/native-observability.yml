@@ -51,13 +51,8 @@ tests:
         values: '0 0'
       - series: 'belacca_backup_daily_retention_count{service="pong"}'
         values: '0 0'
-      - series: 'belacca_backup_monthly_retention_count{service="pong"}'
-        values: '0 0'
     promql_expr_test:
-      - expr: (belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)
-        eval_time: 1h
-        exp_samples: []
-      - expr: (belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)
+      - expr: (belacca_backup_daily_retention_count < 14) and on() (belacca_backup_configuration_ready == 1)
         eval_time: 1h
         exp_samples: []
 
@@ -68,16 +63,9 @@ tests:
         values: '1 1'
       - series: 'belacca_backup_daily_retention_count{service="pong"}'
         values: '0 0'
-      - series: 'belacca_backup_monthly_retention_count{service="pong"}'
-        values: '0 0'
     promql_expr_test:
-      - expr: (belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)
+      - expr: (belacca_backup_daily_retention_count < 14) and on() (belacca_backup_configuration_ready == 1)
         eval_time: 1h
         exp_samples:
           - labels: '{__name__="belacca_backup_daily_retention_count",service="pong"}'
-            value: 0
-      - expr: (belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)
-        eval_time: 1h
-        exp_samples:
-          - labels: '{__name__="belacca_backup_monthly_retention_count",service="pong"}'
             value: 0

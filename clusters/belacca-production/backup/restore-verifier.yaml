@@ -172,6 +172,9 @@ spec:
             - {name: BACKUP_AUTOMATION_ENABLED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: automation-enabled, optional: true}}}
             - {name: BACKUP_CONSISTENCY_ACKNOWLEDGED, valueFrom: {secretKeyRef: {name: backup-restore-runtime, key: consistency-acknowledged, optional: true}}}
             - {name: METRICS_PORT, value: "9091"}
+            # Hourly refresh bounds S3 LIST/GET request volume (nightly data,
+            # no need for 5-minute polling).
+            - {name: METRICS_REFRESH_SECONDS, value: "3600"}
             - {name: S3_RESTORE_ENDPOINT, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: endpoint, optional: true}}}
             - {name: S3_RESTORE_BUCKET, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: bucket, optional: true}}}
             - {name: S3_RESTORE_PREFIX, valueFrom: {secretKeyRef: {name: backup-restore-object-store, key: prefix, optional: true}}}

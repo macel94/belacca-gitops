@@ -1,0 +1,50 @@
+{
+  "schema_version": "belacca.backup.relaxation-evidence.v1",
+  "sanitized": true,
+  "publication_state": "retention_and_cost_relaxation_recorded",
+  "observed_at_utc": "2026-09-02T21:00:00Z",
+  "provider": "aws",
+  "region": "eu-central-1",
+  "storage_class": "STANDARD",
+  "bucket_identifier": "operator-managed-secret",
+  "type": "relaxation",
+  "previous_state": {
+    "object_lock": {"enabled": true, "mode": "COMPLIANCE", "default_retention_days": 400},
+    "lifecycle": {"current_version_expiration_days": 401, "noncurrent_version_expiration_days": 401, "abort_incomplete_multipart_upload_days": 7},
+    "retention_targets": {"daily": 35, "monthly": 12},
+    "metrics_refresh_seconds": 300,
+    "budget_guard_usd": 8
+  },
+  "approved_target": {
+    "object_lock": {"enabled": true, "mode": "GOVERNANCE", "default_retention_days": 30},
+    "lifecycle": {"current_version_expiration_days": 35, "noncurrent_version_expiration_days": 35, "abort_incomplete_multipart_upload_days": 7},
+    "retention_targets": {"daily": 14, "monthly": null},
+    "daily_retention_days": "at least 14 verified daily backups (roughly two weeks)",
+    "monthly_retention_days": "dropped: no long-term monthly archive",
+    "metrics_refresh_seconds": 3600,
+    "budget_guard_usd": 5
+  },
+  "repository_applied": {
+    "observability_alerts": "NativeBackupDailyRetentionLow threshold lowered from 35 to 14; NativeBackupMonthlyRetentionLow removed",
+    "prometheus_unit_tests": "updated to the 14-day daily threshold and removed monthly expressions",
+    "metrics_s3_refresh": "default refresh interval changed from 300s to 3600s, set explicitly in the backup-metrics Deployment",
+    "contracts_and_docs": "BACKUP-CONTRACT.md, BACKUP-RUNBOOK.md, and RELIABILITY.md updated to the relaxed posture"
+  },
+  "out_of_band_application_required": [
+    "change S3 Object Lock default retention from COMPLIANCE/400-day to GOVERNANCE/30-day (bucket-level default affects new objects only)",
+    "change lifecycle expiration for current/noncurrent versions from 401 days to 35 days",
+    "lower the AWS Budgets monthly guard from USD 8 to USD 5",
+    "any already uploaded COMPLIANCE-locked objects (synthetic fixtures and early production artifacts) remain locked until their 400-day retention expires; they are small and cannot be shortened"
+  ],
+  "rationale": [
+    "The backed-up data is not sensitive and the operator wants storage to expire quickly instead of accumulating for over a year.",
+    "S3 API requests are nearly free (PUT USD 0.005/1k, GET/LIST USD 0.0004/1k); the meaningful cost driver is storage growth over the 400-day retention window.",
+    "The hourly metrics refresh cuts the dominant S3 LIST/GET poll volume by about 92% versus the 5-minute cadence, with no freshness loss because backup data changes once per night.",
+    "Nightly uploads (3 services) and daily restore verification are unchanged; they amount to a few requests per day and preserve the 24-hour RPO target."
+  ],
+  "caveats": [
+    "This record is sanitized; no bucket name, account number, access key, KMS identifier, database, token, or player data is included.",
+    "GitOps does not mutate AWS; the bucket Object Lock, lifecycle, and Budgets changes must be applied by the out-of-band operator path and re-verified.",
+    "GOVERNANCE retains WORM protection for the 30-day window while allowing authorized administrators to clean up older artifacts."
+  ]
+}

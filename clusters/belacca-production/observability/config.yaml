@@ -162,18 +162,11 @@ data:
               summary: "Native {{ $labels.exported_service }} backup integrity verification failed"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupDailyRetentionLow
-            expr: (belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)
+            expr: (belacca_backup_daily_retention_count < 14) and on() (belacca_backup_configuration_ready == 1)
             for: 1h
             labels: {severity: warning, notification_class: backup}
             annotations:
-              summary: "Native {{ $labels.exported_service }} has fewer than 35 verified daily backups"
-              runbook: docs/BACKUP-RUNBOOK.md
-          - alert: NativeBackupMonthlyRetentionLow
-            expr: (belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)
-            for: 1h
-            labels: {severity: warning, notification_class: backup}
-            annotations:
-              summary: "Native {{ $labels.exported_service }} has fewer than 12 verified monthly backups"
+              summary: "Native {{ $labels.exported_service }} has fewer than 14 verified daily backups"
               runbook: docs/BACKUP-RUNBOOK.md
           - alert: NativeBackupConfigurationUnknown
             expr: belacca_backup_configuration_ready == 0

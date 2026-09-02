@@ -36,7 +36,10 @@ BACKUP_PAGE_SIZE = 64
 BACKUP_RETRY_SLEEP_SECONDS = 0.1
 BACKUP_LOCK_TIMEOUT_SECONDS = 120
 BACKUP_MAX_ATTEMPTS = 2
-METRICS_REFRESH_SECONDS = 300
+# Refresh remote state hourly instead of every 5 minutes. Backup data changes
+# once per night, so frequent LIST+GET polling only multiplies S3 request
+# volume and cost without improving freshness guarantees.
+METRICS_REFRESH_SECONDS = 3600
 
 
 def fail(message: str) -> NoReturn:

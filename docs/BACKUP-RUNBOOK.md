@@ -36,14 +36,16 @@ native PVC and never uses `kubectl cp` against production.
 Provisioned and tested out of band:
 
 - Amazon S3 Standard in `eu-central-1`, private with anonymous access denied,
-  versioning enabled, and S3 Object Lock `COMPLIANCE` mode with a 400-day
-  default retention period;
+  versioning enabled, and S3 Object Lock `GOVERNANCE` mode with a 30-day
+  default retention period (relaxed on 2026-09-02: the data is not sensitive
+  and objects must expire quickly to bound storage cost);
 - SSE-KMS with the AWS-managed S3 key and S3 Bucket Keys. A customer-managed
   CMK is intentionally deferred to avoid the fixed monthly cost described in
   issue #13;
 - three service-scoped writer identities and one separate restore identity;
-- account-wide AWS Budgets monthly cost guard of USD 8, chosen conservatively
-  below the requested EUR 10 target with exchange-rate headroom, with actual and forecast notifications at
+- account-wide AWS Budgets monthly cost guard was provisioned at USD 8; the
+  2026-09-02 cost relaxation lowers the documented target to USD 5 and requires
+  the AWS Budget change out of band, with actual and forecast notifications at
   50%, 80%, and 100% as applicable. Budgets is an alerting control, not a hard
   stop, and billing data can lag;
 
@@ -53,8 +55,9 @@ Operational evidence tracked after enabling production automation:
   Dex, including source revision and image digest evidence;
 - verified production upload/download and isolated restore verification; the
   synthetic acceptance fixtures contain no production data;
-- at least 35 verified daily and 12 verified monthly production retention
-  points, plus a tested operator notification destination.
+- at least 14 verified daily production retention points, plus a tested
+  operator notification destination. The 12-month monthly retention
+  requirement was dropped in the 2026-09-02 relaxation.
 
 The provisioned bucket uses:
 
@@ -63,12 +66,14 @@ The provisioned bucket uses:
 - separate writer and restore identities; routine identities have no delete or
   bucket-administration permission;
 - lifecycle retention configured for current and noncurrent versions after the
-  400-day compliance window plus a seven-day incomplete-multipart cleanup;
+  30-day governance retention window plus a seven-day incomplete-multipart
+  cleanup;
 
 The writer identities are restricted to their own service prefixes; the restore
 identity can list/read the backup prefix but cannot write or delete. Lifecycle
-rules retain at least 35 distinct verified UTC daily backups and 12 distinct
-verified UTC monthly backups. Lifecycle must not be the only copy policy and
+rules retain at least 14 distinct verified UTC daily backups and no longer
+require the 12-month monthly target, so lifecycle expiry removes objects around
+35 days after upload. Lifecycle must not be the only copy policy and
 must not delete a currently required WORM-locked object.
 
 The Kubernetes Secret names/keys are runtime interfaces only. Populate them in
@@ -162,8 +167,7 @@ The Prometheus diagnostic endpoint is private. Expected alerts are:
   configuration becomes ready, for missed schedules, failed uploads, or failed
   restore verification;
 - `NativeBackupIntegrityFailed` for a bad artifact/manifest/hash;
-- `NativeBackupDailyRetentionLow` below 35 distinct verified UTC days;
-- `NativeBackupMonthlyRetentionLow` below 12 distinct verified UTC months.
+- `NativeBackupDailyRetentionLow` below 14 distinct verified UTC days;
 
 The alert destination is still an out-of-band operator responsibility. The
 repository's Flux notification contract does not claim paging until that

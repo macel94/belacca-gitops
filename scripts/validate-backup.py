@@ -81,7 +81,9 @@ def main() -> int:
             require(verifier, marker, "backup metrics Secret interface")
         require(verifier, "belacca.com/runner-contract: configuration-aware-v3", "backup metrics contract")
         for service_label in ("exported_service",):
-            if observability.count(f"{{{{ $labels.{service_label} }}}}") < 4:
+            # Three backup alerts remain after the monthly-retention alert was
+            # dropped in the 2026-09-02 retention relaxation.
+            if observability.count(f"{{{{ $labels.{service_label} }}}}") < 3:
                 fail("backup alerts must identify the exported service label")
         if re.search(r"restore-verification[\s\S]*?claimName:", verifier):
             fail("restore verification must not mount a production PVC")
@@ -100,17 +102,15 @@ def main() -> int:
         for gate in ("BACKUP_AUTOMATION_ENABLED", "BACKUP_CONSISTENCY_ACKNOWLEDGED"):
             require(source_jobs, gate, "source gate")
             require(verifier, gate, "restore gate")
-        for marker in ("PutObject", "GetObject", "DeleteObject", "SSE-KMS", "WORM", "35", "12", "AccessDenied"):
+        for marker in ("PutObject", "GetObject", "DeleteObject", "SSE-KMS", "WORM", "GOVERNANCE", "30-day", "14", "AccessDenied"):
             require(runbook, marker, "runbook")
         for marker in (
             "belacca_backup_last_success_timestamp_seconds",
             "belacca_backup_integrity_ok",
             "belacca_backup_daily_retention_count",
-            "belacca_backup_monthly_retention_count",
             "NativeBackupStale",
             "NativeBackupIntegrityFailed",
             "NativeBackupDailyRetentionLow",
-            "NativeBackupMonthlyRetentionLow",
             "NativeBackupConfigurationUnknown",
             "belacca_backup_configuration_ready",
             "NativeBackupUploadOrVerificationMissing",
@@ -120,8 +120,7 @@ def main() -> int:
         for alert, expression in (
             ("NativeBackupStale", "(time() - belacca_backup_last_success_timestamp_seconds > 93600) and on() (belacca_backup_configuration_ready == 1)"),
             ("NativeBackupIntegrityFailed", "(belacca_backup_integrity_ok < 1) and on() (belacca_backup_configuration_ready == 1)"),
-            ("NativeBackupDailyRetentionLow", "(belacca_backup_daily_retention_count < 35) and on() (belacca_backup_configuration_ready == 1)"),
-            ("NativeBackupMonthlyRetentionLow", "(belacca_backup_monthly_retention_count < 12) and on() (belacca_backup_configuration_ready == 1)"),
+            ("NativeBackupDailyRetentionLow", "(belacca_backup_daily_retention_count < 14) and on() (belacca_backup_configuration_ready == 1)"),
         ):
             require(observability, f"alert: {alert}", "observability contract")
             require(observability, f"expr: {expression}", f"{alert} readiness gate")

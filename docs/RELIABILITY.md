@@ -19,11 +19,15 @@ approved measurements before it can be claimed.
 - Public application and operator routes use the native edge and documented
   firewall boundary.
 - State remains single-writer on protected Longhorn-backed RWO PVCs.
-- A reliable immutable AWS S3 backup destination is provisioned out of band
-  with Object Lock, SSE-KMS, scoped writer/restore identities, synthetic
-  acceptance evidence, and a USD 8 monthly budget guard.
+- A reliable AWS S3 backup destination is provisioned out of band with
+  short-window Object Lock (`GOVERNANCE`, 30-day default), SSE-KMS, scoped
+  writer/restore identities, synthetic
+  acceptance evidence, and a USD 5 monthly budget guard target. Retention was
+  relaxed on 2026-09-02: roughly 14 daily backups (~35-day lifecycle) and no
+  long-term monthly archive, because the data is not sensitive and must expire
+  quickly to keep costs low.
 - Restore, capacity, and chaos rehearsals use isolated disposable targets.
 - Live production upload and isolated restore verification passed for Pong,
-  GoatCounter, and Dex; the remaining backup evidence is retention history,
-  full application rehearsal where required, and notification delivery.
+  GoatCounter, and Dex; the remaining backup evidence is the 14-day retention
+  history, full application rehearsal where required, and notification delivery.
 - Production rollback is a reviewed Git change followed by Flux reconciliation.

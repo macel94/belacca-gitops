@@ -59,8 +59,14 @@ Required provider behavior:
   from the routine backup identity.
 - The store provides a provider-supported immutability/WORM control for at least
   the retention window, or the operator records why that control is unavailable.
-- The bucket lifecycle retains at least **35 daily verified backups** and at
-  least **12 monthly verified backups**. Lifecycle deletion is not a recovery
+  The approved posture is a short Object Lock `GOVERNANCE` default of 30 days:
+  artifacts stay immutable for the recovery window but remain operator-cleanable
+  afterwards. Long `COMPLIANCE` retention was deliberately dropped because the
+  data is not sensitive and storage must expire quickly to keep costs low.
+- The bucket lifecycle retains at least **14 daily verified backups** (about two
+  weeks of nightly artifacts). Long-term monthly retention is no longer required:
+  the data is not sensitive and objects must expire quickly, with lifecycle
+  expiry aligned to roughly 35 days. Lifecycle deletion is not a recovery
   action and must not run during an incident without an approved exception.
 - Each object is accompanied by metadata or a sidecar manifest containing the
   UTC creation time, source SHA-256, SQLite integrity result, native production
