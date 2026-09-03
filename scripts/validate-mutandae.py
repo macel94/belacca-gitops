@@ -58,6 +58,18 @@ def main() -> int:
     if "native-mutandae-persistence" in (CLUSTER / "native-platform-applications.yaml").read_text():
         raise SystemExit("persistence overlay must remain owned by the native root Kustomization")
     require(CLUSTER / "mutandae" / "kustomization.yaml", "redis-secret.yaml")
+
+    vault = CLUSTER / "mutandae" / "vault.yaml"
+    require(vault, "kind: StatefulSet")
+    require(vault, "name: mutandae-vault")
+    require(vault, "storageClassName: longhorn")
+    require(vault, "image: hashicorp/vault:")
+    require(vault, "@sha256:")
+    require(vault, "name: mutandae-vault-unseal")
+    require(vault, "path: /v1/sys/health")
+    require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-vault-traffic")
+    require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-vault-traffic")
+    require(CLUSTER / "mutandae" / "network-policy.yaml", "app.kubernetes.io/name: mutandae-vault")
     print("validated Mutandae Redis persistence, environment isolation, routing, and Flux contracts")
     return 0
 

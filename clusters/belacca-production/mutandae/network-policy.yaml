@@ -75,6 +75,16 @@ spec:
       ports:
         - protocol: TCP
           port: 6379
+    # The cluster-local μVault (HashiCorp Vault KV v2) is the common demo
+    # credential store; both application environments mirror credentials
+    # into it under their own path prefix.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mutandae-vault
+      ports:
+        - protocol: TCP
+          port: 8200
     - to:
         - namespaceSelector:
             matchLabels:
@@ -95,6 +105,43 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mutandae-vault-traffic
+  namespace: mutandae
+  labels:
+    belacca.com/project: mutandae
+    belacca.com/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mutandae-vault
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [mutandae, mutandae-preview]
+      ports:
+        - protocol: TCP
+          port: 8200
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
