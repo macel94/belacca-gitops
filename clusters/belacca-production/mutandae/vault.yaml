@@ -65,9 +65,9 @@ spec:
     - name: api
       port: 8200
       targetPort: api
-    - name: cluster-internal
+    - name: raft
       port: 8201
-      targetPort: cluster-internal
+      targetPort: raft
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -113,7 +113,7 @@ spec:
           ports:
             - name: api
               containerPort: 8200
-            - name: cluster-internal
+            - name: raft
               containerPort: 8201
           env:
             - name: HOME
