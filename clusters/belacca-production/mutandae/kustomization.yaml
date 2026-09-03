@@ -5,4 +5,5 @@ resources:
   - redis-secret.yaml
   - redis.yaml
   - vault.yaml
+  - vault-secret.yaml
   - network-policy.yaml

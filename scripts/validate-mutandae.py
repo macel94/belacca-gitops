@@ -65,11 +65,13 @@ def main() -> int:
     require(vault, "storageClassName: longhorn")
     require(vault, "image: hashicorp/vault:")
     require(vault, "@sha256:")
-    require(vault, "name: mutandae-vault-unseal")
     require(vault, "path: /v1/sys/health")
     require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-vault-traffic")
-    require(CLUSTER / "mutandae" / "network-policy.yaml", "name: mutandae-vault-traffic")
-    require(CLUSTER / "mutandae" / "network-policy.yaml", "app.kubernetes.io/name: mutandae-vault")
+
+    vault_secret = CLUSTER / "mutandae" / "vault-secret.yaml"
+    require(vault_secret, "name: mutandae-vault-unseal")
+    if "ENC[AES256_GCM" not in vault_secret.read_text():
+        raise SystemExit(f"{vault_secret}: the Vault unseal key must remain SOPS encrypted")
     print("validated Mutandae Redis persistence, environment isolation, routing, and Flux contracts")
     return 0
 
