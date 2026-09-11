@@ -1,0 +1,46 @@
+{
+  "schema": "belacca.com/native-notification-dispatch.v1",
+  "kind": "NotificationPathDispatchEvidence",
+  "environment": "native-production",
+  "cluster": "belacca-native",
+  "observedAtUtc": "2026-09-11T16:23:18Z",
+  "alert": {
+    "id": "BelaccaNotificationPathNotProvisioned",
+    "route": "diagnostic",
+    "telegram_class": "telegram-diagnostic",
+    "send_resolved": false,
+    "source_revision": "belacca-gitops main@ec4bce5 (native-observability Flux child)"
+  },
+  "disposition": "acknowledged-as-expected",
+  "conclusion": "The in-cluster Alertmanager->Telegram aggregation path remains provisioned and operational. This alert is the deliberate fail-closed diagnostic signal for the intentionally deferred external SLO/page evidence path; there is no regression. The metric series is pinned to zero by design until an approved external adapter and page destination exist.",
+  "scope": {
+    "in_cluster_path": "provisioned-and-verified",
+    "external_slo_evidence": "deferred-by-design",
+    "external_page_destination": "deferred-by-design",
+    "runbook": "docs/NOTIFICATIONS.md",
+    "deferred_issue": "external monitoring scope tracked in platform follow-up (issue 14); must not be reported operational until an owner, destination, probe, and recovery test are approved",
+    "delivery_slo_status": "not-measured"
+  },
+  "verification": {
+    "cluster_context": "belacca-native",
+    "flux_git_sources": "cloudnativepong main@sha1:f000673f, flux-system main@sha1:ec4bce55, francesco-belacca-site main@sha1:d39f316f, mutandae main@sha1:0c834f3e; all Ready=True",
+    "flux_kustomizations": "all Ready=True, native-observability applied main@sha1:ec4bce55",
+    "flux_notification_providers": "platform-webhook, platform-page-webhook",
+    "flux_alerts": "platform-deployments, platform-errors, platform-page-errors, platform-page-recovery",
+    "secret": "observability/alertmanager-telegram: provisioned out of band with the required two keys; no endpoint or credential committed",
+    "alertmanager_deployment": "observability/alertmanager-native Ready 1/1, up-to-date, pod running on belacca-k3s-03, ClusterIP service on :9093, liveness /-/healthy OK",
+    "alertmanager_live_config": "/api/v2/status reports the telegram-diagnostic (send_resolved false) and telegram-page (send_resolved true) receiver split with the page-recovery route; group and repeat intervals match the routing contract",
+    "prometheus_health": "observability/prometheus-native running; live query confirms belacca:slo_source:external_probe:coverage == 0, so BelaccaNotificationPathNotProvisioned firing is the designed fail-closed signal",
+    "notification_controller": "running; recent logs show normal alert event matching with no dispatch failure events"
+  },
+  "limitations": [
+    "This record confirms the in-cluster Alertmanager->Telegram path and the native diagnostic page-destination caveat; it is not proof that an external cluster-down monitor or external SLO page lane is operational.",
+    "No raw command output, token, credential, or private endpoint is recorded here.",
+    "This is an evidence/dispatch note only; it does not mutate the cluster and does not authorise a production change."
+  ],
+  "registry": [
+    "https://github.com/macel94/belacca-gitops",
+    "docs/NATIVE-OBSERVABILITY-RUNBOOK.md",
+    "docs/NOTIFICATIONS.md"
+  ]
+}
