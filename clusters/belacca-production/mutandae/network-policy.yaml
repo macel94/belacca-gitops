@@ -71,6 +71,13 @@ spec:
     - to:
         - podSelector:
             matchLabels:
+              app.kubernetes.io/name: mutandae-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
               app.kubernetes.io/name: mutandae-redis
       ports:
         - protocol: TCP
@@ -97,12 +104,17 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # The optional real Azure integration calls login.microsoftonline.com,
-    # graph.microsoft.com, and a user-supplied *.vault.azure.net endpoint.
-    # Standard NetworkPolicy has no DNS-name selector, so keep this limited to
-    # TCP/443; the Go adapter hard-codes Graph/identity hosts and validates the
-    # Key Vault host/scheme before opening a session.
-    - ports:
+    # OIDC discovery and token exchange use the existing Belacca Dex issuer
+    # through the three DNS-only native edge addresses. Keep this bounded to
+    # those addresses; the intake engine does not need cloud-provider egress.
+    - to:
+        - ipBlock:
+            cidr: 169.58.97.73/32
+        - ipBlock:
+            cidr: 169.58.143.41/32
+        - ipBlock:
+            cidr: 169.58.143.42/32
+      ports:
         - protocol: TCP
           port: 443
 ---

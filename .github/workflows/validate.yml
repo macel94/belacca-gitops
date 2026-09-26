@@ -28,6 +28,8 @@ jobs:
           python3 -m unittest discover -s scripts/backup -p 'test_*.py' -v
       - name: Validate service catalog
         run: python3 scripts/validate-catalog.py
+      - name: Validate Mutandae intake deployment contract
+        run: python3 scripts/validate-mutandae.py
       - name: Validate catalog JSON
         run: python3 -m json.tool catalog/services.json >/tmp/services.pretty.json
       - name: Validate recovery contract and drills

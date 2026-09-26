@@ -2,6 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
+  - postgres.yaml
+  - postgres-ca.yaml
+  - postgres-tls-secret.yaml
+  - postgres-secret.yaml
+  - postgres-live-secret.yaml
+  - postgres-preview-secret.yaml
+  - intake-live-secret.yaml
+  - intake-preview-secret.yaml
+  - documents-pvc.yaml
+  - network-policy-postgres.yaml
   - redis-secret.yaml
   - redis.yaml
   - vault.yaml

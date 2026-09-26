@@ -23,6 +23,8 @@ Prometheus -> pong-api /metrics
 Prometheus -> Flux controller metrics :8080
 analytics/headlamp OAuth2 Proxy -> Dex issuer (HTTPS) and in-namespace upstream
 Longhorn chart-owned policies -> Longhorn manager/engine/webhook graph
+Mutandae app Pods -> mutandae-postgres :5432 (Postgres connection; RLS still authorizes rows)
+Mutandae app Pods -> dashboard.belacca.com OAuth2/Dex issuer via the three native edge IPs :443
 ```
 
 Dynamic resources are selected by the labels the application itself creates:
@@ -122,7 +124,11 @@ live probe covers:
 - analytics and Headlamp OAuth2 Proxy to the Dex issuer, analytics proxy to
   GoatCounter, and Headlamp proxy to Headlamp; and
 - Longhorn manager label/port reachability and the chart-generated manager
-  policy; replica/engine paths remain a live chart/CNI verification gate.
+  policy; replica/engine paths remain a live chart/CNI verification gate; and
+- deployed Mutandae app Pod to `mutandae-postgres:5432` (TCP connectivity only;
+  database authorization remains enforced by credentials and forced RLS); and
+- deployed Mutandae app Pod to the Dex discovery endpoint over HTTPS through
+  only the declared native edge addresses.
 
 The probe is the runtime test. The checked-in validator is only a deterministic
 review guard and never claims these paths were live-tested.

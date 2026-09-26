@@ -27,6 +27,8 @@ dex_ip="$(service_ip dex dex)"
 flux_ip="$(service_ip flux-system kustomize-controller)"
 longhorn_manager_ip="$(kubectl -n longhorn-system get pod -l app=longhorn-manager -o jsonpath='{.items[0].status.podIP}')"
 [[ -n "$longhorn_manager_ip" ]] || fail "Longhorn manager Pod IP unavailable"
+mutandae_pod="$(kubectl -n mutandae get pod -l app.kubernetes.io/name=mutandae -o jsonpath='{.items[0].metadata.name}')"
+[[ -n "$mutandae_pod" ]] || fail "Mutandae application Pod unavailable"
 kubectl -n longhorn-system get networkpolicy longhorn-manager >/dev/null || fail "Longhorn chart-owned manager NetworkPolicy is not present"
 
 mkdir -p "$(dirname "$EVIDENCE_FILE")"
@@ -128,6 +130,8 @@ exec_probe pong-dns pong np-api-source "nslookup pong-api.pong.svc.cluster.local
 exec_probe prometheus-pong observability np-prometheus-source "wget -q -T 5 -O - http://pong-api.pong.svc.cluster.local:8080/metrics"
 exec_probe prometheus-flux observability np-prometheus-source "wget -q -T 5 -O - http://$flux_ip:8080/metrics"
 exec_probe longhorn-storage longhorn-system np-longhorn-source "wget -q -T 5 -O - http://$longhorn_manager_ip:9500/v1"
+exec_probe mutandae-app-postgres mutandae "$mutandae_pod" "/bin/busybox nc -z -w 5 mutandae-postgres.mutandae.svc.cluster.local 5432"
+exec_probe mutandae-oidc-dex mutandae "$mutandae_pod" "wget -q -T 8 --no-check-certificate -O - https://dashboard.belacca.com/oauth2/.well-known/openid-configuration"
 
 # Identity/analytics callbacks: auth proxies reach the public Dex issuer via
 # declared native node addresses and their in-namespace upstreams.

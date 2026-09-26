@@ -8,3 +8,4 @@ resources:
   - network-policy.yaml
   - secret-dex-google-oauth.yaml
   - secret-dex-client-secrets.yaml
+  - secret-mutandae-client.yaml

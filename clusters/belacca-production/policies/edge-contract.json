@@ -26,7 +26,9 @@
     {"id": "analytics-upstream", "from": "analytics/app=oauth2-proxy", "to": "analytics/app=goatcounter", "protocol": "tcp", "port": 80},
     {"id": "headlamp-dex", "from": "headlamp/app=oauth2-proxy", "to": "dex/dashboard.belacca.com", "protocol": "tcp", "port": 443, "path": "/oauth2/*"},
     {"id": "headlamp-upstream", "from": "headlamp/app=oauth2-proxy", "to": "headlamp/app.kubernetes.io/name=headlamp,app.kubernetes.io/instance=headlamp", "protocol": "tcp", "port": 80},
-    {"id": "longhorn-storage", "from": "longhorn-system/longhorn components", "to": "longhorn-system/longhorn components", "protocol": "tcp", "port": "9500,9502,9503", "verification": "chart-owned k3s policies enabled; live label/port and replica-path check required"}
+    {"id": "longhorn-storage", "from": "longhorn-system/longhorn components", "to": "longhorn-system/longhorn components", "protocol": "tcp", "port": "9500,9502,9503", "verification": "chart-owned k3s policies enabled; live label/port and replica-path check required"},
+    {"id": "mutandae-app-postgres", "from": "mutandae/app.kubernetes.io/name=mutandae|mutandae-preview", "to": "mutandae/app.kubernetes.io/name=mutandae-postgres", "protocol": "tcp", "port": 5432, "verification": "live TCP probe from the deployed app Pod; PostgreSQL credentials are not used by the probe"},
+    {"id": "mutandae-oidc-dex", "from": "mutandae/app.kubernetes.io/name=mutandae|mutandae-preview", "to": "dashboard.belacca.com/oAuth2 Dex issuer via native edge addresses", "protocol": "tcp", "port": 443, "verification": "HTTPS discovery request from the deployed app Pod; request logs must not include OAuth tokens"}
   ],
   "forbidden_edges": [
     {"id": "diagnostic-to-pong-api", "from": "network-policy-diagnostics", "to": "pong/app=cloudnativepong,component=api", "protocol": "tcp", "port": 8080},

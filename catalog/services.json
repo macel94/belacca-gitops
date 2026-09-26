@@ -155,6 +155,39 @@
       "implementation": "clusters/belacca-production/analytics"
     },
     {
+      "id": "mutandae",
+      "name": "Mutandae client intake and onboarding engine",
+      "owner": "mutandae",
+      "publicHosts": [
+        "mutandae.com",
+        "preview.mutandae.com"
+      ],
+      "tier": "tier-1",
+      "dependencies": [
+        {"name": "Traefik", "kind": "platform", "required": true},
+        {"name": "Dex OIDC issuer", "kind": "identity-provider", "required": true},
+        {"name": "Mutandae PostgreSQL StatefulSet", "kind": "stateful-storage", "required": true},
+        {"name": "Mutandae encrypted document PVCs", "kind": "stateful-storage", "required": true},
+        {"name": "Longhorn", "kind": "platform-storage", "required": true},
+        {"name": "Flux generated image deployment", "kind": "platform", "required": true}
+      ],
+      "slo": {
+        "status": "proposed",
+        "target": "99%",
+        "window": "30d",
+        "indicator": "Successful HTTPS home/catalog and authenticated tenant intake journey",
+        "measurement": "External journey evidence is not configured yet; status remains proposed until auth, storage, backup, and tenant test data are verified"
+      },
+      "rto": "TBD (not validated)",
+      "rpo": "Pending verified PostgreSQL/document restore rehearsal",
+      "dashboard": {
+        "url": "https://dashboard.belacca.com/",
+        "access": "Dex SSO permits approved operators; Mutandae tenant membership controls application data"
+      },
+      "runbook": "docs/mutandae-intake-migration.md",
+      "implementation": "clusters/belacca-production/mutandae plus mutandae/deploy/k3s"
+    },
+    {
       "id": "dashboard",
       "name": "Headlamp operations dashboard",
       "owner": "platform",

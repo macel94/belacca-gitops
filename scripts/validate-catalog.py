@@ -99,7 +99,7 @@ def main() -> int:
                 fail(f"{prefix}.dashboard.url must use https")
             require_string(dashboard["access"], f"{prefix}.dashboard.access")
 
-        expected = {"portfolio", "pong", "analytics", "dashboard"}
+        expected = {"portfolio", "pong", "analytics", "dashboard", "mutandae"}
         if ids != expected:
             fail(f"catalog services must be exactly {sorted(expected)}, got {sorted(ids)}")
     except (OSError, json.JSONDecodeError, ValueError) as error:

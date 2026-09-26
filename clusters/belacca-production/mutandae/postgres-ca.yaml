@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mutandae-postgres-ca
+  namespace: mutandae
+  annotations:
+    belacca.com/postgres-server-dns: mutandae-postgres.mutandae.svc.cluster.local
+  labels:
+    belacca.com/project: mutandae
+    belacca.com/component: database
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIEZjCCAs6gAwIBAgIUQjyU55hUIaTMeI5YdqAET78s57MwDQYJKoZIhvcNAQEL
+    BQAwOTEkMCIGA1UEAwwbTXV0YW5kYWUgUG9zdGdyZVNRTCBSb290IENBMREwDwYD
+    VQQKDAhNdXRhbmRhZTAeFw0yNjA5MjYyMTI2MjhaFw0zNjA5MjMyMTI2MjhaMDkx
+    JDAiBgNVBAMMG011dGFuZGFlIFBvc3RncmVTUUwgUm9vdCBDQTERMA8GA1UECgwI
+    TXV0YW5kYWUwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAwggGKAoIBgQCs4xKliIho
+    yK1Dsta2/eitp+iJUYYkfCt3+u5LAWL7OvwgYDsVXe8fxzAUYmZTZqmCjIlFr0Fi
+    dsJxS6K8wBJL8PPaIxgkk4c2BnrPMdh0CI2TDlW/pzj/EV9kQ6CNlTyM7pM9QsPt
+    Fbk6AxWncl7Vi8eTuVH9+xAbSl2jq7Y9Iflhb1qqWqsIi84rnf5DnKyRzYvkd1vs
+    FyXoLmI95fywqa/PIQUyPoE4r4VGZA8xD1398+Vx0DTyU7+c3O/pRTLC7Vc1nG0m
+    IN5WJolPQc8O8WUwtQ0lAH8WcRZcuFap1TwyGpF87U//24TE3n1XnTdcREusy9rw
+    VeYkIgx9gN0gBVrHV90wU1nowNV85AYrRRYnWw4OxoD+h8xAqH/tXCHhtgku5mbM
+    P82/bzsx7DoTlZrLwXeFHQ5W285FiPqDXc3DE2fFlxp2V5r+CpveQBKqB9EtGeBj
+    JjHF4ztYfYl01Tiimi3bBn+Uotq3R1J6PEx+p1KgVS1OebSFH5vSyq8CAwEAAaNm
+    MGQwHQYDVR0OBBYEFJE4+TB22lFFHoTa9EsqHGJSBJLAMB8GA1UdIwQYMBaAFJE4
+    +TB22lFFHoTa9EsqHGJSBJLAMBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYDVR0PAQH/
+    BAQDAgEGMA0GCSqGSIb3DQEBCwUAA4IBgQB+Wv/IBipXytE+3r+vuzvdwxPA+q4m
+    PYtjjBC+WgxhqF+FAvEU/zibAhjcXFl0DPBL9RoT8xqPy0pIZKgd2qCvvL9sROCz
+    ZaoPMmEG3rhwegFF+3duf4zT4EI5WBpA3r7xYOcj8Kq1y5ZKAWMRPtIMsew1ALlW
+    ud4Bkc2lJJ6b+jD9VrumWcrwDQBQgx4MrDfFgSpUdL/BkcrFPP73pHkMz3kmDVlT
+    KKc+m23VWmKdmjBovtt3k4HgZp9ppleJbXqD48mo+EcW97ecx4xIAeosY4j9MVa/
+    WZo4dVHxdnoLNTWn7GCN3Fjmq07mnCYKwybxcrTS9T4pLps5Whh5U+CKOpmTitNr
+    YcBtJzyLgPH2zdq3O/3ZFBaNZv0dRas3Sztsp/7qbiMz6cxVyfKLJsfW+EIx9ICL
+    ILfxXquY5ClTFMJEi0nqwhKk+AtsLZdcjarEfIp/xNazra1fAZPbXh8BWBj3Z6A7
+    WAq0nooQ4FEvWfaMYPjRvfLMFycF0aceNfc=
+    -----END CERTIFICATE-----

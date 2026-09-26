@@ -58,6 +58,11 @@ spec:
           name: Analytics dashboard
           redirectURIs:
             - https://stats.belacca.com/oauth2/callback
+        - id: mutandae
+          name: Mutandae Client Intake
+          redirectURIs:
+            - https://mutandae.com/auth/callback
+            - https://preview.mutandae.com/auth/callback
       connectors:
         - type: google
           id: google
@@ -124,4 +129,9 @@ spec:
       name: dex-client-secrets
       valuesKey: stats-client-secret
       targetPath: config.staticClients[2].secret
+      literal: true
+    - kind: Secret
+      name: mutandae-dex-client-secret
+      valuesKey: client-secret
+      targetPath: config.staticClients[3].secret
       literal: true

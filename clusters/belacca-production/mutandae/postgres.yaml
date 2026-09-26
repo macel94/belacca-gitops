@@ -1,0 +1,217 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mutandae-postgres-bootstrap
+  namespace: mutandae
+  labels:
+    belacca.com/project: mutandae
+    belacca.com/component: database
+  annotations:
+    belacca.com/config-version: "3"
+data:
+  00-create-roles-and-databases.sh: |
+    #!/bin/sh
+    # This official-image init hook runs only for an empty PGDATA volume.
+    # Passwords are read from the environment and never placed in argv/logs.
+    set -eu
+    psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --set=ON_ERROR_STOP=1 <<'SQL'
+    \getenv live_owner_password MUTANDAE_LIVE_OWNER_PASSWORD
+    \getenv live_app_password MUTANDAE_LIVE_APP_PASSWORD
+    \getenv preview_owner_password MUTANDAE_PREVIEW_OWNER_PASSWORD
+    \getenv preview_app_password MUTANDAE_PREVIEW_APP_PASSWORD
+    SELECT format('CREATE ROLE mutandae_live_owner LOGIN PASSWORD %L NOSUPERUSER NOBYPASSRLS', :'live_owner_password') \gexec
+    SELECT format('CREATE ROLE mutandae_live_app LOGIN PASSWORD %L NOSUPERUSER NOBYPASSRLS', :'live_app_password') \gexec
+    SELECT format('CREATE ROLE mutandae_preview_owner LOGIN PASSWORD %L NOSUPERUSER NOBYPASSRLS', :'preview_owner_password') \gexec
+    SELECT format('CREATE ROLE mutandae_preview_app LOGIN PASSWORD %L NOSUPERUSER NOBYPASSRLS', :'preview_app_password') \gexec
+    SELECT 'CREATE DATABASE mutandae_live OWNER mutandae_live_owner' \gexec
+    SELECT 'CREATE DATABASE mutandae_preview OWNER mutandae_preview_owner' \gexec
+    REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;
+    REVOKE CONNECT ON DATABASE template1 FROM PUBLIC;
+    REVOKE CONNECT ON DATABASE mutandae_live FROM PUBLIC;
+    REVOKE CONNECT ON DATABASE mutandae_preview FROM PUBLIC;
+    GRANT CONNECT ON DATABASE mutandae_live TO mutandae_live_owner, mutandae_live_app;
+    GRANT CONNECT ON DATABASE mutandae_preview TO mutandae_preview_owner, mutandae_preview_app;
+    SQL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mutandae-postgres
+  namespace: mutandae
+  labels:
+    app.kubernetes.io/name: mutandae-postgres
+    belacca.com/project: mutandae
+    belacca.com/component: database
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mutandae-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mutandae-postgres
+  namespace: mutandae
+  labels:
+    app.kubernetes.io/name: mutandae-postgres
+    belacca.com/project: mutandae
+    belacca.com/component: database
+spec:
+  serviceName: mutandae-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mutandae-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mutandae-postgres
+        belacca.com/project: mutandae
+        belacca.com/component: database
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: install-postgres-tls
+          image: postgres:17.11-alpine3.24@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-ec", "cp /source/tls.crt /tls/tls.crt && cp /source/tls.key /tls/tls.key && chmod 0644 /tls/tls.crt && chmod 0600 /tls/tls.key"]
+          volumeMounts:
+            - name: postgres-tls-source
+              mountPath: /source
+              readOnly: true
+            - name: postgres-tls-runtime
+              mountPath: /tls
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: postgres
+          image: postgres:17.11-alpine3.24@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          imagePullPolicy: IfNotPresent
+          args: ["postgres", "-c", "ssl=on", "-c", "ssl_cert_file=/etc/postgres-tls/tls.crt", "-c", "ssl_key_file=/etc/postgres-tls/tls.key"]
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-postgres-credentials
+                  key: POSTGRES_ADMIN_PASSWORD
+            - name: MUTANDAE_LIVE_OWNER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-live-database-credentials
+                  key: MUTANDAE_LIVE_OWNER_PASSWORD
+            - name: MUTANDAE_LIVE_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-live-database-credentials
+                  key: MUTANDAE_LIVE_APP_PASSWORD
+            - name: MUTANDAE_PREVIEW_OWNER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-preview-database-credentials
+                  key: MUTANDAE_PREVIEW_OWNER_PASSWORD
+            - name: MUTANDAE_PREVIEW_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mutandae-preview-database-credentials
+                  key: MUTANDAE_PREVIEW_APP_PASSWORD
+          ports:
+            - name: postgres
+              containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          startupProbe:
+            exec:
+              command: ["sh", "-ec", "pg_isready -U postgres -d postgres"]
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["sh", "-ec", "pg_isready -U postgres -d postgres"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["sh", "-ec", "pg_isready -U postgres -d postgres"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: postgres-tls-runtime
+              mountPath: /etc/postgres-tls
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: bootstrap
+              mountPath: /docker-entrypoint-initdb.d/00-create-roles-and-databases.sh
+              subPath: 00-create-roles-and-databases.sh
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: postgres-tls-source
+          secret:
+            secretName: mutandae-postgres-tls
+            defaultMode: 0440
+            items:
+              - key: PG_TLS_CERT
+                path: tls.crt
+              - key: PG_TLS_KEY
+                path: tls.key
+        - name: postgres-tls-runtime
+          emptyDir:
+            medium: Memory
+        - name: bootstrap
+          configMap:
+            name: mutandae-postgres-bootstrap
+            defaultMode: 0555
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          belacca.com/project: mutandae
+          belacca.com/component: database
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 20Gi

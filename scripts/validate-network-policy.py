@@ -17,6 +17,7 @@ PLATFORM = ROOT / "clusters" / "belacca-production" / "native-platform-applicati
 LONGHORN = ROOT / "clusters" / "belacca-production" / "longhorn" / "helmrelease.yaml"
 DEX = ROOT / "clusters" / "belacca-production" / "dex" / "network-policy.yaml"
 ANALYTICS = ROOT / "clusters" / "belacca-production" / "analytics" / "network-policy.yaml"
+MUTANDAE = ROOT / "clusters" / "belacca-production" / "mutandae" / "network-policy.yaml"
 NATIVE_NETWORK_POLICIES = tuple((ROOT / "clusters" / "belacca-production").rglob("network-policy*.yaml"))
 PROBE = ROOT / "scripts" / "verify-native-network-policy.sh"
 RUNBOOK = ROOT / "docs" / "NATIVE-NETWORK-POLICY.md"
@@ -40,6 +41,7 @@ def main() -> int:
         longhorn = LONGHORN.read_text(encoding="utf-8")
         dex = DEX.read_text(encoding="utf-8")
         analytics = ANALYTICS.read_text(encoding="utf-8")
+        mutandae = MUTANDAE.read_text(encoding="utf-8")
         probe = PROBE.read_text(encoding="utf-8")
         runbook = RUNBOOK.read_text(encoding="utf-8")
         kustomization = KUSTOMIZATION.read_text(encoding="utf-8")
@@ -65,7 +67,7 @@ def main() -> int:
             "traefik-gateway", "gateway-static", "gateway-api", "api-room",
             "room-callback", "api-kubernetes-api", "pong-dns", "prometheus-pong",
             "prometheus-flux", "analytics-dex", "analytics-upstream", "headlamp-dex", "headlamp-upstream",
-            "longhorn-storage",
+            "longhorn-storage", "mutandae-app-postgres", "mutandae-oidc-dex",
         }
         if required_ids != expected_required:
             fail(f"required edge IDs are {sorted(required_ids)}, expected {sorted(expected_required)}")
@@ -111,6 +113,7 @@ def main() -> int:
             fail("native policy bundle contains a broad namespace/pod allow")
 
         require(longhorn, ("networkPolicies:", "enabled: true", "type: k3s"), "Longhorn HelmRelease")
+        require(mutandae, ("app.kubernetes.io/name: mutandae-postgres", "port: 5432"), "Mutandae app-to-Postgres policy")
         require(
             platform,
             (
