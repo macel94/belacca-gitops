@@ -17,8 +17,10 @@ legacy Redis/Vault resources in a separately reviewed GitOps change.
 ## PostgreSQL roles and isolation
 
 `clusters/belacca-production/mutandae/postgres.yaml` deploys the official
-PostgreSQL 17.11 Alpine image pinned by digest. It uses Longhorn-backed RWO
-storage and creates `mutandae_live` and `mutandae_preview`, each owned by a
+PostgreSQL 17.11 Alpine image pinned by digest. Its `PGDATA` is a `pgdata`
+subdirectory of the Longhorn mount so the volume's `lost+found` entry does not
+break `initdb`. It uses Longhorn-backed RWO storage and creates
+`mutandae_live` and `mutandae_preview`, each owned by a
 distinct non-superuser `mutandae_{live,preview}_owner` role. Each database has a
 distinct `mutandae_{live,preview}_app` runtime login. Both roles are
 `NOSUPERUSER NOBYPASSRLS`; public `CONNECT` is revoked and each runtime login

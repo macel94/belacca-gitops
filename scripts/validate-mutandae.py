@@ -6,7 +6,13 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 CLUSTER = ROOT / "clusters" / "belacca-production"
-APP = Path(os.environ.get("MUTANDAE_SOURCE_ROOT", "/root/sources/mutandae")) / "deploy" / "k3s"
+SOURCE_ROOT = os.environ.get("MUTANDAE_SOURCE_ROOT")
+APP = (
+    Path(SOURCE_ROOT) / "deploy" / "k3s"
+    if SOURCE_ROOT
+    else None if os.environ.get("CI", "").lower() == "true"
+    else Path("/root/sources/mutandae/deploy/k3s")
+)
 MUTANDAE = CLUSTER / "mutandae"
 DEX = CLUSTER / "dex"
 
@@ -26,8 +32,11 @@ def encrypted_secret(path: Path, name: str) -> None:
 
 
 def validate_app_source() -> None:
+    if APP is None:
+        print("Mutandae source checkout unavailable in CI; app-manifest checks are run by the application repository")
+        return
     if not APP.is_dir():
-        print("Mutandae source checkout unavailable; app-manifest checks skipped")
+        print(f"Mutandae source checkout unavailable at {APP}; app-manifest checks skipped")
         return
     kustomization = APP / "kustomization.yaml"
     for resource in ("deployment.yaml", "deployment-preview.yaml", "service.yaml", "service-preview.yaml"):
