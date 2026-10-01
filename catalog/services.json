@@ -160,6 +160,7 @@
       "owner": "mutandae",
       "publicHosts": [
         "mutandae.com",
+        "agencysync.belacca.com",
         "preview.mutandae.com"
       ],
       "tier": "tier-1",

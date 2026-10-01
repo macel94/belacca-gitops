@@ -84,9 +84,12 @@ arguments. Do not print local `.env` or SOPS plaintext during validation.
 ## Authentication and tenant bootstrap
 
 Dex issuer: `https://dashboard.belacca.com/oauth2`; client ID: `mutandae`;
-redirects are the live and preview `/auth/callback` URLs. Dex's default global
-OIDC role is not tenant authority. The app resolves the verified OIDC subject
-against PostgreSQL membership for every tenant operation. `/api/v1/me` and the
+redirects are the live and preview `/auth/callback` URLs. The public
+`agencysync.belacca.com` landing links staff to the canonical Mutandae workspace
+for sign-in; it does not add an OIDC callback or grant access to tenant data.
+Dex's default global OIDC role is not tenant authority. The app resolves the
+verified OIDC subject against PostgreSQL membership for every tenant operation.
+`/api/v1/me` and the
 signed-in landing page reveal the caller's own `sub` with `no-store`; use that
 stable value for an owner membership.
 

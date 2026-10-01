@@ -31,8 +31,8 @@ Native production currently contains:
 - the cert-manager controller and CRDs under `cert-manager/`, plus the native
   Cloudflare DNS-01 ClusterIssuer and application Certificates under `tls/`;
   and
-- published Pong and portfolio Kustomizations plus their native Traefik routes
-  under `routing/`, sourced by `native-sources.yaml`.
+- published Pong, portfolio, and Mutandae Kustomizations plus their native
+  Traefik routes under `routing/`, sourced by `native-sources.yaml`.
 
 The native root is Flux-owned; child readiness is reported directly by each
 child Kustomization. The root deliberately does not health-gate on the
@@ -40,9 +40,9 @@ vendor-managed Longhorn HelmRelease because its pre-upgrade hook currently
 emits a tag-only image and is outside the first-party digest policy scope.
 Longhorn remains reconciled from Git and its HelmRelease status is still an
 operator health signal. Native cert-manager owns a SOPS/age-encrypted
-Cloudflare DNS-01 credential, a ClusterIssuer, and seven Ready Certificates.
-Native Traefik routes portfolio, Pong, Dex, Headlamp, Flux Web UI, and analytics
-through private ClusterIP Services; direct and public probes succeed on all
+Cloudflare DNS-01 credential, a ClusterIssuer, and application Certificates.
+Native Traefik routes portfolio, Pong, Mutandae/AgencySync, Dex, Headlamp, Flux
+Web UI, and analytics through private ClusterIP Services; direct and public probes succeed on all
 three native edges (`.73`, `.41`, and `.42`). A private native Prometheus diagnostic child and the in-cluster Alertmanager
 Flux notification path are live-tested; the checked-in routing contract sends
 firing diagnostics and actionable pages through Telegram, suppresses diagnostic
@@ -76,7 +76,7 @@ clusters/belacca-production/
 ├── edge/         Flux-managed Traefik
 ├── cert-manager/ cert-manager controller and CRDs
 ├── tls/          encrypted Cloudflare DNS-01 and app Certificates
-├── routing/      native portfolio and Pong Traefik routes
+├── routing/      native portfolio, Pong, and Mutandae Traefik routes
 ├── observability/ private Prometheus diagnostics and Alertmanager receiver
 ├── policy-system/ Kyverno admission controller HelmRelease
 ├── policies/ native image digest, provenance, SBOM, and vulnerability policies
@@ -87,7 +87,7 @@ clusters/belacca-production/
 
 The native root contains the application GitRepositories and application
 Kustomizations described above, plus cert-manager DNS-01 resources in `tls/`
-and portfolio/Pong Ingresses and redirect Middleware in `routing/`. It does
+and portfolio/Pong/Mutandae Ingresses and redirect Middleware in `routing/`. It does
 DNS is managed out of band at Cloudflare; additional hostnames or services
 require a separate reviewed change.
 

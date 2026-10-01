@@ -19,6 +19,7 @@ records contain all three native addresses.
 | `dashboard.belacca.com` | Headlamp operations dashboard | Protected OAuth2 Proxy, Dex, and Google route | Native GitOps Headlamp tree |
 | `flux.belacca.com` | Flux Web UI | Protected Dex/Google operations route | Native GitOps Flux Web UI tree |
 | `dex.belacca.com` | Dex operator alias | TLS-protected Dex route | Native GitOps Dex tree |
+| `agencysync.belacca.com` | AgencySync | Public digital-agency workflow catalog; staff sign in through the canonical Mutandae workspace | `macel94/mutandae` / native Mutandae service |
 
 ## Canonicalization
 

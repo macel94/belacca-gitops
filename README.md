@@ -23,6 +23,7 @@ The following application and platform entries describe native production.
 | [`cloudnativepong`](https://github.com/macel94/cloudnativepong) | Go lobby, Caddy gateway, Distroless rooms, WebSocket fallback, opt-in WebTransport | [pong.belacca.com](https://pong.belacca.com) | `./k8s/overlays/server` |
 | [`francesco-belacca-site`](https://github.com/macel94/francesco-belacca-site) | Static Caddy portfolio | [francesco.belacca.com](https://francesco.belacca.com) | `./deploy` |
 | GoatCounter | Self-hosted, cookie-free analytics | [stats.belacca.com](https://stats.belacca.com) | `./clusters/belacca-production/analytics` |
+| Mutandae / AgencySync | Digital-agency client project onboarding | [agencysync.belacca.com](https://agencysync.belacca.com) | `./clusters/belacca-production/mutandae` plus `macel94/mutandae/deploy/k3s` |
 
 Native production has published application Flux paths for Pong, portfolio,
 analytics, Dex, Headlamp, Flux Web, private Prometheus diagnostics, and native

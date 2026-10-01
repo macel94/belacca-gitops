@@ -16,4 +16,5 @@ spec:
     rotationPolicy: Always
   dnsNames:
     - mutandae.com
+    - agencysync.belacca.com
     - preview.mutandae.com

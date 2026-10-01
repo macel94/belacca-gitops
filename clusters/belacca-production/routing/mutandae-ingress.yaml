@@ -23,6 +23,16 @@ spec:
                 name: mutandae
                 port:
                   name: http
+    - host: agencysync.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mutandae
+                port:
+                  name: http
     - host: preview.mutandae.com
       http:
         paths:
@@ -52,9 +62,20 @@ spec:
     - secretName: mutandae-tls
       hosts:
         - mutandae.com
+        - agencysync.belacca.com
         - preview.mutandae.com
   rules:
     - host: mutandae.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mutandae
+                port:
+                  name: http
+    - host: agencysync.belacca.com
       http:
         paths:
           - path: /
