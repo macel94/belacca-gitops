@@ -33,6 +33,16 @@ spec:
                 name: mutandae
                 port:
                   name: http
+    - host: growth.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mutandae
+                port:
+                  name: http
     - host: preview.mutandae.com
       http:
         paths:
@@ -63,6 +73,7 @@ spec:
       hosts:
         - mutandae.com
         - agencysync.belacca.com
+        - growth.belacca.com
         - preview.mutandae.com
   rules:
     - host: mutandae.com
@@ -76,6 +87,16 @@ spec:
                 port:
                   name: http
     - host: agencysync.belacca.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mutandae
+                port:
+                  name: http
+    - host: growth.belacca.com
       http:
         paths:
           - path: /

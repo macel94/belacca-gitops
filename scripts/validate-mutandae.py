@@ -130,14 +130,19 @@ def main() -> int:
         "name: mutandae-dex-client-secret",
     ):
         require(dex, fragment)
-    for fragment in ("name: mutandae-http", "name: mutandae-https", "host: agencysync.belacca.com", "name: mutandae"):
+    for fragment in (
+        "name: mutandae-http", "name: mutandae-https",
+        "host: agencysync.belacca.com", "host: growth.belacca.com", "name: mutandae",
+    ):
         require(MUTANDAE_ROUTING, fragment)
     require(MUTANDAE_TLS, "name: mutandae-tls")
-    require(MUTANDAE_TLS, "agencysync.belacca.com")
+    for host in ("agencysync.belacca.com", "growth.belacca.com"):
+        require(MUTANDAE_TLS, host)
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     mutandae_entry = next((item for item in catalog["services"] if item["id"] == "mutandae"), None)
-    if mutandae_entry is None or "agencysync.belacca.com" not in mutandae_entry.get("publicHosts", []):
-        raise SystemExit(f"{CATALOG}: Mutandae AgencySync host missing from service catalog")
+    required_hosts = {"agencysync.belacca.com", "growth.belacca.com"}
+    if mutandae_entry is None or not required_hosts.issubset(mutandae_entry.get("publicHosts", [])):
+        raise SystemExit(f"{CATALOG}: Mutandae public host metadata is incomplete")
     print("validated Mutandae PostgreSQL/RLS, SOPS, document PVC, AgencySync host, Dex OIDC, and network contracts")
     return 0
 
