@@ -51,6 +51,22 @@ metadata:
 spec:
   interval: 10m
   path: ./deploy/k3s
+  # Environment-variable ConfigMap updates need a new pod, not merely a
+  # crashed-container retry. Bump this revision with live provider config.
+  patches:
+    - target:
+        kind: Deployment
+        name: mutandae
+      patch: |-
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: mutandae
+        spec:
+          template:
+            metadata:
+              annotations:
+                mutandae.com/provider-config-revision: "2026-10-08-bare-sender"
   prune: false
   wait: true
   timeout: 10m
