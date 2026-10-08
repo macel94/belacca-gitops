@@ -11,7 +11,7 @@ data:
   MUTANDAE_EMAIL_APPROVED: "true"
   MUTANDAE_EMAIL_TENANTS: mutandae-sales
   MUTANDAE_EMAIL_ORIGIN: https://mutandae.com
-  MUTANDAE_EMAIL_FROM: Mutandae <forms@notify.mutandae.com>
+  MUTANDAE_EMAIL_FROM: forms@notify.mutandae.com
   # File-backed token revocation is already supported by the application.
   # Release verification starts with one scoped digest; it is emptied afterward.
   MUTANDAE_API_TOKENS_FILE: /etc/mutandae/api-tokens/tokens.json
