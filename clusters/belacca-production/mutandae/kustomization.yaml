@@ -10,6 +10,10 @@ resources:
   - postgres-preview-secret.yaml
   - intake-live-secret.yaml
   - intake-preview-secret.yaml
+  - sales-config.yaml
+  - sales-ai-secret.yaml
+  - sales-email-secret.yaml
+  - api-tokens-secret.yaml
   - documents-pvc.yaml
   - network-policy-postgres.yaml
   - redis-secret.yaml
