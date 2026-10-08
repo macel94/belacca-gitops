@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mutandae-approved-provider-egress
+  namespace: mutandae
+  labels:
+    belacca.com/project: mutandae
+    belacca.com/component: network-policy
+spec:
+  # Live only. Preview and isolated anonymous demos have no provider keys.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mutandae
+  policyTypes: [Egress]
+  egress:
+    - to:
+        # IPv4 DNS observations, 2026-10-08. Native NetworkPolicy has no
+        # hostname selector. Review/update these /32s if provider DNS changes;
+        # do not broaden to public or private catch-all CIDRs.
+        # openrouter.ai
+        - ipBlock: {cidr: 104.18.2.115/32}
+        - ipBlock: {cidr: 104.18.3.115/32}
+        # api.resend.com
+        - ipBlock: {cidr: 104.20.29.242/32}
+        - ipBlock: {cidr: 172.66.165.132/32}
+      ports:
+        - protocol: TCP
+          port: 443

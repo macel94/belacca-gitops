@@ -21,3 +21,4 @@ resources:
   - vault.yaml
   - vault-secret.yaml
   - network-policy.yaml
+  - network-policy-providers.yaml
