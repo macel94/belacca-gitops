@@ -41,9 +41,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: prometheus
-          # Deliberately reused historical multi-architecture pin; revalidate
-          # the digest against the official registry before native rollout or upgrade.
-          image: prom/prometheus:v3.13.2@sha256:508729e0e2d18e11fd742a5a5ca70e557b940a93948c3c95fd0123a6fd538b69
+          # Multi-architecture digest verified against the official registry.
+          image: prom/prometheus:v3.13.5@sha256:aafa9d694e6a883c02db516d9f6e5b84e14195f49a2a6456a4cca815edda72b9
           imagePullPolicy: IfNotPresent
           args:
             - --config.file=/etc/prometheus/prometheus.yml

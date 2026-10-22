@@ -102,7 +102,7 @@ def validate_native() -> None:
     if "notification_class: page" not in rules or "routing_class: page" not in rules:
         fail("native actionable notification rules must identify the page lane")
 
-    if "prom/prometheus:v3.13.2@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
+    if "prom/prometheus:v3.13.5@sha256:" not in deployment or re.search(r"image:\s+\S+:latest(?:\s|$)", deployment):
         fail("native Prometheus image must be immutable and must not use latest")
     if "kustomize.toolkit.fluxcd.io/force: enabled" not in deployment:
         fail("native Prometheus Deployment must use targeted Flux force replacement for the strategy transition")

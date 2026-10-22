@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: azure/setup-kubectl@bda439f5f36b99b262ebdcd3613869bddb064c8e # v5.2.0
         with:
-          version: v1.35.0
+          version: v1.35.9
       - name: Validate native image provenance policy
         run: |
           python3 scripts/validate-image-policy.py
@@ -45,9 +45,9 @@ jobs:
           set -eu
           python3 scripts/validate-observability.py
           python3 scripts/extract-prometheus-config.py
-          version='3.13.2'
+          version='3.13.5'
           archive="prometheus-${version}.linux-amd64.tar.gz"
-          digest='0e8c4d46101bd025ea8265e377d2caabc57f488fc1be1c367f37db69ea41be6f'
+          digest='0388822ace519c5a3a8ef556a541ce1b536e21d872f82deded465bd27a5a0699'
           curl --fail --silent --show-error --location \
             "https://github.com/prometheus/prometheus/releases/download/v${version}/${archive}" \
             --output "/tmp/${archive}"
@@ -98,7 +98,7 @@ jobs:
           grep -q 'name: cert-manager-cloudflare' clusters/belacca-production/tls/clusterissuer.yaml
           grep -q 'CLOUDFLARE_DNS_API_TOKEN' clusters/belacca-production/tls/clusterissuer.yaml SUBDOMAIN-RUNBOOK.md
           grep -q 'name: native-observability' clusters/belacca-production/native-platform-applications.yaml
-          grep -q 'prom/prometheus:v3.13.2@sha256:' /tmp/kustomize-clusters_belacca-production_observability.yaml
+          grep -q 'prom/prometheus:v3.13.5@sha256:' /tmp/kustomize-clusters_belacca-production_observability.yaml
           grep -q 'unsafeUseServiceAccountToken: true' clusters/belacca-production/headlamp/helmrelease.yaml
           grep -q -- '- "-proxy-auth=true"' clusters/belacca-production/headlamp/helmrelease.yaml
           test ! -f clusters/belacca-production/secret.yaml

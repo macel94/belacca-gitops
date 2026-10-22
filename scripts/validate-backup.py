@@ -98,7 +98,7 @@ def main() -> int:
             require(text, "startingDeadlineSeconds: 3600", label)
             require(text, "activeDeadlineSeconds: 1800", label)
             require(text, "automountServiceAccountToken: false", label)
-            require(text, "python:3.13.11-slim-bookworm@sha256:", label)
+            require(text, "python:3.13.16-slim-bookworm@sha256:", label)
         for gate in ("BACKUP_AUTOMATION_ENABLED", "BACKUP_CONSISTENCY_ACKNOWLEDGED"):
             require(source_jobs, gate, "source gate")
             require(verifier, gate, "restore gate")

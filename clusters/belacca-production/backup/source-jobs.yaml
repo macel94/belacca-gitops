@@ -38,7 +38,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: runner
-              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              image: python:3.13.16-slim-bookworm@sha256:73aa5faee130c60da030e105ec971ccf57473fbd22ce73bd6fc9ba99a40b838d
               command: ["python3", "/opt/backup/backup_runner.py", "upload", "pong", "/source/pong.db"]
               args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
               env:
@@ -93,7 +93,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: runner
-              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              image: python:3.13.16-slim-bookworm@sha256:73aa5faee130c60da030e105ec971ccf57473fbd22ce73bd6fc9ba99a40b838d
               command: ["python3", "/opt/backup/backup_runner.py", "upload", "goatcounter", "/source/db.sqlite3"]
               args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
               env:
@@ -149,7 +149,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: runner
-              image: python:3.13.11-slim-bookworm@sha256:20080e807bfc404f8450b185cf0fc95d553462673598549613735f70a5b4d5d0
+              image: python:3.13.16-slim-bookworm@sha256:73aa5faee130c60da030e105ec971ccf57473fbd22ce73bd6fc9ba99a40b838d
               command: ["python3", "/opt/backup/backup_runner.py", "upload", "dex", "/source/dex.db"]
               args: ["--source-revision", "$(SOURCE_REVISION)", "--image-digests", "$(IMAGE_DIGESTS)"]
               env:
