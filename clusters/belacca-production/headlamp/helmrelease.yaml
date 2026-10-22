@@ -16,7 +16,7 @@ spec:
   chart:
     spec:
       chart: headlamp
-      version: "0.44.0"
+      version: "0.46.0"
       sourceRef:
         kind: HelmRepository
         name: headlamp
@@ -28,6 +28,12 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  postRenderers:
+    - kustomize:
+        images:
+          - name: ghcr.io/headlamp-k8s/headlamp
+            newTag: v0.46.0
+            digest: sha256:8a0ef97527544baa2b35825940ddf4db6e2d09c30cd5aa31fd269ff604cc8b75
   values:
     replicaCount: 1
     config:
