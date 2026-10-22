@@ -17,7 +17,7 @@ spec:
   chart:
     spec:
       chart: dex
-      version: "0.24.1"
+      version: "0.26.0"
       sourceRef:
         kind: HelmRepository
         name: dex
@@ -30,6 +30,9 @@ spec:
     remediation:
       retries: 3
   values:
+    image:
+      tag: v2.46.1
+      digest: sha256:65b72ca0f4b0bf6d4ada84ec21da8851782563404ac7b8f926923d27ceced9ab
     replicaCount: 1
     revisionHistoryLimit: 2
     configSecret:
